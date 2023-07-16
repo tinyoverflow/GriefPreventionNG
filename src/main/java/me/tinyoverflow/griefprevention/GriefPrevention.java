@@ -20,6 +20,8 @@ package me.tinyoverflow.griefprevention;
 
 import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationType;
+import dev.jorel.commandapi.CommandAPI;
+import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import me.tinyoverflow.griefprevention.events.PreventBlockBreakEvent;
 import me.tinyoverflow.griefprevention.events.SaveTrappedPlayerEvent;
 import me.tinyoverflow.griefprevention.events.TrustChangedEvent;
@@ -273,9 +275,15 @@ public class GriefPrevention extends JavaPlugin
         AddLogEntry(entry, CustomLogEntryTypes.Debug);
     }
 
+    public void onLoad() {
+        CommandAPI.onLoad(new CommandAPIBukkitConfig(this));
+    }
+
     //initializes well...   everything
     public void onEnable()
     {
+        CommandAPI.onEnable();
+
         instance = this;
         log = instance.getLogger();
 
