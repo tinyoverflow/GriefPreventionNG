@@ -63,6 +63,11 @@ commands:
       usage: /AdjustBonusClaimBlocksAll <amount>
       permission: griefprevention.adjustclaimblocks
       aliases: acball
+    adjustclaimblocklimit:
+      description: Adjusts the max accrued claim block limit for a player.
+      usage: /AdjustClaimBlockLimit <player> <limit|reset>
+      permission: griefprevention.adjustclaimblocklimit
+      aliases: acbl
     setaccruedclaimblocks:
       description: Updates a player's accrued claim block total.
       usage: /SetAccruedClaimBlocks <player> <amount>

@@ -61,6 +61,7 @@ public enum Messages
     NoDeletePermission,
     AllAdminDeleted,
     AdjustBlocksSuccess,
+    AdjustLimitSuccess,
     NotTrappedHere,
     RescuePending,
     NonSiegeWorld,

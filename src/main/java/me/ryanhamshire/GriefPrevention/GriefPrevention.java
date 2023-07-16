@@ -65,6 +65,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
@@ -2312,7 +2313,40 @@ public class GriefPrevention extends JavaPlugin
             return true;
         }
 
-        //adjustbonusclaimblocks <player> <amount> or [<permission>] amount
+        //adjustclaimblocklimit <player> <limit|reset>
+        else if (cmd.getName().equalsIgnoreCase("adjustclaimblocklimit"))
+        {
+            if (args.length != 2) return false;
+
+            int limit;
+            if (args[1].equalsIgnoreCase("reset")) {
+                limit = config_claims_maxAccruedBlocks_default;
+            } else {
+                try {
+                    limit = Integer.parseInt(args[1]);
+                } catch (NumberFormatException numberFormatException) {
+                    return false;
+                }
+            }
+
+            OfflinePlayer targetPlayer = this.resolvePlayerByName(args[0]);
+            if (targetPlayer == null) {
+                GriefPrevention.sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
+                return true;
+            }
+
+            PlayerData playerData = this.dataStore.getPlayerData(targetPlayer.getUniqueId());
+            playerData.setAccruedClaimBlocksLimit(limit);
+            this.dataStore.savePlayerData(targetPlayer.getUniqueId(), playerData);
+
+            GriefPrevention.sendMessage(player, TextMode.Success, Messages.AdjustLimitSuccess, targetPlayer.getName(), String.valueOf(limit));
+            if (player != null)
+                GriefPrevention.AddLogEntry(player.getName() + " adjusted " + targetPlayer.getName() + "'s max accrued claim block limit to " + limit + ".", CustomLogEntryTypes.AdminActivity);
+
+            return true;
+        }
+
+        // adjustbonusclaimblocks <player> <amount> or [<permission>] amount
         else if (cmd.getName().equalsIgnoreCase("adjustbonusclaimblocks"))
         {
             //requires exactly two parameters, the other player or group's name and the adjustment
