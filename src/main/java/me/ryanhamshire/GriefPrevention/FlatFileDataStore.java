@@ -18,6 +18,7 @@
 
 package me.ryanhamshire.GriefPrevention;
 
+import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -618,47 +619,20 @@ public class FlatFileDataStore extends DataStore
             boolean needRetry = false;
             int retriesRemaining = 5;
             Exception latestException = null;
+
             do
             {
                 try
                 {
                     needRetry = false;
 
-                    //read the file content and immediately close it
-                    List<String> lines = Files.readLines(playerFile, Charset.forName("UTF-8"));
-                    Iterator<String> iterator = lines.iterator();
+                    String fileBody = Files.toString(playerFile, Charsets.UTF_8);
+                    YamlConfiguration yaml = new YamlConfiguration();
+                    yaml.loadFromString(fileBody);
 
-
-                    iterator.next();
-                    //first line is last login timestamp //RoboMWM - not using this anymore
-//
-//    				//convert that to a date and store it
-//    				DateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
-//    				try
-//    				{
-//    					playerData.setLastLogin(dateFormat.parse(lastLoginTimestampString));
-//    				}
-//    				catch(ParseException parseException)
-//    				{
-//    					GriefPrevention.AddLogEntry("Unable to load last login for \"" + playerFile.getName() + "\".");
-//    					playerData.setLastLogin(null);
-//    				}
-
-                    //second line is accrued claim blocks
-                    String accruedBlocksString = iterator.next();
-
-                    //convert that to a number and store it
-                    playerData.setAccruedClaimBlocks(Integer.parseInt(accruedBlocksString));
-
-                    //third line is any bonus claim blocks granted by administrators
-                    String bonusBlocksString = iterator.next();
-
-                    //convert that to a number and store it
-                    playerData.setBonusClaimBlocks(Integer.parseInt(bonusBlocksString));
-
-                    //fourth line is a double-semicolon-delimited list of claims, which is currently ignored
-                    //String claimsString = inStream.readLine();
-                    //iterator.next();
+                    playerData.setAccruedClaimBlocks(yaml.getInt("accrued-claim-blocks"));
+                    playerData.setAccruedClaimBlocksLimit(yaml.getInt("accrued-claim-blocks-limit"));
+                    playerData.setBonusClaimBlocks(yaml.getInt("bonus-claim-blocks"));
                 }
 
                 //if there's any problem with the file's content, retry up to 5 times with 5 milliseconds between
@@ -697,6 +671,11 @@ public class FlatFileDataStore extends DataStore
         //never save data for the "administrative" account.  null for claim owner ID indicates administrative account
         if (playerID == null) return;
 
+        YamlConfiguration data = new YamlConfiguration();
+        data.set("accrued-claim-blocks", playerData.getAccruedClaimBlocks());
+        data.set("accrued-claim-blocks-limit", playerData.getAccruedClaimBlocksLimit());
+        data.set("bonus-claim-blocks", playerData.getBonusClaimBlocks());
+
         StringBuilder fileContent = new StringBuilder();
         try
         {
@@ -717,9 +696,8 @@ public class FlatFileDataStore extends DataStore
             //fourth line is blank
             fileContent.append("\n");
 
-            //write data to file
-            File playerDataFile = new File(playerDataFolderPath + File.separator + playerID.toString());
-            Files.write(fileContent.toString().getBytes("UTF-8"), playerDataFile);
+            File playerDataYamlFile = new File(playerDataFolderPath + File.separator + playerID.toString() + ".yml");
+            Files.write(data.saveToString().getBytes("UTF-8"), playerDataYamlFile);
         }
 
         //if any problem, log it
