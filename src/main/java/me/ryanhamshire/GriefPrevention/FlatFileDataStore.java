@@ -491,8 +491,8 @@ public class FlatFileDataStore extends DataStore
         yaml.loadFromString(input);
 
         //boundaries
-        Location lesserBoundaryCorner = this.locationFromString(yaml.getString("Lesser Boundary Corner"), validWorlds);
-        Location greaterBoundaryCorner = this.locationFromString(yaml.getString("Greater Boundary Corner"), validWorlds);
+        Location lesserBoundaryCorner = this.locationFromString(yaml.getString("boundary-corner.lesser"), validWorlds);
+        Location greaterBoundaryCorner = this.locationFromString(yaml.getString("boundary-corner.greater"), validWorlds);
 
         //owner
         String ownerIdentifier = yaml.getString("Owner");
@@ -510,17 +510,17 @@ public class FlatFileDataStore extends DataStore
             }
         }
 
-        List<String> builders = yaml.getStringList("Builders");
+        List<String> builders = yaml.getStringList("permissions.builders");
 
-        List<String> containers = yaml.getStringList("Containers");
+        List<String> containers = yaml.getStringList("permissions.containers");
 
-        List<String> accessors = yaml.getStringList("Accessors");
+        List<String> accessors = yaml.getStringList("permissions.accessors");
 
-        List<String> managers = yaml.getStringList("Managers");
+        List<String> managers = yaml.getStringList("permissions.managers");
 
-        boolean inheritNothing = yaml.getBoolean("inheritNothing");
+        boolean inheritNothing = yaml.getBoolean("parent.inherit-nothing");
 
-        out_parentID.add(yaml.getLong("Parent Claim ID", -1L));
+        out_parentID.add(yaml.getLong("parent.claim-id", -1L));
 
         //instantiate
         claim = new Claim(lesserBoundaryCorner, greaterBoundaryCorner, ownerID, builders, containers, accessors, managers, inheritNothing, claimID);
@@ -535,13 +535,13 @@ public class FlatFileDataStore extends DataStore
         YamlConfiguration yaml = new YamlConfiguration();
 
         //boundaries
-        yaml.set("Lesser Boundary Corner", this.locationToString(claim.lesserBoundaryCorner));
-        yaml.set("Greater Boundary Corner", this.locationToString(claim.greaterBoundaryCorner));
+        yaml.set("boundary-corner.lesser", this.locationToString(claim.lesserBoundaryCorner));
+        yaml.set("boundary-corner.greater", this.locationToString(claim.greaterBoundaryCorner));
 
         //owner
         String ownerID = "";
         if (claim.ownerID != null) ownerID = claim.ownerID.toString();
-        yaml.set("Owner", ownerID);
+        yaml.set("owner", ownerID);
 
         ArrayList<String> builders = new ArrayList<>();
         ArrayList<String> containers = new ArrayList<>();
@@ -549,10 +549,10 @@ public class FlatFileDataStore extends DataStore
         ArrayList<String> managers = new ArrayList<>();
         claim.getPermissions(builders, containers, accessors, managers);
 
-        yaml.set("Builders", builders);
-        yaml.set("Containers", containers);
-        yaml.set("Accessors", accessors);
-        yaml.set("Managers", managers);
+        yaml.set("permissions.builders", builders);
+        yaml.set("permissions.containers", containers);
+        yaml.set("permissions.accessors", accessors);
+        yaml.set("permissions.managers", managers);
 
         Long parentID = -1L;
         if (claim.parent != null)
@@ -560,9 +560,9 @@ public class FlatFileDataStore extends DataStore
             parentID = claim.parent.id;
         }
 
-        yaml.set("Parent Claim ID", parentID);
+        yaml.set("parent.claim-id", parentID);
 
-        yaml.set("inheritNothing", claim.getSubclaimRestrictions());
+        yaml.set("parent.inherit-nothing", claim.getSubclaimRestrictions());
 
         return yaml.saveToString();
     }
