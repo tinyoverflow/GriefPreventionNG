@@ -1,0 +1,7 @@
+repositories:
+  - id: paper
+    type: default
+    url: https://repo.papermc.io/repository/maven-public/
+
+dependencies:
+  - dev.jorel:commandapi-bukkit-shade:9.0.3
