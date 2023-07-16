@@ -323,10 +323,10 @@ public class GriefPrevention extends JavaPlugin
             {
                 if (!FlatFileDataStore.hasData())
                 {
-                    File claimdata = new File("plugins" + File.separator + "GriefPreventionData" + File.separator + "ClaimData");
+                    File claimdata = new File("plugins" + File.separator + "GriefPrevention" + File.separator + "ClaimData");
                     oldclaimdata.renameTo(claimdata);
                     File oldplayerdata = new File(getDataFolder(), "PlayerData");
-                    File playerdata = new File("plugins" + File.separator + "GriefPreventionData" + File.separator + "PlayerData");
+                    File playerdata = new File("plugins" + File.separator + "GriefPrevention" + File.separator + "PlayerData");
                     oldplayerdata.renameTo(playerdata);
                 }
             }

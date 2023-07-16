@@ -90,7 +90,7 @@ public abstract class DataStore
     Long nextClaimID = (long) 0;
 
     //path information, for where stuff stored on disk is well...  stored
-    protected final static String dataLayerFolderPath = "plugins" + File.separator + "GriefPreventionData";
+    protected final static String dataLayerFolderPath = "plugins" + File.separator + "GriefPrevention";
     final static String playerDataFolderPath = dataLayerFolderPath + File.separator + "PlayerData";
     final static String configFilePath = dataLayerFolderPath + File.separator + "config.yml";
     final static String messagesFilePath = dataLayerFolderPath + File.separator + "messages.yml";
@@ -1624,6 +1624,7 @@ public abstract class DataStore
         this.addDefault(defaults, Messages.NoDeletePermission, "You don't have permission to delete claims.", null);
         this.addDefault(defaults, Messages.AllAdminDeleted, "Deleted all administrative claims.", null);
         this.addDefault(defaults, Messages.AdjustBlocksSuccess, "Adjusted {0}'s bonus claim blocks by {1}.  New total bonus blocks: {2}.", "0: player; 1: adjustment; 2: new total");
+        this.addDefault(defaults, Messages.AdjustLimitSuccess, "Adjusted {0}'s max accrued claim block limit to {1}.", "0: player; 1: new total");
         this.addDefault(defaults, Messages.AdjustBlocksAllSuccess, "Adjusted all online players' bonus claim blocks by {0}.", "0: adjustment amount");
         this.addDefault(defaults, Messages.NotTrappedHere, "You can build here.  Save yourself.", null);
         this.addDefault(defaults, Messages.RescuePending, "If you stay put for 10 seconds, you'll be teleported out.  Please wait.", null);
