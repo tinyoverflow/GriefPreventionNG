@@ -1,8 +1,8 @@
 package com.griefprevention.visualization;
 
 import com.griefprevention.util.IntVector;
-import me.ryanhamshire.GriefPrevention.PlayerData;
-import me.ryanhamshire.GriefPrevention.util.BoundingBox;
+import me.tinyoverflow.griefprevention.PlayerData;
+import me.tinyoverflow.griefprevention.util.BoundingBox;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;

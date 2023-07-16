@@ -1,7 +1,7 @@
 package com.griefprevention.visualization;
 
-import me.ryanhamshire.GriefPrevention.Claim;
-import me.ryanhamshire.GriefPrevention.util.BoundingBox;
+import me.tinyoverflow.griefprevention.Claim;
+import me.tinyoverflow.griefprevention.util.BoundingBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

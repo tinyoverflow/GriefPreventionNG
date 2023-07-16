@@ -6,7 +6,7 @@ import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationProvider;
 import com.griefprevention.visualization.impl.AntiCheatCompatVisualization;
 import com.griefprevention.visualization.impl.FakeBlockVisualization;
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
+import me.tinyoverflow.griefprevention.GriefPrevention;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;

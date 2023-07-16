@@ -1,0 +1,28 @@
+name: GriefPreventionNG
+version: "${git.commit.id.describe}"
+api-version: "1.20"
+main: me.tinyoverflow.griefprevention.GriefPrevention
+
+dependencies:
+  - name: Vault
+    required: false
+  - name: Multiverse-Core
+    required: false
+  - name: My_Worlds
+    required: false
+  - name: MystCraft
+    required: false
+  - name: Transporter
+    required: false
+  - name: WorldGuard
+    required: false
+  - name: WorldEdit
+    required: false
+  - name: RoyalCommands
+    required: false
+  - name: MultiWorld
+    required: false
+  - name: Denizen
+    required: false
+  - name: CommandHelper
+    required: false

@@ -1,12 +1,12 @@
 package com.griefprevention.visualization;
 
-import me.ryanhamshire.GriefPrevention.Claim;
-import me.ryanhamshire.GriefPrevention.CustomLogEntryTypes;
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
-import me.ryanhamshire.GriefPrevention.PlayerData;
+import me.tinyoverflow.griefprevention.Claim;
+import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
+import me.tinyoverflow.griefprevention.GriefPrevention;
+import me.tinyoverflow.griefprevention.PlayerData;
 import com.griefprevention.events.BoundaryVisualizationEvent;
 import com.griefprevention.util.IntVector;
-import me.ryanhamshire.GriefPrevention.util.BoundingBox;
+import me.tinyoverflow.griefprevention.util.BoundingBox;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.block.Block;
