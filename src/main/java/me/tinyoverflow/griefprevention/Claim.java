@@ -18,7 +18,10 @@
 
 package me.tinyoverflow.griefprevention;
 
-import me.tinyoverflow.griefprevention.util.BoundingBox;
+import me.tinyoverflow.griefprevention.datastore.DataStore;
+import me.tinyoverflow.griefprevention.handlers.BlockEventHandler;
+import me.tinyoverflow.griefprevention.tasks.RestoreNatureProcessingTask;
+import me.tinyoverflow.griefprevention.utils.BoundingBox;
 import me.tinyoverflow.griefprevention.events.ClaimPermissionCheckEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -58,14 +61,14 @@ public class Claim
 {
     //two locations, which together define the boundaries of the claim
     //note that the upper Y value is always ignored, because claims ALWAYS extend up to the sky
-    Location lesserBoundaryCorner;
-    Location greaterBoundaryCorner;
+    public Location lesserBoundaryCorner;
+    public Location greaterBoundaryCorner;
 
     //modification date.  this comes from the file timestamp during load, and is updated with runtime changes
     public Date modifiedDate;
 
     //id number.  unique to this claim, never changes.
-    Long id = null;
+    public Long id = null;
 
     //ownerID.  for admin claims, this is NULL
     //use getOwnerName() to get a friendly name (will be "an administrator" for admin claims)
@@ -214,7 +217,7 @@ public class Claim
     }
 
     //main constructor.  note that only creating a claim instance does nothing - a claim must be added to the data store to be effective
-    Claim(Location lesserBoundaryCorner, Location greaterBoundaryCorner, UUID ownerID, List<String> builderIDs, List<String> containerIDs, List<String> accessorIDs, List<String> managerIDs, boolean inheritNothing, Long id)
+    public Claim(Location lesserBoundaryCorner, Location greaterBoundaryCorner, UUID ownerID, List<String> builderIDs, List<String> containerIDs, List<String> accessorIDs, List<String> managerIDs, boolean inheritNothing, Long id)
     {
         //modification date
         this.modifiedDate = Calendar.getInstance().getTime();
@@ -256,7 +259,7 @@ public class Claim
         this.inheritNothing = inheritNothing;
     }
 
-    Claim(Location lesserBoundaryCorner, Location greaterBoundaryCorner, UUID ownerID, List<String> builderIDs, List<String> containerIDs, List<String> accessorIDs, List<String> managerIDs, Long id)
+    public Claim(Location lesserBoundaryCorner, Location greaterBoundaryCorner, UUID ownerID, List<String> builderIDs, List<String> containerIDs, List<String> accessorIDs, List<String> managerIDs, Long id)
     {
         this(lesserBoundaryCorner, greaterBoundaryCorner, ownerID, builderIDs, containerIDs, accessorIDs, managerIDs, false, id);
     }
@@ -459,7 +462,8 @@ public class Claim
      * @param denialOverride a message overriding the default denial for clarity
      * @return the denial message or null if permission is granted
      */
-    @Nullable Supplier<String> checkPermission(
+    @Nullable
+    public Supplier<String> checkPermission(
             @NotNull Player player,
             @NotNull ClaimPermission permission,
             @Nullable Event event,
@@ -820,7 +824,7 @@ public class Claim
 
     //whether or not two claims overlap
     //used internally to prevent overlaps when creating claims
-    boolean overlaps(Claim otherClaim)
+    public boolean overlaps(Claim otherClaim)
     {
         if (!Objects.equals(this.lesserBoundaryCorner.getWorld(), otherClaim.getLesserBoundaryCorner().getWorld())) return false;
 
@@ -918,7 +922,7 @@ public class Claim
     }
 
 
-    long getPlayerInvestmentScore()
+    public long getPlayerInvestmentScore()
     {
         //decide which blocks will be considered player placed
         Location lesserBoundaryCorner = this.getLesserBoundaryCorner();
@@ -994,7 +998,7 @@ public class Claim
         return chunks;
     }
 
-    ArrayList<Long> getChunkHashes()
+    public ArrayList<Long> getChunkHashes()
     {
         return DataStore.getChunkHashes(this);
     }

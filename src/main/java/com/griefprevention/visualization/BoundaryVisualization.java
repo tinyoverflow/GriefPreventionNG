@@ -6,7 +6,7 @@ import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.PlayerData;
 import com.griefprevention.events.BoundaryVisualizationEvent;
 import com.griefprevention.util.IntVector;
-import me.tinyoverflow.griefprevention.util.BoundingBox;
+import me.tinyoverflow.griefprevention.utils.BoundingBox;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.block.Block;

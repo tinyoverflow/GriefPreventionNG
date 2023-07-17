@@ -19,6 +19,7 @@
 package me.tinyoverflow.griefprevention;
 
 import com.google.common.io.Files;
+import me.tinyoverflow.griefprevention.datastore.DataStore;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import java.io.File;

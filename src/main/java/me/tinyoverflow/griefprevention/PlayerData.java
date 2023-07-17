@@ -19,6 +19,7 @@
 package me.tinyoverflow.griefprevention;
 
 import com.griefprevention.visualization.BoundaryVisualization;
+import me.tinyoverflow.griefprevention.datastore.DataStore;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -55,7 +56,7 @@ public class PlayerData
     public ShovelMode shovelMode = ShovelMode.Basic;
 
     //radius for restore nature fill mode
-    int fillRadius = 0;
+    public int fillRadius = 0;
 
     //last place the player used the shovel, useful in creating and resizing claims,
     //because the player must use the shovel twice in those instances
@@ -71,13 +72,13 @@ public class PlayerData
     public boolean pendingTrapped = false;
 
     //whether this player was recently warned about building outside land claims
-    boolean warnedAboutBuildingOutsideClaims = false;
+    public boolean warnedAboutBuildingOutsideClaims = false;
 
     //timestamp when last siege ended (where this player was the defender)
-    long lastSiegeEndTimeStamp = 0;
+    public long lastSiegeEndTimeStamp = 0;
 
     //whether the player was kicked (set and used during logout)
-    boolean wasKicked = false;
+    public boolean wasKicked = false;
 
     //visualization
     private transient @Nullable BoundaryVisualization visibleBoundaries = null;
@@ -112,23 +113,23 @@ public class PlayerData
     private int AccruedClaimBlocksLimit = -1;
 
     //whether or not this player has received a message about unlocking death drops since his last death
-    boolean receivedDropUnlockAdvertisement = false;
+    public boolean receivedDropUnlockAdvertisement = false;
 
     //whether or not this player's dropped items (on death) are unlocked for other players to pick up
-    boolean dropsAreUnlocked = false;
+    public boolean dropsAreUnlocked = false;
 
     //message to send to player after he respawns
-    String messageOnRespawn = null;
+    public String messageOnRespawn = null;
 
     //player which a pet will be given to when it's right-clicked
-    OfflinePlayer petGiveawayRecipient = null;
+    public OfflinePlayer petGiveawayRecipient = null;
 
     //timestamp for last "you're building outside your land claims" message
-    Long buildWarningTimestamp = null;
+    public Long buildWarningTimestamp = null;
 
     //spot where a player can't talk, used to mute new players until they've moved a little
     //this is an anti-bot strategy.
-    Location noChatLocation = null;
+    public Location noChatLocation = null;
 
     //ignore list
     //true means invisible (admin-forced ignore), false means player-created ignore

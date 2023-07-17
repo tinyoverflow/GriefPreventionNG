@@ -1,6 +1,6 @@
 package me.tinyoverflow.griefprevention;
 
-enum CommandCategory
+public enum CommandCategory
 {
     Chat,
     Whisper,

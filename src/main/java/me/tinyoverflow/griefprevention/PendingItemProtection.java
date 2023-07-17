@@ -5,12 +5,12 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
 
-class PendingItemProtection
+public class PendingItemProtection
 {
     public Location location;
     public UUID owner;
-    long expirationTimestamp;
-    ItemStack itemStack;
+    public long expirationTimestamp;
+    public ItemStack itemStack;
 
     public PendingItemProtection(Location location, UUID owner, long expirationTimestamp, ItemStack itemStack)
     {

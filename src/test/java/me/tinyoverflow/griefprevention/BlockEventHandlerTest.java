@@ -1,5 +1,7 @@
 package me.tinyoverflow.griefprevention;
 
+import me.tinyoverflow.griefprevention.datastore.DataStore;
+import me.tinyoverflow.griefprevention.handlers.BlockEventHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.entity.Item;

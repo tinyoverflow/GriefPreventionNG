@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-class UUIDFetcher
+public class UUIDFetcher
 {
     private static int PROFILES_PER_REQUEST = 100;
     private static final String PROFILE_URL = "https://api.mojang.com/profiles/minecraft";
@@ -29,10 +29,10 @@ class UUIDFetcher
     private final boolean rateLimiting;
 
     //cache for username -> uuid lookups
-    static HashMap<String, UUID> lookupCache;
+    public static HashMap<String, UUID> lookupCache;
 
     //record of username -> proper casing updates
-    static HashMap<String, String> correctedNames;
+    public static HashMap<String, String> correctedNames;
 
     public UUIDFetcher(List<String> names, boolean rateLimiting)
     {

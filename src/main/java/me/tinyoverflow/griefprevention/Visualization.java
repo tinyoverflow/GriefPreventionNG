@@ -22,7 +22,7 @@ import com.griefprevention.visualization.Boundary;
 import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationType;
 import com.griefprevention.events.BoundaryVisualizationEvent;
-import me.tinyoverflow.griefprevention.util.BoundingBox;
+import me.tinyoverflow.griefprevention.utils.BoundingBox;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;

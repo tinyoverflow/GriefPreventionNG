@@ -22,10 +22,29 @@ import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationType;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
-import me.tinyoverflow.griefprevention.configuration.GriefPreventionConfiguration;
+import me.tinyoverflow.griefprevention.configurations.GriefPreventionConfiguration;
+import me.tinyoverflow.griefprevention.datastore.DataStore;
+import me.tinyoverflow.griefprevention.datastore.DatabaseDataStore;
+import me.tinyoverflow.griefprevention.datastore.FlatFileDataStore;
 import me.tinyoverflow.griefprevention.events.PreventBlockBreakEvent;
 import me.tinyoverflow.griefprevention.events.SaveTrappedPlayerEvent;
 import me.tinyoverflow.griefprevention.events.TrustChangedEvent;
+import me.tinyoverflow.griefprevention.handlers.BlockEventHandler;
+import me.tinyoverflow.griefprevention.handlers.EconomyHandler;
+import me.tinyoverflow.griefprevention.handlers.EntityDamageHandler;
+import me.tinyoverflow.griefprevention.handlers.EntityEventHandler;
+import me.tinyoverflow.griefprevention.handlers.PlayerEventHandler;
+import me.tinyoverflow.griefprevention.handlers.SiegeEventHandler;
+import me.tinyoverflow.griefprevention.tasks.AutoExtendClaimTask;
+import me.tinyoverflow.griefprevention.tasks.CheckForPortalTrapTask;
+import me.tinyoverflow.griefprevention.tasks.DeliverClaimBlocksTask;
+import me.tinyoverflow.griefprevention.tasks.EntityCleanupTask;
+import me.tinyoverflow.griefprevention.tasks.FindUnusedClaimsTask;
+import me.tinyoverflow.griefprevention.tasks.PlayerRescueTask;
+import me.tinyoverflow.griefprevention.tasks.PvPImmunityValidationTask;
+import me.tinyoverflow.griefprevention.tasks.RestoreNatureProcessingTask;
+import me.tinyoverflow.griefprevention.tasks.SendPlayerMessageTask;
+import me.tinyoverflow.griefprevention.tasks.WelcomeTask;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -88,11 +107,11 @@ public class GriefPrevention extends JavaPlugin
     public DataStore dataStore;
 
     // Event handlers with common functionality
-    EntityEventHandler entityEventHandler;
-    EntityDamageHandler entityDamageHandler;
+    public EntityEventHandler entityEventHandler;
+    public EntityDamageHandler entityDamageHandler;
 
     //this tracks item stacks expected to drop which will need protection
-    ArrayList<PendingItemProtection> pendingItemWatchList = new ArrayList<>();
+    public ArrayList<PendingItemProtection> pendingItemWatchList = new ArrayList<>();
 
     //log entry manager for GP's custom log files
     CustomLogger customLogger;
@@ -3002,7 +3021,7 @@ public class GriefPrevention extends JavaPlugin
     }
 
     //helper method to resolve a player name from the player's UUID
-    static @NotNull String lookupPlayerName(@Nullable UUID playerID)
+    public static @NotNull String lookupPlayerName(@Nullable UUID playerID)
     {
         //parameter validation
         if (playerID == null) return "someone";
@@ -3026,7 +3045,7 @@ public class GriefPrevention extends JavaPlugin
     }
 
     //cache for player name lookups, to save searches of all offline players
-    static void cacheUUIDNamePair(UUID playerID, String playerName)
+    public static void cacheUUIDNamePair(UUID playerID, String playerName)
     {
         //store the reverse mapping
         GriefPrevention.instance.playerNameToIDMap.put(playerName, playerID);
@@ -3101,7 +3120,7 @@ public class GriefPrevention extends JavaPlugin
         }
     }
 
-    static boolean isInventoryEmpty(Player player)
+    public static boolean isInventoryEmpty(Player player)
     {
         PlayerInventory inventory = player.getInventory();
         ItemStack[] armorStacks = inventory.getArmorContents();
@@ -3217,7 +3236,7 @@ public class GriefPrevention extends JavaPlugin
     }
 
     //determines whether creative anti-grief rules apply at a location
-    boolean creativeRulesApply(Location location)
+    public boolean creativeRulesApply(Location location)
     {
         if (!this.config_creativeWorldsExist) return false;
 
@@ -3539,7 +3558,7 @@ public class GriefPrevention extends JavaPlugin
 	*/
 
     //Track scheduled "rescues" so we can cancel them if the player happens to teleport elsewhere so we can cancel it.
-    ConcurrentHashMap<UUID, BukkitTask> portalReturnTaskMap = new ConcurrentHashMap<>();
+    public ConcurrentHashMap<UUID, BukkitTask> portalReturnTaskMap = new ConcurrentHashMap<>();
 
     public void startRescueTask(Player player, Location location)
     {
