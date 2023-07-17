@@ -162,13 +162,6 @@ public class BlockEventHandler implements Listener
 
         String signMessage = lines.toString();
 
-        //prevent signs with blocked IP addresses
-        if (!player.hasPermission("griefprevention.spam") && GriefPrevention.instance.containsBlockedIP(signMessage))
-        {
-            event.setCancelled(true);
-            return;
-        }
-
         PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
         //if not empty and wasn't the same as the last sign, log it and remember it for later
         //This has been temporarily removed since `signMessage` includes location, not just the message. Waste of memory IMO

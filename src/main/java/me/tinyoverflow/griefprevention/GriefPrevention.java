@@ -22,15 +22,11 @@ import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationType;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
-import me.tinyoverflow.griefprevention.configuration.ClaimConfiguration;
 import me.tinyoverflow.griefprevention.configuration.GriefPreventionConfiguration;
 import me.tinyoverflow.griefprevention.events.PreventBlockBreakEvent;
 import me.tinyoverflow.griefprevention.events.SaveTrappedPlayerEvent;
 import me.tinyoverflow.griefprevention.events.TrustChangedEvent;
-import me.tinyoverflow.griefprevention.metrics.MetricsHandler;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.BanList;
-import org.bukkit.BanList.Type;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -62,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
-import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,16 +68,12 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class GriefPrevention extends JavaPlugin
@@ -169,16 +160,6 @@ public class GriefPrevention extends JavaPlugin
     public Set<Material> config_siege_blocks;                    //which blocks will be breakable in siege mode
     public int config_siege_doorsOpenSeconds;  // how before claim is re-secured after siege win
     public int config_siege_cooldownEndInMinutes;
-    public boolean config_spam_enabled;                                //whether or not to monitor for spam
-    public int config_spam_loginCooldownSeconds;                    //how long players must wait between logins.  combats login spam.
-    public int config_spam_loginLogoutNotificationsPerMinute;        //how many login/logout notifications to show per minute (global, not per player)
-    public ArrayList<String> config_spam_monitorSlashCommands;    //the list of slash commands monitored for spam
-    public boolean config_spam_banOffenders;                        //whether or not to ban spammers automatically
-    public String config_spam_banMessage;                            //message to show an automatically banned player
-    public String config_spam_warningMessage;                        //message to show a player who is close to spam level
-    public String config_spam_allowedIpAddresses;                    //IP addresses which will not be censored
-    public int config_spam_deathMessageCooldownSeconds;                //cooldown period for death messages (per player) in seconds
-    public int config_spam_logoutMessageDelaySeconds;               //delay before a logout message will be shown (only if the player stays offline that long)
 
     HashMap<World, Boolean> config_pvp_specifiedWorlds;                //list of worlds where pvp anti-grief rules apply, according to the config file
     public boolean config_pvp_protectFreshSpawns;                    //whether to make newly spawned players immune until they pick up an item
@@ -213,11 +194,7 @@ public class GriefPrevention extends JavaPlugin
 
     public boolean config_whisperNotifications;                    //whether whispered messages will broadcast to administrators in game
     public boolean config_signNotifications;                        //whether sign content will broadcast to administrators in game
-    public ArrayList<String> config_eavesdrop_whisperCommands;        //list of whisper commands to eavesdrop on
-
     public boolean config_visualizationAntiCheatCompat;              // whether to engage compatibility mode for anti-cheat plugins
-
-    public boolean config_smartBan;                                    //whether to ban accounts which very likely owned by a banned player
 
     public boolean config_endermenMoveBlocks;                        //whether or not endermen may move blocks around
     public boolean config_claims_ravagersBreakBlocks;                //whether or not ravagers may break blocks in claims
@@ -225,11 +202,6 @@ public class GriefPrevention extends JavaPlugin
     public boolean config_creaturesTrampleCrops;                    //whether or not non-player entities may trample crops
     public boolean config_rabbitsEatCrops;                          //whether or not rabbits may eat crops
     public boolean config_zombiesBreakDoors;                        //whether or not hard-mode zombies may break down wooden doors
-
-    public int config_ipLimit;                                      //how many players can share an IP address
-
-    public boolean config_trollFilterEnabled;                       //whether to auto-mute new players who use banned words right after joining
-    public boolean config_silenceBans;                              //whether to remove quit messages on banned players
 
     public HashMap<String, Integer> config_seaLevelOverride;        //override for sea level, because bukkit doesn't report the right value for all situations
 
@@ -249,20 +221,10 @@ public class GriefPrevention extends JavaPlugin
     public boolean config_logs_debugEnabled;
     public boolean config_logs_mutedChatEnabled;
 
-    //ban management plugin interop settings
-    public boolean config_ban_useCommand;
-    public String config_ban_commandFormat;
 
     private String databaseUrl;
     private String databaseUserName;
     private String databasePassword;
-
-
-    //how far away to search from a tree trunk for its branch blocks
-    public static final int TREE_RADIUS = 5;
-
-    //how long to wait before deciding a player is staying online or staying offline, for notication messages
-    public static final int NOTIFICATION_SECONDS = 20;
 
     //adds a server log entry
     public static synchronized void AddLogEntry(String entry, CustomLogEntryTypes customLogType, boolean excludeFromServerLogs)
@@ -409,21 +371,7 @@ public class GriefPrevention extends JavaPlugin
         namesThread.setPriority(Thread.MIN_PRIORITY);
         namesThread.start();
 
-        //load ignore lists for any already-online players
-        @SuppressWarnings("unchecked")
-        Collection<Player> players = (Collection<Player>) GriefPrevention.instance.getServer().getOnlinePlayers();
-        for (Player player : players)
-        {
-            new IgnoreLoaderThread(player.getUniqueId(), this.dataStore.getPlayerData(player.getUniqueId()).ignoredPlayers).start();
-        }
-
         AddLogEntry("Boot finished.");
-
-        try
-        {
-            new MetricsHandler(this, dataMode);
-        }
-        catch (Throwable ignored) {}
     }
 
     private void loadConfig()
@@ -629,18 +577,6 @@ public class GriefPrevention extends JavaPlugin
         this.config_claims_firedamages = config.getBoolean("GriefPrevention.Claims.FireDamagesInClaims", false);
         this.config_claims_lecternReadingRequiresAccessTrust = config.getBoolean("GriefPrevention.Claims.LecternReadingRequiresAccessTrust", true);
 
-        this.config_spam_enabled = config.getBoolean("GriefPrevention.Spam.Enabled", true);
-        this.config_spam_loginCooldownSeconds = config.getInt("GriefPrevention.Spam.LoginCooldownSeconds", 60);
-        this.config_spam_loginLogoutNotificationsPerMinute = config.getInt("GriefPrevention.Spam.LoginLogoutNotificationsPerMinute", 5);
-        this.config_spam_warningMessage = config.getString("GriefPrevention.Spam.WarningMessage", "Please reduce your noise level.  Spammers will be banned.");
-        this.config_spam_allowedIpAddresses = config.getString("GriefPrevention.Spam.AllowedIpAddresses", "1.2.3.4; 5.6.7.8");
-        this.config_spam_banOffenders = config.getBoolean("GriefPrevention.Spam.BanOffenders", true);
-        this.config_spam_banMessage = config.getString("GriefPrevention.Spam.BanMessage", "Banned for spam.");
-        String slashCommandsToMonitor = config.getString("GriefPrevention.Spam.MonitorSlashCommands", "/me;/global;/local");
-        slashCommandsToMonitor = config.getString("GriefPrevention.Spam.ChatSlashCommands", slashCommandsToMonitor);
-        this.config_spam_deathMessageCooldownSeconds = config.getInt("GriefPrevention.Spam.DeathMessageCooldownSeconds", 120);
-        this.config_spam_logoutMessageDelaySeconds = config.getInt("GriefPrevention.Spam.Logout Message Delay In Seconds", 0);
-
         this.config_pvp_protectFreshSpawns = config.getBoolean("GriefPrevention.PvP.ProtectFreshSpawns", true);
         this.config_pvp_punishLogout = config.getBoolean("GriefPrevention.PvP.PunishLogout", true);
         this.config_pvp_combatTimeoutSeconds = config.getInt("GriefPrevention.PvP.CombatTimeoutSeconds", 15);
@@ -669,24 +605,13 @@ public class GriefPrevention extends JavaPlugin
         this.config_fireSpreads = config.getBoolean("GriefPrevention.FireSpreads", false);
         this.config_fireDestroys = config.getBoolean("GriefPrevention.FireDestroys", false);
 
-        this.config_whisperNotifications = config.getBoolean("GriefPrevention.AdminsGetWhispers", true);
-        this.config_signNotifications = config.getBoolean("GriefPrevention.AdminsGetSignNotifications", true);
-        String whisperCommandsToMonitor = config.getString("GriefPrevention.WhisperCommands", "/tell;/pm;/r;/whisper;/msg");
-        whisperCommandsToMonitor = config.getString("GriefPrevention.Spam.WhisperSlashCommands", whisperCommandsToMonitor);
-
         this.config_visualizationAntiCheatCompat = config.getBoolean("GriefPrevention.VisualizationAntiCheatCompatMode", false);
-        this.config_smartBan = config.getBoolean("GriefPrevention.SmartBan", true);
-        this.config_trollFilterEnabled = config.getBoolean("GriefPrevention.Mute New Players Using Banned Words", true);
-        this.config_ipLimit = config.getInt("GriefPrevention.MaxPlayersPerIpAddress", 3);
-        this.config_silenceBans = config.getBoolean("GriefPrevention.SilenceBans", true);
 
         this.config_endermenMoveBlocks = config.getBoolean("GriefPrevention.EndermenMoveBlocks", false);
         this.config_silverfishBreakBlocks = config.getBoolean("GriefPrevention.SilverfishBreakBlocks", false);
         this.config_creaturesTrampleCrops = config.getBoolean("GriefPrevention.CreaturesTrampleCrops", false);
         this.config_rabbitsEatCrops = config.getBoolean("GriefPrevention.RabbitsEatCrops", true);
         this.config_zombiesBreakDoors = config.getBoolean("GriefPrevention.HardModeZombiesBreakDoors", false);
-        this.config_ban_useCommand = config.getBoolean("GriefPrevention.UseBanCommand", false);
-        this.config_ban_commandFormat = config.getString("GriefPrevention.BanCommandPattern", "ban %name% %reason%");
 
         //default for claim investigation tool
         String investigationToolMaterialName = Material.STICK.name();
@@ -875,18 +800,6 @@ public class GriefPrevention extends JavaPlugin
         outConfig.set("GriefPrevention.Claims.FireDamagesInClaims", config_claims_firedamages);
         outConfig.set("GriefPrevention.Claims.LecternReadingRequiresAccessTrust", config_claims_lecternReadingRequiresAccessTrust);
 
-        outConfig.set("GriefPrevention.Spam.Enabled", this.config_spam_enabled);
-        outConfig.set("GriefPrevention.Spam.LoginCooldownSeconds", this.config_spam_loginCooldownSeconds);
-        outConfig.set("GriefPrevention.Spam.LoginLogoutNotificationsPerMinute", this.config_spam_loginLogoutNotificationsPerMinute);
-        outConfig.set("GriefPrevention.Spam.ChatSlashCommands", slashCommandsToMonitor);
-        outConfig.set("GriefPrevention.Spam.WhisperSlashCommands", whisperCommandsToMonitor);
-        outConfig.set("GriefPrevention.Spam.WarningMessage", this.config_spam_warningMessage);
-        outConfig.set("GriefPrevention.Spam.BanOffenders", this.config_spam_banOffenders);
-        outConfig.set("GriefPrevention.Spam.BanMessage", this.config_spam_banMessage);
-        outConfig.set("GriefPrevention.Spam.AllowedIpAddresses", this.config_spam_allowedIpAddresses);
-        outConfig.set("GriefPrevention.Spam.DeathMessageCooldownSeconds", this.config_spam_deathMessageCooldownSeconds);
-        outConfig.set("GriefPrevention.Spam.Logout Message Delay In Seconds", this.config_spam_logoutMessageDelaySeconds);
-
         for (World world : worlds)
         {
             outConfig.set("GriefPrevention.PvP.RulesEnabledInWorld." + world.getName(), this.pvpRulesApply(world));
@@ -929,10 +842,6 @@ public class GriefPrevention extends JavaPlugin
         outConfig.set("GriefPrevention.AdminsGetSignNotifications", this.config_signNotifications);
 
         outConfig.set("GriefPrevention.VisualizationAntiCheatCompatMode", this.config_visualizationAntiCheatCompat);
-        outConfig.set("GriefPrevention.SmartBan", this.config_smartBan);
-        outConfig.set("GriefPrevention.Mute New Players Using Banned Words", this.config_trollFilterEnabled);
-        outConfig.set("GriefPrevention.MaxPlayersPerIpAddress", this.config_ipLimit);
-        outConfig.set("GriefPrevention.SilenceBans", this.config_silenceBans);
 
         outConfig.set("GriefPrevention.Siege.Worlds", siegeEnabledWorldNames);
         outConfig.set("GriefPrevention.Siege.BreakableBlocks", breakableBlocksList);
@@ -947,9 +856,6 @@ public class GriefPrevention extends JavaPlugin
         outConfig.set("GriefPrevention.Database.URL", this.databaseUrl);
         outConfig.set("GriefPrevention.Database.UserName", this.databaseUserName);
         outConfig.set("GriefPrevention.Database.Password", this.databasePassword);
-
-        outConfig.set("GriefPrevention.UseBanCommand", this.config_ban_useCommand);
-        outConfig.set("GriefPrevention.BanCommandPattern", this.config_ban_commandFormat);
 
         outConfig.set("GriefPrevention.Advanced.fixNegativeClaimblockAmounts", this.config_advanced_fixNegativeClaimblockAmounts);
         outConfig.set("GriefPrevention.Advanced.ClaimExpirationCheckRate", this.config_advanced_claim_expiration_check_rate);
@@ -982,22 +888,6 @@ public class GriefPrevention extends JavaPlugin
             {
                 this.config_claims_commandsRequiringAccessTrust.add(command.trim().toLowerCase());
             }
-        }
-
-        //try to parse the list of commands which should be monitored for spam
-        this.config_spam_monitorSlashCommands = new ArrayList<>();
-        commands = slashCommandsToMonitor.split(";");
-        for (String command : commands)
-        {
-            this.config_spam_monitorSlashCommands.add(command.trim().toLowerCase());
-        }
-
-        //try to parse the list of commands which should be included in eavesdropping
-        this.config_eavesdrop_whisperCommands = new ArrayList<>();
-        commands = whisperCommandsToMonitor.split(";");
-        for (String command : commands)
-        {
-            this.config_eavesdrop_whisperCommands.add(command.trim().toLowerCase());
         }
 
         //try to parse the list of commands which should be banned during pvp combat
@@ -2696,24 +2586,6 @@ public class GriefPrevention extends JavaPlugin
                 return true;
             }
 
-            //toggle mute for player
-            boolean isMuted = this.dataStore.toggleSoftMute(targetPlayer.getUniqueId());
-            if (isMuted)
-            {
-                sendMessage(player, TextMode.Success, Messages.SoftMuted, targetPlayer.getName());
-                String executorName = "console";
-                if (player != null)
-                {
-                    executorName = player.getName();
-                }
-
-                GriefPrevention.AddLogEntry(executorName + " muted " + targetPlayer.getName() + ".", CustomLogEntryTypes.AdminActivity, true);
-            }
-            else
-            {
-                sendMessage(player, TextMode.Success, Messages.UnSoftMuted, targetPlayer.getName());
-            }
-
             return true;
         }
         else if (cmd.getName().equalsIgnoreCase("gpreload"))
@@ -2781,143 +2653,6 @@ public class GriefPrevention extends JavaPlugin
             return true;
         }
 
-        //ignoreplayer
-        else if (cmd.getName().equalsIgnoreCase("ignoreplayer") && player != null)
-        {
-            //requires target player name
-            if (args.length < 1) return false;
-
-            //validate target player
-            OfflinePlayer targetPlayer = this.resolvePlayerByName(args[0]);
-            if (targetPlayer == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
-                return true;
-            }
-
-            this.setIgnoreStatus(player, targetPlayer, IgnoreMode.StandardIgnore);
-
-            sendMessage(player, TextMode.Success, Messages.IgnoreConfirmation);
-
-            return true;
-        }
-
-        //unignoreplayer
-        else if (cmd.getName().equalsIgnoreCase("unignoreplayer") && player != null)
-        {
-            //requires target player name
-            if (args.length < 1) return false;
-
-            //validate target player
-            OfflinePlayer targetPlayer = this.resolvePlayerByName(args[0]);
-            if (targetPlayer == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
-                return true;
-            }
-
-            PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-            Boolean ignoreStatus = playerData.ignoredPlayers.get(targetPlayer.getUniqueId());
-            if (ignoreStatus == null || ignoreStatus == true)
-            {
-                sendMessage(player, TextMode.Err, Messages.NotIgnoringPlayer);
-                return true;
-            }
-
-            this.setIgnoreStatus(player, targetPlayer, IgnoreMode.None);
-
-            sendMessage(player, TextMode.Success, Messages.UnIgnoreConfirmation);
-
-            return true;
-        }
-
-        //ignoredplayerlist
-        else if (cmd.getName().equalsIgnoreCase("ignoredplayerlist") && player != null)
-        {
-            PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-            StringBuilder builder = new StringBuilder();
-            for (Entry<UUID, Boolean> entry : playerData.ignoredPlayers.entrySet())
-            {
-                if (entry.getValue() != null)
-                {
-                    //if not an admin ignore, add it to the list
-                    if (!entry.getValue())
-                    {
-                        builder.append(GriefPrevention.lookupPlayerName(entry.getKey()));
-                        builder.append(" ");
-                    }
-                }
-            }
-
-            String list = builder.toString().trim();
-            if (list.isEmpty())
-            {
-                sendMessage(player, TextMode.Info, Messages.NotIgnoringAnyone);
-            }
-            else
-            {
-                sendMessage(player, TextMode.Info, list);
-            }
-
-            return true;
-        }
-
-        //separateplayers
-        else if (cmd.getName().equalsIgnoreCase("separate"))
-        {
-            //requires two player names
-            if (args.length < 2) return false;
-
-            //validate target players
-            OfflinePlayer targetPlayer = this.resolvePlayerByName(args[0]);
-            if (targetPlayer == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
-                return true;
-            }
-
-            OfflinePlayer targetPlayer2 = this.resolvePlayerByName(args[1]);
-            if (targetPlayer2 == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
-                return true;
-            }
-
-            this.setIgnoreStatus(targetPlayer, targetPlayer2, IgnoreMode.AdminIgnore);
-
-            sendMessage(player, TextMode.Success, Messages.SeparateConfirmation);
-
-            return true;
-        }
-
-        //unseparateplayers
-        else if (cmd.getName().equalsIgnoreCase("unseparate"))
-        {
-            //requires two player names
-            if (args.length < 2) return false;
-
-            //validate target players
-            OfflinePlayer targetPlayer = this.resolvePlayerByName(args[0]);
-            if (targetPlayer == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
-                return true;
-            }
-
-            OfflinePlayer targetPlayer2 = this.resolvePlayerByName(args[1]);
-            if (targetPlayer2 == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
-                return true;
-            }
-
-            this.setIgnoreStatus(targetPlayer, targetPlayer2, IgnoreMode.None);
-            this.setIgnoreStatus(targetPlayer2, targetPlayer, IgnoreMode.None);
-
-            sendMessage(player, TextMode.Success, Messages.UnSeparateConfirmation);
-
-            return true;
-        }
         return false;
     }
 
@@ -3710,25 +3445,6 @@ public class GriefPrevention extends JavaPlugin
         }
     }
 
-    public boolean containsBlockedIP(String message)
-    {
-        message = message.replace("\r\n", "");
-        Pattern ipAddressPattern = Pattern.compile("([0-9]{1,3}\\.){3}[0-9]{1,3}");
-        Matcher matcher = ipAddressPattern.matcher(message);
-
-        //if it looks like an IP address
-        if (matcher.find())
-        {
-            //and it's not in the list of allowed IP addresses
-            if (!GriefPrevention.instance.config_spam_allowedIpAddresses.contains(matcher.group()))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public boolean pvpRulesApply(World world)
     {
         Boolean configSetting = this.config_pvp_specifiedWorlds.get(world);
@@ -3749,27 +3465,6 @@ public class GriefPrevention extends JavaPlugin
         if (playerData.getClaims().size() > 0) return false;
 
         return true;
-    }
-
-    static void banPlayer(Player player, String reason, String source)
-    {
-        if (GriefPrevention.instance.config_ban_useCommand)
-        {
-            Bukkit.getServer().dispatchCommand(
-                    Bukkit.getConsoleSender(),
-                    GriefPrevention.instance.config_ban_commandFormat.replace("%name%", player.getName()).replace("%reason%", reason));
-        }
-        else
-        {
-            BanList bans = Bukkit.getServer().getBanList(Type.NAME);
-            bans.addBan(player.getName(), reason, null, source);
-
-            //kick
-            if (player.isOnline())
-            {
-                player.kickPlayer(reason);
-            }
-        }
     }
 
     public ItemStack getItemInHand(Player player, EquipmentSlot hand)

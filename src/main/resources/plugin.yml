@@ -1,6 +1,6 @@
 name: GriefPrevention
 main: me.ryanhamshire.GriefPrevention.GriefPrevention
-softdepend: [Vault, Multiverse-Core, My_Worlds, MystCraft, Transporter, WorldGuard, WorldEdit, RoyalCommands, MultiWorld, Denizen, CommandHelper]
+softdepend: [Vault, WorldGuard, WorldEdit]
 dev-url: https://dev.bukkit.org/projects/grief-prevention
 version: '${git.commit.id.describe}'
 api-version: '1.17'
@@ -180,10 +180,6 @@ commands:
       usage: /ClaimExplosions
       permission: griefprevention.claims
       aliases: claimexplosion
-    softmute:
-      description: Toggles whether a player's messages will only reach other soft-muted players.
-      usage: /SoftMute <player>
-      permission: griefprevention.softmute
     gpreload:
       description: Reloads Grief Prevention's configuration settings.  Does NOT totally reload the entire plugin.
       usage: /gpreload
@@ -196,29 +192,6 @@ commands:
       description: Allows an administrator to get technical information about blocks in the world and items in hand.
       usage: /GPBlockInfo
       permission: griefprevention.gpblockinfo
-    ignoreplayer:
-      description: Ignores another player's chat messages.
-      usage: /IgnorePlayer <player name>
-      aliases: [ignore]
-      permission: griefprevention.ignore
-    unignoreplayer:
-      description: Unignores another player's chat messages.
-      usage: /UnIgnorePlayer <player name>
-      aliases: [unignore]
-      permission: griefprevention.ignore
-    ignoredplayerlist:
-      description: Lists the players you're ignoring in chat.
-      usage: /IgnoredPlayerList
-      aliases: [ignores, ignored, ignorelist, ignoredlist, listignores, listignored, ignoring]
-      permission: griefprevention.ignore
-    separate:
-      description: Forces two players to ignore each other in chat.
-      usage: /Separate <player1> <player2>
-      permission: griefprevention.separate
-    unseparate:
-      description: Reverses /separate.
-      usage: /UnSeparate <player1> <player2>
-      permission: griefprevention.separate
     claimbook:
       description: Gives a player a manual about claiming land.
       usage: /ClaimBook <player>

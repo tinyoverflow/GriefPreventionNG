@@ -7,23 +7,7 @@ loader: me.tinyoverflow.griefprevention.GriefPreventionLoader
 dependencies:
   - name: Vault
     required: false
-  - name: Multiverse-Core
-    required: false
-  - name: My_Worlds
-    required: false
-  - name: MystCraft
-    required: false
-  - name: Transporter
-    required: false
   - name: WorldGuard
     required: false
   - name: WorldEdit
-    required: false
-  - name: RoyalCommands
-    required: false
-  - name: MultiWorld
-    required: false
-  - name: Denizen
-    required: false
-  - name: CommandHelper
     required: false

@@ -94,8 +94,6 @@ public abstract class DataStore
     final static String playerDataFolderPath = dataLayerFolderPath + File.separator + "PlayerData";
     final static String configFilePath = dataLayerFolderPath + File.separator + "config.yml";
     final static String messagesFilePath = dataLayerFolderPath + File.separator + "messages.yml";
-    final static String softMuteFilePath = dataLayerFolderPath + File.separator + "softMute.txt";
-    final static String bannedWordsFilePath = dataLayerFolderPath + File.separator + "bannedWords.txt";
 
     //the latest version of the data schema implemented here
     protected static final int latestSchemaVersion = 3;
@@ -113,8 +111,6 @@ public abstract class DataStore
     static final String CREATIVE_VIDEO_URL = "" + ChatColor.DARK_AQUA + ChatColor.UNDERLINE + "bit.ly/mcgpcrea" + ChatColor.RESET;
     static final String SUBDIVISION_VIDEO_URL = "" + ChatColor.DARK_AQUA + ChatColor.UNDERLINE + "bit.ly/mcgpsub" + ChatColor.RESET;
 
-    //list of UUIDs which are soft-muted
-    ConcurrentHashMap<UUID, Boolean> softMuteMap = new ConcurrentHashMap<>();
 
     //world guard reference, if available
     private WorldGuardWrapper worldGuard = null;
@@ -191,9 +187,6 @@ public abstract class DataStore
             GriefPrevention.AddLogEntry("Update finished.");
         }
 
-        //load list of soft mutes
-        this.loadSoftMutes();
-
         //make a note of the data store schema version
         this.setSchemaVersion(latestSchemaVersion);
 
@@ -205,141 +198,6 @@ public abstract class DataStore
         }
         //if failed, world guard compat features will just be disabled.
         catch (IllegalStateException | IllegalArgumentException | ClassCastException | NoClassDefFoundError ignored) { }
-    }
-
-    private void loadSoftMutes()
-    {
-        File softMuteFile = new File(softMuteFilePath);
-        if (softMuteFile.exists())
-        {
-            BufferedReader inStream = null;
-            try
-            {
-                //open the file
-                inStream = new BufferedReader(new FileReader(softMuteFile.getAbsolutePath()));
-
-                //while there are lines left
-                String nextID = inStream.readLine();
-                while (nextID != null)
-                {
-                    //parse line into a UUID
-                    UUID playerID;
-                    try
-                    {
-                        playerID = UUID.fromString(nextID);
-                    }
-                    catch (Exception e)
-                    {
-                        playerID = null;
-                        GriefPrevention.AddLogEntry("Failed to parse soft mute entry as a UUID: " + nextID);
-                    }
-
-                    //push it into the map
-                    if (playerID != null)
-                    {
-                        this.softMuteMap.put(playerID, true);
-                    }
-
-                    //move to the next
-                    nextID = inStream.readLine();
-                }
-            }
-            catch (Exception e)
-            {
-                GriefPrevention.AddLogEntry("Failed to read from the soft mute data file: " + e.toString());
-                e.printStackTrace();
-            }
-
-            try
-            {
-                if (inStream != null) inStream.close();
-            }
-            catch (IOException exception) {}
-        }
-    }
-
-    public List<String> loadBannedWords()
-    {
-        try
-        {
-            File bannedWordsFile = new File(bannedWordsFilePath);
-            if (!bannedWordsFile.exists())
-            {
-                Files.touch(bannedWordsFile);
-                String defaultWords =
-                        "nigger\nniggers\nniger\nnigga\nnigers\nniggas\n" +
-                                "fag\nfags\nfaggot\nfaggots\nfeggit\nfeggits\nfaggit\nfaggits\n" +
-                                "cunt\ncunts\nwhore\nwhores\nslut\nsluts\n";
-                Files.append(defaultWords, bannedWordsFile, Charset.forName("UTF-8"));
-            }
-
-            return Files.readLines(bannedWordsFile, Charset.forName("UTF-8"));
-        }
-        catch (Exception e)
-        {
-            GriefPrevention.AddLogEntry("Failed to read from the banned words data file: " + e.toString());
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
-    }
-
-    //updates soft mute map and data file
-    boolean toggleSoftMute(UUID playerID)
-    {
-        boolean newValue = !this.isSoftMuted(playerID);
-
-        this.softMuteMap.put(playerID, newValue);
-        this.saveSoftMutes();
-
-        return newValue;
-    }
-
-    public boolean isSoftMuted(UUID playerID)
-    {
-        Boolean mapEntry = this.softMuteMap.get(playerID);
-        if (mapEntry == null || mapEntry == Boolean.FALSE)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    private void saveSoftMutes()
-    {
-        BufferedWriter outStream = null;
-
-        try
-        {
-            //open the file and write the new value
-            File softMuteFile = new File(softMuteFilePath);
-            softMuteFile.createNewFile();
-            outStream = new BufferedWriter(new FileWriter(softMuteFile));
-
-            for (Map.Entry<UUID, Boolean> entry : softMuteMap.entrySet())
-            {
-                if (entry.getValue().booleanValue())
-                {
-                    outStream.write(entry.getKey().toString());
-                    outStream.newLine();
-                }
-            }
-
-        }
-
-        //if any problem, log it
-        catch (Exception e)
-        {
-            GriefPrevention.AddLogEntry("Unexpected exception saving soft mute data: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        //close the file
-        try
-        {
-            if (outStream != null) outStream.close();
-        }
-        catch (IOException exception) {}
     }
 
     //removes cached player data from memory
@@ -1729,7 +1587,6 @@ public abstract class DataStore
         this.addDefault(defaults, Messages.TooManyEntitiesInClaim, "This claim has too many entities already.  Try enlarging the claim or removing some animals, monsters, paintings, or minecarts.", null);
         this.addDefault(defaults, Messages.YouHaveNoClaims, "You don't have any land claims.", null);
         this.addDefault(defaults, Messages.ConfirmFluidRemoval, "Abandoning this claim will remove lava inside the claim.  If you're sure, use /AbandonClaim again.", null);
-        this.addDefault(defaults, Messages.AutoBanNotify, "Auto-banned {0}({1}).  See logs for details.", null);
         this.addDefault(defaults, Messages.AdjustGroupBlocksSuccess, "Adjusted bonus claim blocks for players with the {0} permission by {1}.  New total: {2}.", "0: permission; 1: adjustment amount; 2: new total bonus");
         this.addDefault(defaults, Messages.InvalidPermissionID, "Please specify a player name, or a permission in [brackets].", null);
         this.addDefault(defaults, Messages.HowToClaimRegex, "(^|.*\\W)how\\W.*\\W(claim|protect|lock)(\\W.*|$)", "This is a Java Regular Expression.  Look it up before editing!  It's used to tell players about the demo video when they ask how to claim land.");
@@ -1751,8 +1608,6 @@ public abstract class DataStore
         this.addDefault(defaults, Messages.ClaimExplosivesAdvertisement, "To allow explosives to destroy blocks in this land claim, use /ClaimExplosions.", null);
         this.addDefault(defaults, Messages.PlayerInPvPSafeZone, "That player is in a PvP safe zone.", null);
         this.addDefault(defaults, Messages.NoPistonsOutsideClaims, "Warning: Pistons won't move blocks outside land claims.", null);
-        this.addDefault(defaults, Messages.SoftMuted, "Soft-muted {0}.", "0: The changed player's name.");
-        this.addDefault(defaults, Messages.UnSoftMuted, "Un-soft-muted {0}.", "0: The changed player's name.");
         this.addDefault(defaults, Messages.DropUnlockAdvertisement, "Other players can't pick up your dropped items unless you /UnlockDrops first.", null);
         this.addDefault(defaults, Messages.PickupBlockedExplanation, "You can't pick this up unless {0} uses /UnlockDrops.", "0: The item stack's owner.");
         this.addDefault(defaults, Messages.DropUnlockConfirmation, "Unlocked your drops.  Other players may now pick them up (until you die again).", null);
@@ -1770,7 +1625,6 @@ public abstract class DataStore
         this.addDefault(defaults, Messages.CreateClaimFailOverlapRegion, "You can't claim all of this because you're not allowed to build here.", null);
         this.addDefault(defaults, Messages.ResizeFailOverlapRegion, "You don't have permission to build there, so you can't claim that area.", null);
         this.addDefault(defaults, Messages.ShowNearbyClaims, "Found {0} land claims.", "0: Number of claims found.");
-        this.addDefault(defaults, Messages.NoChatUntilMove, "Sorry, but you have to move a little more before you can chat.  We get lots of spam bots here.  :)", null);
         this.addDefault(defaults, Messages.SiegeImmune, "That player is immune to /siege.", null);
         this.addDefault(defaults, Messages.SetClaimBlocksSuccess, "Updated accrued claim blocks.", null);
         this.addDefault(defaults, Messages.IgnoreConfirmation, "You're now ignoring chat messages from that player.", null);
