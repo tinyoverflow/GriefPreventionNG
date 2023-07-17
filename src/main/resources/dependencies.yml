@@ -5,3 +5,4 @@ repositories:
 
 dependencies:
   - dev.jorel:commandapi-bukkit-shade:9.0.3
+  - org.spongepowered:configurate-hocon:4.1.2

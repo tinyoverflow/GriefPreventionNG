@@ -22,6 +22,7 @@ import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationType;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
+import me.tinyoverflow.griefprevention.configuration.ClaimConfiguration;
 import me.tinyoverflow.griefprevention.configuration.GriefPreventionConfiguration;
 import me.tinyoverflow.griefprevention.events.PreventBlockBreakEvent;
 import me.tinyoverflow.griefprevention.events.SaveTrappedPlayerEvent;
@@ -60,8 +61,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
-import org.spongepowered.configurate.yaml.NodeStyle;
-import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
+import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,6 +73,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
@@ -426,16 +428,14 @@ public class GriefPrevention extends JavaPlugin
 
     private void loadConfig()
     {
-        final Path file = Paths.get(this.getDataFolder().getPath(), "config.yml");
-        final YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
-                .nodeStyle(NodeStyle.BLOCK)
-                .path(file)
-                .build();
+        final Path file = Paths.get(this.getDataFolder().getPath(), "config.conf");
+        final HoconConfigurationLoader loader = HoconConfigurationLoader.builder().path(file).build();
 
         try
         {
             final CommentedConfigurationNode node = loader.load();
             final GriefPreventionConfiguration configuration = node.get(GriefPreventionConfiguration.class);
+            node.set(configuration);
             loader.save(node);
         }
         catch (ConfigurateException e)

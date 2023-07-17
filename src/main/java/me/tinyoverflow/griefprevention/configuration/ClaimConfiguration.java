@@ -3,6 +3,7 @@ package me.tinyoverflow.griefprevention.configuration;
 import org.bukkit.Material;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,44 +14,20 @@ import java.util.Map;
 @ConfigSerializable
 public class ClaimConfiguration
 {
-    public Map<String, String> mode = new HashMap<>();
+    @Setting
+    @Comment("How the plugin should work in different worlds (Disabled, Survival, SurvivalRequiringClaims, Creative).")
+    public Map<String, String> mode = Map.of("world", "Survival", "world_nether", "Disabled", "world_the_end", "Disabled");
 
-    public boolean preventGlobalMonsterEgg = true;
-    public boolean preventTheft = true;
-    public boolean preventButtonSwitches = true;
-    public boolean lockWoodenDoors = false;
-    public boolean lockTrapDoors = false;
-    public boolean lockFenceGates = true;
-    public boolean enderPearlsRequireAccessTrust = true;
-    public boolean raidTriggersRequireBuildTrust = true;
-    public boolean protectCreatures = true;
-    public boolean protectHorses = true;
-    public boolean protectDonkeys = true;
-    public boolean protectLlamas = true;
-    public int initialBlocks = 100;
-    public int accruedPerHour = 100;
-    public int maxAccruedBlocks = 80000;
-    public int accruedIdleThreshold = 0;
-    public int accruedIdlePercent = 0;
-    public float accruedReturnRatio = 1.0f;
-    public float abandonReturnRatio = 1.0f;
-    public int automaticNewPlayerClaimsRadius = 4;
-    public int automaticNewPlayerClaimsRadiusMinimum = 0;
-    public int extendIntoGroundDistance = 5;
-    public int minimumWidth = 5;
-    public int minimumArea = 100;
-    public int maximumDepth = Integer.MIN_VALUE;
-    public Material investigationTool = Material.STICK;
-    public Material modificationTool = Material.GOLDEN_SHOVEL;
+    public ClaimMobsConfiguration mobs = new ClaimMobsConfiguration();
+    public ClaimBlocksConfiguration claimBlocks = new ClaimBlocksConfiguration();
+    public ClaimToolsConfiguration tools = new ClaimToolsConfiguration();
     public ClaimExpirationConfiguration expiration = new ClaimExpirationConfiguration();
+    public ClaimCommandTrustLimitsConfiguration commandTrustLimits = new ClaimCommandTrustLimitsConfiguration();
+    public ClaimProtectionConfiguration protection = new ClaimProtectionConfiguration();
+    public ClaimCreationConfiguration creation = new ClaimCreationConfiguration();
+    public ClaimManualConfiguration manual = new ClaimManualConfiguration();
+
+    @Setting
+    @Comment("Whether the /trapped command can be used inside admin claims.")
     public boolean allowTrappedInAdminClaims = false;
-    public int maximumNumberOfClaimsPerPlayer = 0;
-    public boolean creationRequiredWorldGuardPermission = true;
-    public List<String> commandsRequiringAccessTrust = List.of("/sethome");
-    public boolean deliverManuals = true;
-    public int manualDeliveryDelaySeconds = 30;
-    public boolean ravagersBreakBlocks = true;
-    public boolean fireSpeadInClaims = false;
-    public boolean fireDamagesInClaims = false;
-    public boolean lecternReadingRequiresAccessTrust = true;
 }
