@@ -22,6 +22,7 @@ import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationType;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
+import me.tinyoverflow.griefprevention.configuration.GriefPreventionConfiguration;
 import me.tinyoverflow.griefprevention.events.PreventBlockBreakEvent;
 import me.tinyoverflow.griefprevention.events.SaveTrappedPlayerEvent;
 import me.tinyoverflow.griefprevention.events.TrustChangedEvent;
@@ -57,9 +58,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.ConfigurateException;
+import org.spongepowered.configurate.yaml.NodeStyle;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -419,6 +426,24 @@ public class GriefPrevention extends JavaPlugin
 
     private void loadConfig()
     {
+        final Path file = Paths.get(this.getDataFolder().getPath(), "config.yml");
+        final YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
+                .nodeStyle(NodeStyle.BLOCK)
+                .path(file)
+                .build();
+
+        try
+        {
+            final CommentedConfigurationNode node = loader.load();
+            final GriefPreventionConfiguration configuration = node.get(GriefPreventionConfiguration.class);
+            loader.save(node);
+        }
+        catch (ConfigurateException e)
+        {
+            throw new RuntimeException(e);
+        }
+
+
         //load the config if it exists
         FileConfiguration config = YamlConfiguration.loadConfiguration(new File(DataStore.configFilePath));
         FileConfiguration outConfig = new YamlConfiguration();

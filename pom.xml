@@ -138,13 +138,36 @@
     </build>
 
     <dependencies>
-        <!-- Bukkit API. Bukkit has never ever deployed a release version -->
+        <!-- Paper API -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
             <version>1.20.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- CommandAPI -->
+        <dependency>
+            <groupId>dev.jorel</groupId>
+            <artifactId>commandapi-bukkit-core</artifactId>
+            <version>9.0.3</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- SpongePowered Configurate -->
+        <dependency>
+            <groupId>org.spongepowered</groupId>
+            <artifactId>configurate-yaml</artifactId>
+            <version>4.1.2</version>
+        </dependency>
+
+        <!-- SnakeYAML -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.0</version>
+        </dependency>
+
         <!-- Worldguard dependency -->
         <dependency>
             <groupId>com.sk89q.worldguard</groupId>
@@ -166,6 +189,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <!-- Vault dependency -->
         <dependency>
             <groupId>net.milkbowl.vault</groupId>
@@ -179,6 +203,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <!-- Annotations for nullity and other behaviors -->
         <dependency>
             <groupId>org.jetbrains</groupId>
@@ -187,6 +212,7 @@
             <!-- Annotations are not required at runtime, only during compilation. -->
             <scope>provided</scope>
         </dependency>
+
         <!-- Tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -199,12 +225,6 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <version>5.4.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>dev.jorel</groupId>
-            <artifactId>commandapi-bukkit-core</artifactId>
-            <version>9.0.3</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
