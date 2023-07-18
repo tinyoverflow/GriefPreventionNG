@@ -592,7 +592,7 @@ public class FlatFileDataStore extends DataStore
     @Override
     public synchronized PlayerData getPlayerDataFromStorage(UUID playerID)
     {
-        File playerFile = new File(playerDataFolderPath + File.separator + playerID.toString());
+        File playerFile = new File(playerDataFolderPath + File.separator + playerID.toString() + ".yml");
 
         PlayerData playerData = new PlayerData();
         playerData.playerID = playerID;
@@ -600,19 +600,10 @@ public class FlatFileDataStore extends DataStore
         //if it exists as a file, read the file
         if (playerFile.exists())
         {
-            boolean needRetry = false;
-            int retriesRemaining = 5;
-            Exception latestException = null;
-
-            do
-            {
                 try
                 {
-                    needRetry = false;
-
-                    String fileBody = Files.toString(playerFile, Charsets.UTF_8);
                     YamlConfiguration yaml = new YamlConfiguration();
-                    yaml.loadFromString(fileBody);
+                    yaml.load(playerFile);
 
                     playerData.setAccruedClaimBlocks(yaml.getInt("accrued-claim-blocks"));
                     playerData.setAccruedClaimBlocksLimit(yaml.getInt("accrued-claim-blocks-limit"));
@@ -622,27 +613,7 @@ public class FlatFileDataStore extends DataStore
                 //if there's any problem with the file's content, retry up to 5 times with 5 milliseconds between
                 catch (Exception e)
                 {
-                    latestException = e;
-                    needRetry = true;
-                    retriesRemaining--;
                 }
-
-                try
-                {
-                    if (needRetry) Thread.sleep(5);
-                }
-                catch (InterruptedException exception) {}
-
-            } while (needRetry && retriesRemaining >= 0);
-
-            //if last attempt failed, log information about the problem
-            if (needRetry)
-            {
-                StringWriter errors = new StringWriter();
-                latestException.printStackTrace(new PrintWriter(errors));
-                GriefPrevention.AddLogEntry("Failed to load PlayerData for " + playerID + ". This usually occurs when your server runs out of storage space, causing any file saves to corrupt. Fix or delete the file in GriefPrevetionData/PlayerData/" + playerID, CustomLogEntryTypes.Debug, false);
-                GriefPrevention.AddLogEntry(playerID + " " + errors.toString(), CustomLogEntryTypes.Exception);
-            }
         }
 
         return playerData;
@@ -655,36 +626,16 @@ public class FlatFileDataStore extends DataStore
         //never save data for the "administrative" account.  null for claim owner ID indicates administrative account
         if (playerID == null) return;
 
-        YamlConfiguration data = new YamlConfiguration();
-        data.set("accrued-claim-blocks", playerData.getAccruedClaimBlocks());
-        data.set("accrued-claim-blocks-limit", playerData.getAccruedClaimBlocksLimit());
-        data.set("bonus-claim-blocks", playerData.getBonusClaimBlocks());
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("accrued-claim-blocks", playerData.getAccruedClaimBlocks());
+        yaml.set("accrued-claim-blocks-limit", playerData.getAccruedClaimBlocksLimit());
+        yaml.set("bonus-claim-blocks", playerData.getBonusClaimBlocks());
 
-        StringBuilder fileContent = new StringBuilder();
         try
         {
-            //first line is last login timestamp //RoboMWM - no longer storing/using
-            //if(playerData.getLastLogin() == null) playerData.setLastLogin(new Date());
-            //DateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
-            //fileContent.append(dateFormat.format(playerData.getLastLogin()));
-            fileContent.append("\n");
-
-            //second line is accrued claim blocks
-            fileContent.append(String.valueOf(playerData.getAccruedClaimBlocks()));
-            fileContent.append("\n");
-
-            //third line is bonus claim blocks
-            fileContent.append(String.valueOf(playerData.getBonusClaimBlocks()));
-            fileContent.append("\n");
-
-            //fourth line is blank
-            fileContent.append("\n");
-
-            File playerDataYamlFile = new File(playerDataFolderPath + File.separator + playerID.toString() + ".yml");
-            Files.write(data.saveToString().getBytes("UTF-8"), playerDataYamlFile);
+            File playerDataYamlFile = new File(playerDataFolderPath + File.separator + playerID + ".yml");
+            Files.write(yaml.saveToString().getBytes(Charsets.UTF_8), playerDataYamlFile);
         }
-
-        //if any problem, log it
         catch (Exception e)
         {
             GriefPrevention.AddLogEntry("GriefPrevention: Unexpected exception saving data for player \"" + playerID.toString() + "\": " + e.getMessage());
