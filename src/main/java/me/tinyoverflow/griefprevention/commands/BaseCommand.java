@@ -1,8 +1,28 @@
 package me.tinyoverflow.griefprevention.commands;
 
 import dev.jorel.commandapi.CommandAPICommand;
+import me.tinyoverflow.griefprevention.GriefPrevention;
 
-public interface BaseCommand
+public abstract class BaseCommand
 {
-    CommandAPICommand getCommand();
+    private final String commandName;
+    private final GriefPrevention plugin;
+
+    public BaseCommand(String commandName, GriefPrevention plugin)
+    {
+        this.commandName = commandName;
+        this.plugin = plugin;
+    }
+
+    public GriefPrevention getPlugin()
+    {
+        return plugin;
+    }
+
+    public String getCommandName()
+    {
+        return commandName;
+    }
+
+    public abstract CommandAPICommand getCommand();
 }

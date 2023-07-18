@@ -20,19 +20,17 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class TrustListCommand implements BaseCommand, PlayerCommandExecutor
+public class TrustListCommand extends BaseCommand implements PlayerCommandExecutor
 {
-    private final GriefPrevention plugin;
-
-    public TrustListCommand(GriefPrevention plugin)
+    public TrustListCommand(String commandName, GriefPrevention plugin)
     {
-        this.plugin = plugin;
+        super(commandName, plugin);
     }
 
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand("trustlist")
+        return new CommandAPICommand(this.getCommandName())
                 .withPermission("griefprevention.trustlist")
                 .executesPlayer(this);
     }
@@ -40,7 +38,7 @@ public class TrustListCommand implements BaseCommand, PlayerCommandExecutor
     @Override
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
-        Claim claim = this.plugin.getDataStore().getClaimAt(player.getLocation(), true, null);
+        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true, null);
 
         //if no claim here, error message
         if (claim == null)
@@ -109,10 +107,10 @@ public class TrustListCommand implements BaseCommand, PlayerCommandExecutor
         player.sendMessage(permissions.toString());
 
         player.sendMessage(
-                ChatColor.GOLD + this.plugin.getDataStore().getMessage(Messages.Manage) + " " +
-                        ChatColor.YELLOW + this.plugin.getDataStore().getMessage(Messages.Build) + " " +
-                        ChatColor.GREEN + this.plugin.getDataStore().getMessage(Messages.Containers) + " " +
-                        ChatColor.BLUE + this.plugin.getDataStore().getMessage(Messages.Access));
+                ChatColor.GOLD + this.getPlugin().getDataStore().getMessage(Messages.Manage) + " " +
+                        ChatColor.YELLOW + this.getPlugin().getDataStore().getMessage(Messages.Build) + " " +
+                        ChatColor.GREEN + this.getPlugin().getDataStore().getMessage(Messages.Containers) + " " +
+                        ChatColor.BLUE + this.getPlugin().getDataStore().getMessage(Messages.Access));
 
         if (claim.getSubclaimRestrictions())
         {
@@ -124,7 +122,7 @@ public class TrustListCommand implements BaseCommand, PlayerCommandExecutor
     private String getPlayerName(String manager)
     {
         return Optional
-                .ofNullable(this.plugin.getServer().getOfflinePlayer(UUID.fromString(manager)).getName())
+                .ofNullable(this.getPlugin().getServer().getOfflinePlayer(UUID.fromString(manager)).getName())
                 .orElse("someone");
     }
 }

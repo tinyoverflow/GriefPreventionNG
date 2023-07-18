@@ -13,19 +13,17 @@ import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.TextMode;
 import org.bukkit.entity.Player;
 
-public class AbandonClaimCommand implements BaseCommand, PlayerCommandExecutor
+public class ClaimAbandonCommand extends BaseCommand implements PlayerCommandExecutor
 {
-    private final GriefPrevention plugin;
-
-    public AbandonClaimCommand(GriefPrevention plugin)
+    public ClaimAbandonCommand(String commandName, GriefPrevention plugin)
     {
-        this.plugin = plugin;
+        super(commandName, plugin);
     }
 
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand("abandonclaim")
+        return new CommandAPICommand(this.getCommandName())
                 .withPermission("griefprevention.abandonclaim")
                 .withOptionalArguments(new BooleanArgument("topLevel"))
                 .executesPlayer(this);

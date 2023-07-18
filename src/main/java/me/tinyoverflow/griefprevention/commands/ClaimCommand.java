@@ -18,49 +18,45 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-public class ClaimCommand implements BaseCommand, PlayerCommandExecutor
+public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
 {
-    private final GriefPrevention plugin;
-
-    public ClaimCommand(GriefPrevention plugin)
+    public ClaimCommand(String commandName, GriefPrevention plugin)
     {
-        this.plugin = plugin;
+        super(commandName, plugin);
     }
 
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand("claim")
+        return new CommandAPICommand(this.getCommandName())
                 .withPermission("griefprevention.claim")
-                .withOptionalArguments(new IntegerArgument("radius", this.plugin.getPluginConfig().claims.getCreation().automaticMinimumRadius))
+                .withOptionalArguments(new IntegerArgument("radius", this.getPlugin().getPluginConfig().claims.getCreation().automaticMinimumRadius))
                 .executesPlayer(this);
     }
 
     @Override
     public void run(Player player, CommandArguments args) throws WrapperCommandSyntaxException
     {
-        int radius = (int) args.getOptional("radius").orElse(this.plugin.getPluginConfig().claims.getCreation().automaticPreferredRadius);
-
-        if (!this.plugin.claimsEnabledForWorld(player.getWorld()))
+        if (!this.getPlugin().claimsEnabledForWorld(player.getWorld()))
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.ClaimsDisabledWorld);
             return;
         }
 
-        PlayerData playerData = this.plugin.getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
 
         //if he's at the claim count per player limit already and doesn't have permission to bypass, display an error message
-        if (this.plugin.config_claims_maxClaimsPerPlayer > 0 &&
+        if (this.getPlugin().config_claims_maxClaimsPerPlayer > 0 &&
                 !player.hasPermission("griefprevention.overrideclaimcountlimit") &&
-                playerData.getClaims().size() >= this.plugin.config_claims_maxClaimsPerPlayer)
+                playerData.getClaims().size() >= this.getPlugin().config_claims_maxClaimsPerPlayer)
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.ClaimCreationFailedOverClaimCountLimit);
             return;
         }
 
         //default is chest claim radius, unless -1
-        radius = this.plugin.config_claims_automaticClaimsForNewPlayersRadius;
-        if (radius < 0) radius = (int) Math.ceil(Math.sqrt(this.plugin.config_claims_minArea) / 2);
+        int radius = this.getPlugin().config_claims_automaticClaimsForNewPlayersRadius;
+        if (radius < 0) radius = (int) Math.ceil(Math.sqrt(this.getPlugin().config_claims_minArea) / 2);
 
         //if player has any claims, respect claim minimum size setting
         if (playerData.getClaims().size() > 0)
@@ -68,19 +64,19 @@ public class ClaimCommand implements BaseCommand, PlayerCommandExecutor
             //if player has exactly one land claim, this requires the claim modification tool to be in hand (or creative mode player)
             if (playerData.getClaims().size() == 1 &&
                     player.getGameMode() != GameMode.CREATIVE &&
-                    !player.getInventory().getItemInMainHand().getType().equals(this.plugin.getPluginConfig().claims.getTools().getModificationTool()))
+                    !player.getInventory().getItemInMainHand().getType().equals(this.getPlugin().getPluginConfig().claims.getTools().getModificationTool()))
             {
                 GriefPrevention.sendMessage(player, TextMode.Err, Messages.MustHoldModificationToolForThat);
                 return;
             }
 
-            radius = (int) Math.ceil(Math.sqrt(this.plugin.config_claims_minArea) / 2);
+            radius = (int) Math.ceil(Math.sqrt(this.getPlugin().config_claims_minArea) / 2);
         }
 
         //allow for specifying the radius
         if (args.getOptional("radius").isPresent())
         {
-            if (playerData.getClaims().size() < 2 && player.getGameMode() != GameMode.CREATIVE && player.getItemInHand().getType() != this.plugin.config_claims_modificationTool)
+            if (playerData.getClaims().size() < 2 && player.getGameMode() != GameMode.CREATIVE && player.getInventory().getItemInMainHand().getType() != this.getPlugin().config_claims_modificationTool)
             {
                 GriefPrevention.sendMessage(player, TextMode.Err, Messages.RadiusRequiresGoldenShovel);
                 return;
@@ -118,14 +114,14 @@ public class ClaimCommand implements BaseCommand, PlayerCommandExecutor
         if (remaining < area)
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.CreateClaimInsufficientBlocks, String.valueOf(area - remaining));
-            this.plugin.dataStore.tryAdvertiseAdminAlternatives(player);
+            this.getPlugin().dataStore.tryAdvertiseAdminAlternatives(player);
             return;
         }
 
-        CreateClaimResult result = this.plugin.getDataStore().createClaim(lc.getWorld(),
+        CreateClaimResult result = this.getPlugin().getDataStore().createClaim(lc.getWorld(),
                 lc.getBlockX(), gc.getBlockX(),
-                lc.getBlockY() - this.plugin.config_claims_claimsExtendIntoGroundDistance - 1,
-                gc.getWorld().getHighestBlockYAt(gc) - this.plugin.config_claims_claimsExtendIntoGroundDistance - 1,
+                lc.getBlockY() - this.getPlugin().config_claims_claimsExtendIntoGroundDistance - 1,
+                gc.getWorld().getHighestBlockYAt(gc) - this.getPlugin().config_claims_claimsExtendIntoGroundDistance - 1,
                 lc.getBlockZ(), gc.getBlockZ(),
                 player.getUniqueId(), null, null, player);
         if (!result.succeeded || result.claim == null)
@@ -146,11 +142,11 @@ public class ClaimCommand implements BaseCommand, PlayerCommandExecutor
             GriefPrevention.sendMessage(player, TextMode.Success, Messages.CreateClaimSuccess);
 
             //link to a video demo of land claiming, based on world type
-            if (this.plugin.creativeRulesApply(player.getLocation()))
+            if (this.getPlugin().creativeRulesApply(player.getLocation()))
             {
                 GriefPrevention.sendMessage(player, TextMode.Instr, Messages.CreativeBasicsVideo2, DataStore.CREATIVE_VIDEO_URL);
             }
-            else if (this.plugin.claimsEnabledForWorld(player.getWorld()))
+            else if (this.getPlugin().claimsEnabledForWorld(player.getWorld()))
             {
                 GriefPrevention.sendMessage(player, TextMode.Instr, Messages.SurvivalBasicsVideo2, DataStore.SURVIVAL_VIDEO_URL);
             }

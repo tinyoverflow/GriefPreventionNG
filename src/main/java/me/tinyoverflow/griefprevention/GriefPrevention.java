@@ -20,10 +20,14 @@ package me.tinyoverflow.griefprevention;
 
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
-import me.tinyoverflow.griefprevention.commands.AbandonClaimCommand;
+import me.tinyoverflow.griefprevention.commands.AbandonAllClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.ClaimAbandonCommand;
 import me.tinyoverflow.griefprevention.commands.ClaimCommand;
+import me.tinyoverflow.griefprevention.commands.ClaimExtendCommand;
 import me.tinyoverflow.griefprevention.commands.CommandManager;
 import me.tinyoverflow.griefprevention.commands.IgnoreClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.RestoreNatureCommand;
+import me.tinyoverflow.griefprevention.commands.RestoreNatureFillCommand;
 import me.tinyoverflow.griefprevention.commands.TrappedCommand;
 import me.tinyoverflow.griefprevention.commands.TrustCommand;
 import me.tinyoverflow.griefprevention.commands.TrustListCommand;
@@ -32,7 +36,6 @@ import me.tinyoverflow.griefprevention.datastore.DataStore;
 import me.tinyoverflow.griefprevention.datastore.DatabaseDataStore;
 import me.tinyoverflow.griefprevention.datastore.FlatFileDataStore;
 import me.tinyoverflow.griefprevention.events.PreventBlockBreakEvent;
-import me.tinyoverflow.griefprevention.events.SaveTrappedPlayerEvent;
 import me.tinyoverflow.griefprevention.events.TrustChangedEvent;
 import me.tinyoverflow.griefprevention.handlers.BlockEventHandler;
 import me.tinyoverflow.griefprevention.handlers.EconomyHandler;
@@ -44,7 +47,6 @@ import me.tinyoverflow.griefprevention.tasks.CheckForPortalTrapTask;
 import me.tinyoverflow.griefprevention.tasks.DeliverClaimBlocksTask;
 import me.tinyoverflow.griefprevention.tasks.EntityCleanupTask;
 import me.tinyoverflow.griefprevention.tasks.FindUnusedClaimsTask;
-import me.tinyoverflow.griefprevention.tasks.PlayerRescueTask;
 import me.tinyoverflow.griefprevention.tasks.PvPImmunityValidationTask;
 import me.tinyoverflow.griefprevention.tasks.RestoreNatureProcessingTask;
 import me.tinyoverflow.griefprevention.tasks.SendPlayerMessageTask;
@@ -53,7 +55,6 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
-import org.bukkit.FluidCollisionMode;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -420,12 +421,16 @@ public class GriefPrevention extends JavaPlugin
     private void registerCommands()
     {
         CommandManager commandManager = new CommandManager();
-        commandManager.add(new ClaimCommand(this));
-        commandManager.add(new AbandonClaimCommand(this));
-        commandManager.add(new IgnoreClaimsCommand(this));
-        commandManager.add(new TrustCommand(this));
-        commandManager.add(new TrustListCommand(this));
-        commandManager.add(new TrappedCommand(this));
+        commandManager.add(new AbandonAllClaimsCommand("abandonallclaims", this));
+        commandManager.add(new ClaimAbandonCommand("abandonclaim", this));
+        commandManager.add(new ClaimCommand("claim", this));
+        commandManager.add(new ClaimExtendCommand("extendclaim", this));
+        commandManager.add(new IgnoreClaimsCommand("ignoreclaims", this));
+        commandManager.add(new RestoreNatureCommand("restorenature", this));
+        commandManager.add(new RestoreNatureFillCommand("restorenaturefill", this));
+        commandManager.add(new TrappedCommand("trapped", this));
+        commandManager.add(new TrustCommand("trust", this));
+        commandManager.add(new TrustListCommand("trustlist", this));
         commandManager.register();
     }
 
@@ -1006,235 +1011,8 @@ public class GriefPrevention extends JavaPlugin
             player = (Player) sender;
         }
 
-        if (cmd.getName().equalsIgnoreCase("extendclaim") && player != null)
-        {
-            if (args.length < 1)
-            {
-                //link to a video demo of land claiming, based on world type
-                if (GriefPrevention.instance.creativeRulesApply(player.getLocation()))
-                {
-                    sendMessage(player, TextMode.Instr, Messages.CreativeBasicsVideo2, DataStore.CREATIVE_VIDEO_URL);
-                }
-                else if (GriefPrevention.instance.claimsEnabledForWorld(player.getLocation().getWorld()))
-                {
-                    sendMessage(player, TextMode.Instr, Messages.SurvivalBasicsVideo2, DataStore.SURVIVAL_VIDEO_URL);
-                }
-                return false;
-            }
-
-            int amount;
-            try
-            {
-                amount = Integer.parseInt(args[0]);
-            }
-            catch (NumberFormatException e)
-            {
-                //link to a video demo of land claiming, based on world type
-                if (GriefPrevention.instance.creativeRulesApply(player.getLocation()))
-                {
-                    sendMessage(player, TextMode.Instr, Messages.CreativeBasicsVideo2, DataStore.CREATIVE_VIDEO_URL);
-                }
-                else if (GriefPrevention.instance.claimsEnabledForWorld(player.getLocation().getWorld()))
-                {
-                    sendMessage(player, TextMode.Instr, Messages.SurvivalBasicsVideo2, DataStore.SURVIVAL_VIDEO_URL);
-                }
-                return false;
-            }
-
-            //requires claim modification tool in hand
-            if (player.getGameMode() != GameMode.CREATIVE && player.getItemInHand().getType() != GriefPrevention.instance.config_claims_modificationTool)
-            {
-                sendMessage(player, TextMode.Err, Messages.MustHoldModificationToolForThat);
-                return true;
-            }
-
-            //must be standing in a land claim
-            PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-            Claim claim = this.dataStore.getClaimAt(player.getLocation(), true, playerData.lastClaim);
-            if (claim == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.StandInClaimToResize);
-                return true;
-            }
-
-            //must have permission to edit the land claim you're in
-            Supplier<String> errorMessage = claim.checkPermission(player, ClaimPermission.Edit, null);
-            if (errorMessage != null)
-            {
-                sendMessage(player, TextMode.Err, Messages.NotYourClaim);
-                return true;
-            }
-
-            //determine new corner coordinates
-            org.bukkit.util.Vector direction = player.getLocation().getDirection();
-            if (direction.getY() > .75)
-            {
-                sendMessage(player, TextMode.Info, Messages.ClaimsExtendToSky);
-                return true;
-            }
-
-            if (direction.getY() < -.75)
-            {
-                sendMessage(player, TextMode.Info, Messages.ClaimsAutoExtendDownward);
-                return true;
-            }
-
-            Location lc = claim.getLesserBoundaryCorner();
-            Location gc = claim.getGreaterBoundaryCorner();
-            int newx1 = lc.getBlockX();
-            int newx2 = gc.getBlockX();
-            int newy1 = lc.getBlockY();
-            int newy2 = gc.getBlockY();
-            int newz1 = lc.getBlockZ();
-            int newz2 = gc.getBlockZ();
-
-            //if changing Z only
-            if (Math.abs(direction.getX()) < .3)
-            {
-                if (direction.getZ() > 0)
-                {
-                    newz2 += amount;  //north
-                }
-                else
-                {
-                    newz1 -= amount;  //south
-                }
-            }
-
-            //if changing X only
-            else if (Math.abs(direction.getZ()) < .3)
-            {
-                if (direction.getX() > 0)
-                {
-                    newx2 += amount;  //east
-                }
-                else
-                {
-                    newx1 -= amount;  //west
-                }
-            }
-
-            //diagonals
-            else
-            {
-                if (direction.getX() > 0)
-                {
-                    newx2 += amount;
-                }
-                else
-                {
-                    newx1 -= amount;
-                }
-
-                if (direction.getZ() > 0)
-                {
-                    newz2 += amount;
-                }
-                else
-                {
-                    newz1 -= amount;
-                }
-            }
-
-            //attempt resize
-            playerData.claimResizing = claim;
-            this.dataStore.resizeClaimWithChecks(player, playerData, newx1, newx2, newy1, newy2, newz1, newz2);
-            playerData.claimResizing = null;
-
-            return true;
-        }
-
-        //abandonallclaims
-        else if (cmd.getName().equalsIgnoreCase("abandonallclaims") && player != null)
-        {
-            if (args.length > 1) return false;
-
-            if (args.length != 1 || !"confirm".equalsIgnoreCase(args[0]))
-            {
-                sendMessage(player, TextMode.Err, Messages.ConfirmAbandonAllClaims);
-                return true;
-            }
-
-            //count claims
-            PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-            int originalClaimCount = playerData.getClaims().size();
-
-            //check count
-            if (originalClaimCount == 0)
-            {
-                sendMessage(player, TextMode.Err, Messages.YouHaveNoClaims);
-                return true;
-            }
-
-            if (this.config_claims_abandonReturnRatio != 1.0D)
-            {
-                //adjust claim blocks
-                for (Claim claim : playerData.getClaims())
-                {
-                    playerData.setAccruedClaimBlocks(playerData.getAccruedClaimBlocks() - (int) Math.ceil((claim.getArea() * (1 - this.config_claims_abandonReturnRatio))));
-                }
-            }
-
-
-            //delete them
-            this.dataStore.deleteClaimsForPlayer(player.getUniqueId(), false);
-
-            //inform the player
-            int remainingBlocks = playerData.getRemainingClaimBlocks();
-            sendMessage(player, TextMode.Success, Messages.SuccessfulAbandon, String.valueOf(remainingBlocks));
-
-            //revert any current visualization
-            playerData.setVisibleBoundaries(null);
-
-            return true;
-        }
-
-        //restore nature
-        else if (cmd.getName().equalsIgnoreCase("restorenature") && player != null)
-        {
-            //change shovel mode
-            PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-            playerData.shovelMode = ShovelMode.RestoreNature;
-            sendMessage(player, TextMode.Instr, Messages.RestoreNatureActivate);
-            return true;
-        }
-
-        //restore nature aggressive mode
-        else if (cmd.getName().equalsIgnoreCase("restorenatureaggressive") && player != null)
-        {
-            //change shovel mode
-            PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-            playerData.shovelMode = ShovelMode.RestoreNatureAggressive;
-            sendMessage(player, TextMode.Warn, Messages.RestoreNatureAggressiveActivate);
-            return true;
-        }
-
-        //restore nature fill mode
-        else if (cmd.getName().equalsIgnoreCase("restorenaturefill") && player != null)
-        {
-            //change shovel mode
-            PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-            playerData.shovelMode = ShovelMode.RestoreNatureFill;
-
-            //set radius based on arguments
-            playerData.fillRadius = 2;
-            if (args.length > 0)
-            {
-                try
-                {
-                    playerData.fillRadius = Integer.parseInt(args[0]);
-                }
-                catch (Exception exception) { }
-            }
-
-            if (playerData.fillRadius < 0) playerData.fillRadius = 2;
-
-            sendMessage(player, TextMode.Success, Messages.FillModeActive, String.valueOf(playerData.fillRadius));
-            return true;
-        }
-
         //transferclaim <player>
-        else if (cmd.getName().equalsIgnoreCase("transferclaim") && player != null)
+        if (cmd.getName().equalsIgnoreCase("transferclaim") && player != null)
         {
             //which claim is the user in?
             Claim claim = this.dataStore.getClaimAt(player.getLocation(), true, null);

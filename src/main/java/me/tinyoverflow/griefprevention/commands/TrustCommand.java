@@ -27,19 +27,17 @@ import java.util.function.Supplier;
 import static dev.jorel.commandapi.arguments.CustomArgument.CustomArgumentException;
 import static dev.jorel.commandapi.arguments.CustomArgument.MessageBuilder;
 
-public class TrustCommand implements BaseCommand, PlayerCommandExecutor
+public class TrustCommand extends BaseCommand implements PlayerCommandExecutor
 {
-    private final GriefPrevention plugin;
-
-    public TrustCommand(GriefPrevention plugin)
+    public TrustCommand(String commandName, GriefPrevention plugin)
     {
-        this.plugin = plugin;
+        super(commandName, plugin);
     }
 
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand("trust")
+        return new CommandAPICommand(this.getCommandName())
                 .withPermission("griefprevention.trust")
                 .withArguments(new OfflinePlayerArgument("target"))
                 .withOptionalArguments(this.trustLevelArgument("level"))
@@ -55,13 +53,13 @@ public class TrustCommand implements BaseCommand, PlayerCommandExecutor
                 .orElse(ClaimPermission.Build);
 
         //determine which claim the player is standing in
-        Claim claim = this.plugin.getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
+        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
 
         //determine which claims should be modified
         ArrayList<Claim> targetClaims = new ArrayList<>();
         if (claim == null)
         {
-            PlayerData playerData = this.plugin.getDataStore().getPlayerData(player.getUniqueId());
+            PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
             targetClaims.addAll(playerData.getClaims());
         }
         else
@@ -111,21 +109,21 @@ public class TrustCommand implements BaseCommand, PlayerCommandExecutor
         for (Claim currentClaim : event.getClaims())
         {
             currentClaim.setPermission(identifierToAdd, permissionLevel);
-            this.plugin.getDataStore().saveClaim(currentClaim);
+            this.getPlugin().getDataStore().saveClaim(currentClaim);
         }
 
         //notify player
         String permissionDescription = switch (permissionLevel) {
-            case Build -> this.plugin.getDataStore().getMessage(Messages.BuildPermission);
-            case Inventory -> this.plugin.getDataStore().getMessage(Messages.ContainersPermission);
-            case Access -> this.plugin.getDataStore().getMessage(Messages.AccessPermission);
-            case Manage -> this.plugin.getDataStore().getMessage(Messages.PermissionsPermission);
+            case Build -> this.getPlugin().getDataStore().getMessage(Messages.BuildPermission);
+            case Inventory -> this.getPlugin().getDataStore().getMessage(Messages.ContainersPermission);
+            case Access -> this.getPlugin().getDataStore().getMessage(Messages.AccessPermission);
+            case Manage -> this.getPlugin().getDataStore().getMessage(Messages.PermissionsPermission);
             default -> "";
         };
 
         String location = claim == null
-                ? this.plugin.getDataStore().getMessage(Messages.LocationAllClaims)
-                : this.plugin.getDataStore().getMessage(Messages.LocationCurrentClaim);
+                ? this.getPlugin().getDataStore().getMessage(Messages.LocationAllClaims)
+                : this.getPlugin().getDataStore().getMessage(Messages.LocationCurrentClaim);
 
         GriefPrevention.sendMessage(
                 player,

@@ -16,19 +16,17 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
-public class TrappedCommand implements BaseCommand, PlayerCommandExecutor
+public class TrappedCommand extends BaseCommand implements PlayerCommandExecutor
 {
-    private final GriefPrevention plugin;
-
-    public TrappedCommand(GriefPrevention plugin)
+    public TrappedCommand(String commandName, GriefPrevention plugin)
     {
-        this.plugin = plugin;
+        super(commandName, plugin);
     }
 
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand("trapped")
+        return new CommandAPICommand(this.getCommandName())
                 .withPermission("griefprevention.trapped")
                 .executesPlayer(this);
     }
@@ -36,8 +34,8 @@ public class TrappedCommand implements BaseCommand, PlayerCommandExecutor
     @Override
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
-        PlayerData playerData = this.plugin.getDataStore().getPlayerData(player.getUniqueId());
-        Claim claim = this.plugin.getDataStore().getClaimAt(player.getLocation(), false, playerData.lastClaim);
+        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), false, playerData.lastClaim);
 
         //if another /trapped is pending, ignore this slash command
         if (playerData.pendingTrapped)
@@ -74,6 +72,6 @@ public class TrappedCommand implements BaseCommand, PlayerCommandExecutor
 
         //create a task to rescue this player in a little while
         PlayerRescueTask task = new PlayerRescueTask(player, player.getLocation(), event.getDestination());
-        this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, task, 200L);  //20L ~ 1 second
+        this.getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(this.getPlugin(), task, 200L);  //20L ~ 1 second
     }
 }
