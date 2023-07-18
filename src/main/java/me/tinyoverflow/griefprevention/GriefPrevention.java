@@ -24,6 +24,7 @@ import me.tinyoverflow.griefprevention.commands.AbandonClaimCommand;
 import me.tinyoverflow.griefprevention.commands.ClaimCommand;
 import me.tinyoverflow.griefprevention.commands.CommandManager;
 import me.tinyoverflow.griefprevention.commands.IgnoreClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.TrappedCommand;
 import me.tinyoverflow.griefprevention.commands.TrustCommand;
 import me.tinyoverflow.griefprevention.commands.TrustListCommand;
 import me.tinyoverflow.griefprevention.configurations.GriefPreventionConfiguration;
@@ -280,18 +281,25 @@ public class GriefPrevention extends JavaPlugin
         AddLogEntry(entry, CustomLogEntryTypes.Debug);
     }
 
-    public void onLoad() {
+    public void onLoad()
+    {
+        // Load the plugin config first, so we have everything ready
+        // for all dependencies that might come up.
+        this.loadPluginConfig();
+
+        // As CommandAPI is loaded as a library and not as a plugin,
+        // we need to trigger this event manually.
         CommandAPI.onLoad(new CommandAPIBukkitConfig(this));
     }
 
-    //initializes well...   everything
     public void onEnable()
     {
+        // As CommandAPI is loaded as a library and not as a plugin,
+        // we need to trigger this event manually.
+        CommandAPI.onEnable();
 
         instance = this;
         log = instance.getLogger();
-
-        this.loadPluginConfig();
 
         this.registerCommands();
 
@@ -411,14 +419,13 @@ public class GriefPrevention extends JavaPlugin
 
     private void registerCommands()
     {
-        CommandAPI.onEnable();
-
         CommandManager commandManager = new CommandManager();
         commandManager.add(new ClaimCommand(this));
         commandManager.add(new AbandonClaimCommand(this));
         commandManager.add(new IgnoreClaimsCommand(this));
         commandManager.add(new TrustCommand(this));
         commandManager.add(new TrustListCommand(this));
+        commandManager.add(new TrappedCommand(this));
         commandManager.register();
     }
 
@@ -438,7 +445,6 @@ public class GriefPrevention extends JavaPlugin
         return this.configuration;
     }
 
-    // TODO: Remove legacy code once all references have been updated.
     private void loadPluginConfig()
     {
         try
@@ -447,7 +453,10 @@ public class GriefPrevention extends JavaPlugin
             configurationNode = configurationLoader.load();
             configuration = configurationNode.get(GriefPreventionConfiguration.class);
 
-            this.savePluginConfig();
+            // Save the configuration from memory to disk if the file does not exist.
+            if (!configurationFile.toFile().exists()) {
+                this.savePluginConfig();
+            }
         }
         catch (ConfigurateException e)
         {
@@ -455,6 +464,7 @@ public class GriefPrevention extends JavaPlugin
         }
 
 
+        // TODO: Remove legacy code once all references have been updated.
         //load the config if it exists
         FileConfiguration config = YamlConfiguration.loadConfiguration(new File(DataStore.configFilePath));
         FileConfiguration outConfig = new YamlConfiguration();
@@ -2163,54 +2173,6 @@ public class GriefPrevention extends JavaPlugin
             sendMessage(player, TextMode.Success, Messages.SetClaimBlocksSuccess);
             if (player != null)
                 GriefPrevention.AddLogEntry(player.getName() + " set " + targetPlayer.getName() + "'s accrued claim blocks to " + newAmount + ".", CustomLogEntryTypes.AdminActivity);
-
-            return true;
-        }
-
-        //trapped
-        else if (cmd.getName().equalsIgnoreCase("trapped") && player != null)
-        {
-            //FEATURE: empower players who get "stuck" in an area where they don't have permission to build to save themselves
-
-            PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-            Claim claim = this.dataStore.getClaimAt(player.getLocation(), false, playerData.lastClaim);
-
-            //if another /trapped is pending, ignore this slash command
-            if (playerData.pendingTrapped)
-            {
-                return true;
-            }
-
-            //if the player isn't in a claim or has permission to build, tell him to man up
-            if (claim == null || claim.checkPermission(player, ClaimPermission.Build, null) == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.NotTrappedHere);
-                return true;
-            }
-
-            //rescue destination may be set by GPFlags or other plugin, ask to find out
-            SaveTrappedPlayerEvent event = new SaveTrappedPlayerEvent(claim);
-            Bukkit.getPluginManager().callEvent(event);
-
-            //if the player is in the nether or end, he's screwed (there's no way to programmatically find a safe place for him)
-            if (player.getWorld().getEnvironment() != Environment.NORMAL && event.getDestination() == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.TrappedWontWorkHere);
-                return true;
-            }
-
-            //if the player is in an administrative claim and AllowTrappedInAdminClaims is false, he should contact an admin
-            if (!GriefPrevention.instance.config_claims_allowTrappedInAdminClaims && claim.isAdminClaim() && event.getDestination() == null)
-            {
-                sendMessage(player, TextMode.Err, Messages.TrappedWontWorkHere);
-                return true;
-            }
-            //send instructions
-            sendMessage(player, TextMode.Instr, Messages.RescuePending);
-
-            //create a task to rescue this player in a little while
-            PlayerRescueTask task = new PlayerRescueTask(player, player.getLocation(), event.getDestination());
-            this.getServer().getScheduler().scheduleSyncDelayedTask(this, task, 200L);  //20L ~ 1 second
 
             return true;
         }
