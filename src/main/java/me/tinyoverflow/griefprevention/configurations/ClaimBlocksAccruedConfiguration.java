@@ -17,7 +17,7 @@ public class ClaimBlocksAccruedConfiguration
 
     @Setting
     @Comment("If the player is considered idle, it will gain the amount of claim blocks per hour multiplied with this ratio.")
-    public float idleRatio = 0.5f;
+    public double idleRatio = 0.5d;
 
     @Setting
     @Comment("The distance in blocks a player has to move between payouts to be considered active.")

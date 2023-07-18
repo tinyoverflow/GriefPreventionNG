@@ -15,4 +15,14 @@ public class ClaimToolsConfiguration
     @Setting
     @Comment("The material to use to create and modify claims.")
     public Material modification = Material.GOLDEN_SHOVEL;
+
+    public Material getInvestigationTool()
+    {
+        return this.investigation;
+    }
+
+    public Material getModificationTool()
+    {
+        return this.modification;
+    }
 }

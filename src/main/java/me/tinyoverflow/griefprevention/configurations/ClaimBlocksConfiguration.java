@@ -13,7 +13,7 @@ public class ClaimBlocksConfiguration
 
     @Setting
     @Comment("The ratio of claim blocks the player will get refunded if they abandon a claim.")
-    public float abandonReturnRatio = 0.75f;
+    public double abandonReturnRatio = 0.75d;
 
     @Setting
     public ClaimBlocksAccruedConfiguration accrued = new ClaimBlocksAccruedConfiguration();

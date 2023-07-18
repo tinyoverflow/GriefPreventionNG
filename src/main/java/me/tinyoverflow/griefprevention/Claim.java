@@ -675,16 +675,25 @@ public class Claim
     //grants a permission for a player or the public
     public void setPermission(@Nullable String playerID, @Nullable ClaimPermission permissionLevel)
     {
-        if (permissionLevel == ClaimPermission.Edit) throw new IllegalArgumentException("Cannot add editors!");
+        if (permissionLevel == ClaimPermission.Edit)
+            throw new IllegalArgumentException("Cannot add editors!");
 
-        if (playerID == null || playerID.isEmpty()) return;
+        if (playerID == null || playerID.isEmpty())
+            return;
 
         if (permissionLevel == null)
+        {
             dropPermission(playerID);
+        }
         else if (permissionLevel == ClaimPermission.Manage)
+        {
+            if (managers.contains(playerID.toLowerCase())) return;
             this.managers.add(playerID.toLowerCase());
+        }
         else
+        {
             this.playerIDToClaimPermissionMap.put(playerID.toLowerCase(), permissionLevel);
+        }
     }
 
     //revokes a permission for a player or the public
