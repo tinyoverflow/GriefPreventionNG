@@ -293,7 +293,7 @@ public class GriefPrevention extends JavaPlugin
                 if (FlatFileDataStore.hasData())
                 {
                     GriefPrevention.AddLogEntry("There appears to be some data on the hard drive.  Migrating those data to the database...");
-                    FlatFileDataStore flatFileStore = new FlatFileDataStore();
+                    FlatFileDataStore flatFileStore = new FlatFileDataStore(this.getDataFolder());
                     this.dataStore = flatFileStore;
                     flatFileStore.migrateData(databaseStore);
                     GriefPrevention.AddLogEntry("Data migration process complete.");
@@ -328,7 +328,7 @@ public class GriefPrevention extends JavaPlugin
             }
             try
             {
-                this.dataStore = new FlatFileDataStore();
+                this.dataStore = new FlatFileDataStore(this.getDataFolder());
             }
             catch (Exception e)
             {

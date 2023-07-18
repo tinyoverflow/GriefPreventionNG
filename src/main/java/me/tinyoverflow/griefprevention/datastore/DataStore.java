@@ -101,7 +101,7 @@ public abstract class DataStore
 
     //path information, for where stuff stored on disk is well...  stored
     public final static String dataLayerFolderPath = "plugins" + File.separator + "GriefPrevention";
-    final static String playerDataFolderPath = dataLayerFolderPath + File.separator + "PlayerData";
+    static String playerDataFolderPath = dataLayerFolderPath + File.separator + "PlayerData";
     public final static String configFilePath = dataLayerFolderPath + File.separator + "config.yml";
     final static String messagesFilePath = dataLayerFolderPath + File.separator + "messages.yml";
 
@@ -1637,12 +1637,6 @@ public abstract class DataStore
         this.addDefault(defaults, Messages.ShowNearbyClaims, "Found {0} land claims.", "0: Number of claims found.");
         this.addDefault(defaults, Messages.SiegeImmune, "That player is immune to /siege.", null);
         this.addDefault(defaults, Messages.SetClaimBlocksSuccess, "Updated accrued claim blocks.", null);
-        this.addDefault(defaults, Messages.IgnoreConfirmation, "You're now ignoring chat messages from that player.", null);
-        this.addDefault(defaults, Messages.UnIgnoreConfirmation, "You're no longer ignoring chat messages from that player.", null);
-        this.addDefault(defaults, Messages.NotIgnoringPlayer, "You're not ignoring that player.", null);
-        this.addDefault(defaults, Messages.SeparateConfirmation, "Those players will now ignore each other in chat.", null);
-        this.addDefault(defaults, Messages.UnSeparateConfirmation, "Those players will no longer ignore each other in chat.", null);
-        this.addDefault(defaults, Messages.NotIgnoringAnyone, "You're not ignoring anyone.", null);
         this.addDefault(defaults, Messages.TrustListHeader, "Explicit permissions here:", "0: The claim's owner");
         this.addDefault(defaults, Messages.Manage, "Manage", null);
         this.addDefault(defaults, Messages.Build, "Build", null);
@@ -1656,7 +1650,6 @@ public abstract class DataStore
         this.addDefault(defaults, Messages.NoClaimDuringPvP, "You can't claim lands during PvP combat.", null);
         this.addDefault(defaults, Messages.UntrustAllOwnerOnly, "Only the claim owner can clear all its permissions.", null);
         this.addDefault(defaults, Messages.ManagersDontUntrustManagers, "Only the claim owner can demote a manager.", null);
-        this.addDefault(defaults, Messages.PlayerNotIgnorable, "You can't ignore that player.", null);
         this.addDefault(defaults, Messages.NoEnoughBlocksForChestClaim, "Because you don't have any claim blocks available, no automatic land claim was created for you.  You can use /ClaimsList to monitor your available claim block total.", null);
         this.addDefault(defaults, Messages.MustHoldModificationToolForThat, "You must be holding a golden shovel to do that.", null);
         this.addDefault(defaults, Messages.StandInClaimToResize, "Stand inside the land claim you want to resize.", null);
@@ -1674,11 +1667,8 @@ public abstract class DataStore
         this.addDefault(defaults, Messages.BookTools, "Our claim tools are {0} and {1}.", "0: claim modification tool name; 1:claim information tool name");
         this.addDefault(defaults, Messages.BookDisabledChestClaims, "  On this server, placing a chest will NOT claim land for you.", null);
         this.addDefault(defaults, Messages.BookUsefulCommands, "Useful Commands:", null);
-        this.addDefault(defaults, Messages.NoProfanity, "Please moderate your language.", null);
-        this.addDefault(defaults, Messages.IsIgnoringYou, "That player is ignoring you.", null);
         this.addDefault(defaults, Messages.ConsoleOnlyCommand, "That command may only be executed from the server console.", null);
         this.addDefault(defaults, Messages.WorldNotFound, "World not found.", null);
-        this.addDefault(defaults, Messages.TooMuchIpOverlap, "Sorry, there are too many players logged in with your IP address.", null);
 
         this.addDefault(defaults, Messages.StandInSubclaim, "You need to be standing in a subclaim to restrict it", null);
         this.addDefault(defaults, Messages.SubclaimRestricted, "This subclaim's permissions will no longer inherit from the parent claim", null);

@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -52,7 +53,7 @@ import java.util.regex.Matcher;
 //manages data stored in the file system
 public class FlatFileDataStore extends DataStore
 {
-    private final static String claimDataFolderPath = dataLayerFolderPath + File.separator + "ClaimData";
+    private static String claimDataFolderPath = dataLayerFolderPath + File.separator + "ClaimData";
     private final static String nextClaimIdFilePath = claimDataFolderPath + File.separator + "_nextClaimID";
     private final static String schemaVersionFilePath = dataLayerFolderPath + File.separator + "_schemaVersion";
 
@@ -64,8 +65,11 @@ public class FlatFileDataStore extends DataStore
     }
 
     //initialization!
-    public FlatFileDataStore() throws Exception
+    public FlatFileDataStore(File dataFolder) throws Exception
     {
+        playerDataFolderPath = Paths.get(dataFolder.toString(), "players").toString();
+        claimDataFolderPath = Paths.get(dataFolder.toString(), "claims").toString();
+
         this.initialize();
     }
 
@@ -605,9 +609,9 @@ public class FlatFileDataStore extends DataStore
                     YamlConfiguration yaml = new YamlConfiguration();
                     yaml.load(playerFile);
 
-                    playerData.setAccruedClaimBlocks(yaml.getInt("accrued-claim-blocks"));
-                    playerData.setAccruedClaimBlocksLimit(yaml.getInt("accrued-claim-blocks-limit"));
-                    playerData.setBonusClaimBlocks(yaml.getInt("bonus-claim-blocks"));
+                    playerData.setAccruedClaimBlocks(yaml.getInt("accrued.blocks"));
+                    playerData.setAccruedClaimBlocksLimit(yaml.getInt("accrued.limit"));
+                    playerData.setBonusClaimBlocks(yaml.getInt("bonus.blocks"));
                 }
 
                 //if there's any problem with the file's content, retry up to 5 times with 5 milliseconds between
@@ -627,9 +631,9 @@ public class FlatFileDataStore extends DataStore
         if (playerID == null) return;
 
         YamlConfiguration yaml = new YamlConfiguration();
-        yaml.set("accrued-claim-blocks", playerData.getAccruedClaimBlocks());
-        yaml.set("accrued-claim-blocks-limit", playerData.getAccruedClaimBlocksLimit());
-        yaml.set("bonus-claim-blocks", playerData.getBonusClaimBlocks());
+        yaml.set("accrued.blocks", playerData.getAccruedClaimBlocks());
+        yaml.set("accrued.limit", playerData.getAccruedClaimBlocksLimit());
+        yaml.set("bonus.blocks", playerData.getBonusClaimBlocks());
 
         try
         {
