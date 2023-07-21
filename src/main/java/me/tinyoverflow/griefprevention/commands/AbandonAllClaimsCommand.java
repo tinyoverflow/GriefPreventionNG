@@ -23,7 +23,7 @@ public class AbandonAllClaimsCommand extends BaseCommand implements PlayerComman
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.abandonallclaims")
                 .withOptionalArguments(new StringArgument("confirm").replaceSuggestions(ArgumentSuggestions.strings("confirm")))
                 .executesPlayer(this);
@@ -39,7 +39,7 @@ public class AbandonAllClaimsCommand extends BaseCommand implements PlayerComman
         }
 
         //count claims
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
         int originalClaimCount = playerData.getClaims().size();
 
         //check count
@@ -49,7 +49,7 @@ public class AbandonAllClaimsCommand extends BaseCommand implements PlayerComman
             return;
         }
 
-        double abandonReturnRatio = this.getPlugin().getPluginConfig().claims.getClaimBlocks().abandonReturnRatio;
+        double abandonReturnRatio = getPlugin().getPluginConfig().getClaimConfiguration().getClaimBlocks().abandonReturnRatio;
         if (abandonReturnRatio != 1.0D)
         {
             //adjust claim blocks
@@ -61,7 +61,7 @@ public class AbandonAllClaimsCommand extends BaseCommand implements PlayerComman
 
 
         //delete them
-        this.getPlugin().getDataStore().deleteClaimsForPlayer(player.getUniqueId(), false);
+        getPlugin().getDataStore().deleteClaimsForPlayer(player.getUniqueId(), false);
 
         //inform the player
         int remainingBlocks = playerData.getRemainingClaimBlocks();

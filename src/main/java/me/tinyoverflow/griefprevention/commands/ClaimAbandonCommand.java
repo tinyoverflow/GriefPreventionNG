@@ -23,7 +23,7 @@ public class ClaimAbandonCommand extends BaseCommand implements PlayerCommandExe
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.abandonclaim")
                 .withOptionalArguments(new BooleanArgument("topLevel"))
                 .executesPlayer(this);
@@ -34,10 +34,10 @@ public class ClaimAbandonCommand extends BaseCommand implements PlayerCommandExe
     {
         final boolean abandonTopLevelClaim = (boolean) arguments.getOptional("topLevel").orElse(false);
 
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
 
         //which claim is being abandoned?
-        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
+        Claim claim = getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
         if (claim == null)
         {
             GriefPrevention.sendMessage(player, TextMode.Instr, Messages.AbandonClaimMissing);
@@ -59,7 +59,7 @@ public class ClaimAbandonCommand extends BaseCommand implements PlayerCommandExe
         {
             //delete it
             claim.removeSurfaceFluids(null);
-            this.getPlugin().getDataStore().deleteClaim(claim, true, false);
+            getPlugin().getDataStore().deleteClaim(claim, true, false);
 
             //if in a creative mode world, restore the claim area
             if (GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()))
@@ -70,7 +70,7 @@ public class ClaimAbandonCommand extends BaseCommand implements PlayerCommandExe
             }
 
             //adjust claim blocks when abandoning a top level claim
-            double abandonReturnRatio = this.getPlugin().getPluginConfig().claims.getClaimBlocks().abandonReturnRatio;
+            double abandonReturnRatio = getPlugin().getPluginConfig().getClaimConfiguration().getClaimBlocks().abandonReturnRatio;
             if (abandonReturnRatio != 1.0d && claim.parent == null && claim.ownerID.equals(playerData.playerID))
             {
                 playerData.setAccruedClaimBlocks(playerData.getAccruedClaimBlocks() - (int) Math.ceil((claim.getArea() * (1 - abandonReturnRatio))));
