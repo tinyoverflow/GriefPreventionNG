@@ -34,14 +34,14 @@ public class SiegeCommand extends BaseCommand implements PlayerCommandExecutor
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
 //error message for when siege mode is disabled
-        if (!this.getPlugin().siegeEnabledForWorld(player.getWorld()))
+        if (!getPlugin().getPluginConfig().getSiegeConfiguration().isEnabledForWorld(player.getWorld()))
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.NonSiegeWorld);
             return;
         }
 
         //can't start a siege when you're already involved in one
-        PlayerData attackerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData attackerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
         if (attackerData.siegeData != null)
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.AlreadySieging);
@@ -57,7 +57,7 @@ public class SiegeCommand extends BaseCommand implements PlayerCommandExecutor
 
         //if a player name was specified, use that
         Optional<Object> defenderOptional = commandArguments.getOptional("player").or(
-                () -> Optional.ofNullable(this.getPlugin().getServer().getPlayer(attackerData.lastPvpPlayer))
+                () -> Optional.ofNullable(getPlugin().getServer().getPlayer(attackerData.lastPvpPlayer))
         );
 
         if (defenderOptional.isEmpty()) {
@@ -82,7 +82,7 @@ public class SiegeCommand extends BaseCommand implements PlayerCommandExecutor
         }
 
         //victim must not be under siege already
-        PlayerData defenderData = this.getPlugin().getDataStore().getPlayerData(defender.getUniqueId());
+        PlayerData defenderData = getPlugin().getDataStore().getPlayerData(defender.getUniqueId());
         if (defenderData.siegeData != null)
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.AlreadyUnderSiegePlayer);
@@ -96,7 +96,7 @@ public class SiegeCommand extends BaseCommand implements PlayerCommandExecutor
             return;
         }
 
-        Claim defenderClaim = this.getPlugin().getDataStore().getClaimAt(defender.getLocation(), false, null);
+        Claim defenderClaim = getPlugin().getDataStore().getClaimAt(defender.getLocation(), false, null);
 
         //defender must have some level of permission there to be protected
         if (defenderClaim == null || defenderClaim.checkPermission(defender, ClaimPermission.Access, null) != null)
@@ -127,14 +127,14 @@ public class SiegeCommand extends BaseCommand implements PlayerCommandExecutor
         }
 
         //can't be on cooldown
-        if (this.getPlugin().getDataStore().onCooldown(player, defender, defenderClaim))
+        if (getPlugin().getDataStore().onCooldown(player, defender, defenderClaim))
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.SiegeOnCooldown);
             return;
         }
 
         //start the siege
-        this.getPlugin().getDataStore().startSiege(player, defender, defenderClaim);
+        getPlugin().getDataStore().startSiege(player, defender, defenderClaim);
 
         //confirmation message for attacker, warning message for defender
         GriefPrevention.sendMessage(defender, TextMode.Warn, Messages.SiegeAlert, player.getName());

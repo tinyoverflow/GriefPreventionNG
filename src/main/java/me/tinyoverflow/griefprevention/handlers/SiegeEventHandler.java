@@ -88,7 +88,7 @@ public class SiegeEventHandler implements Listener
         if (broken != null)
         {
             // Error messages for siege mode.
-            if (!GriefPrevention.instance.config_siege_blocks.contains(broken))
+            if (!GriefPrevention.instance.getPluginConfig().getSiegeConfiguration().isBreakableBlock(broken))
                 event.setDenialReason(() -> GriefPrevention.instance.dataStore.getMessage(Messages.NonSiegeMaterial));
             else if (player.getUniqueId().equals(claim.ownerID))
                 event.setDenialReason(() -> GriefPrevention.instance.dataStore.getMessage(Messages.NoOwnerBuildUnderSiege));

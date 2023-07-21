@@ -558,7 +558,7 @@ public class PlayerEventHandler implements Listener
         //FEATURE: prevent teleport abuse to win sieges
 
         //these rules only apply to siege worlds only
-        if (!instance.config_siege_enabledWorlds.contains(player.getWorld())) return;
+        if (!instance.getPluginConfig().getSiegeConfiguration().isEnabledForWorld(player.getWorld())) return;
 
         //these rules do not apply to admins
         if (player.hasPermission("griefprevention.siegeteleport")) return;

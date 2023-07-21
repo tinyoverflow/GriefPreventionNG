@@ -1070,7 +1070,7 @@ public abstract class DataStore
 
         //start a cooldown for this attacker/defender pair
         Long now = Calendar.getInstance().getTimeInMillis();
-        Long cooldownEnd = now + 1000 * 60 * GriefPrevention.instance.config_siege_cooldownEndInMinutes;  //one hour from now
+        Long cooldownEnd = now + 1000 * 60 * GriefPrevention.instance.getPluginConfig().getSiegeConfiguration().getCooldownEnd();  //one hour from now
         this.siegeCooldownRemaining.put(siegeData.attacker.getName() + "_" + siegeData.defender.getName(), cooldownEnd);
 
         //start cooldowns for every attacker/involved claim pair
@@ -1110,7 +1110,7 @@ public abstract class DataStore
                 SecureClaimTask task = new SecureClaimTask(siegeData);
 
                 GriefPrevention.instance.getServer().getScheduler().scheduleSyncDelayedTask(
-                        GriefPrevention.instance, task, 20L * GriefPrevention.instance.config_siege_doorsOpenSeconds
+                        GriefPrevention.instance, task, 20L * GriefPrevention.instance.getPluginConfig().getSiegeConfiguration().getDoorsOpenDelay()
                 );
             }
         }
