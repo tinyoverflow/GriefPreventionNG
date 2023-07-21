@@ -290,8 +290,8 @@ public class PlayerData
                 {
                     if (!claim.inDataStore) continue;
                     GriefPrevention.AddLogEntry(
-                            GriefPrevention.getfriendlyLocationString(claim.getLesserBoundaryCorner()) + " // "
-                                    + GriefPrevention.getfriendlyLocationString(claim.getGreaterBoundaryCorner()) + " = "
+                            GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()) + " // "
+                                    + GriefPrevention.getFriendlyLocationString(claim.getGreaterBoundaryCorner()) + " = "
                                     + claim.getArea()
                             , CustomLogEntryTypes.Debug, true);
                 }

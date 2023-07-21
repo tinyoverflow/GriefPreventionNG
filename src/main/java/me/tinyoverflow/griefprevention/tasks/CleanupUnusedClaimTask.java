@@ -128,7 +128,7 @@ class CleanupUnusedClaimTask implements Runnable
                     if (expireEventCanceled())
                         return;
                     GriefPrevention.instance.dataStore.deleteClaim(claim, true, true);
-                    GriefPrevention.AddLogEntry("Removed " + claim.getOwnerName() + "'s unused claim @ " + GriefPrevention.getfriendlyLocationString(claim.getLesserBoundaryCorner()), CustomLogEntryTypes.AdminActivity);
+                    GriefPrevention.AddLogEntry("Removed " + claim.getOwnerName() + "'s unused claim @ " + GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()), CustomLogEntryTypes.AdminActivity);
 
                     //restore the claim area to natural state
                     GriefPrevention.instance.restoreClaim(claim, 0);

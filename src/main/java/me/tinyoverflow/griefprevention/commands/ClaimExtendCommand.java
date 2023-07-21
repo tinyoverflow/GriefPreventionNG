@@ -47,8 +47,8 @@ public class ClaimExtendCommand extends BaseCommand implements PlayerCommandExec
         }
 
         //must be standing in a land claim
-        PlayerData playerData = this.plugin.getDataStore().getPlayerData(player.getUniqueId());
-        Claim claim = this.plugin.getDataStore().getClaimAt(player.getLocation(), true, playerData.lastClaim);
+        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true, playerData.lastClaim);
         if (claim == null)
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.StandInClaimToResize);
@@ -136,7 +136,7 @@ public class ClaimExtendCommand extends BaseCommand implements PlayerCommandExec
 
         //attempt resize
         playerData.claimResizing = claim;
-        this.plugin.getDataStore().resizeClaimWithChecks(player, playerData, newx1, newx2, newy1, newy2, newz1, newz2);
+        this.getPlugin().getDataStore().resizeClaimWithChecks(player, playerData, newx1, newx2, newy1, newy2, newz1, newz2);
         playerData.claimResizing = null;
     }
 }

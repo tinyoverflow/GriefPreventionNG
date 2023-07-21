@@ -157,7 +157,7 @@ public class BlockEventHandler implements Listener
         //send sign content to online administrators
         if (!GriefPrevention.instance.config_signNotifications) return;
 
-        StringBuilder lines = new StringBuilder(" placed a sign @ " + GriefPrevention.getfriendlyLocationString(event.getBlock().getLocation()));
+        StringBuilder lines = new StringBuilder(" placed a sign @ " + GriefPrevention.getFriendlyLocationString(event.getBlock().getLocation()));
         boolean notEmpty = false;
         for (int i = 0; i < event.getLines().length; i++)
         {

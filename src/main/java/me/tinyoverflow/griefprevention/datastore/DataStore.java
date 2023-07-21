@@ -1386,7 +1386,7 @@ public abstract class DataStore
             //if resizing someone else's claim, make a log entry
             if (!player.getUniqueId().equals(playerData.claimResizing.ownerID) && playerData.claimResizing.parent == null)
             {
-                GriefPrevention.AddLogEntry(player.getName() + " resized " + playerData.claimResizing.getOwnerName() + "'s claim at " + GriefPrevention.getfriendlyLocationString(playerData.claimResizing.lesserBoundaryCorner) + ".");
+                GriefPrevention.AddLogEntry(player.getName() + " resized " + playerData.claimResizing.getOwnerName() + "'s claim at " + GriefPrevention.getFriendlyLocationString(playerData.claimResizing.lesserBoundaryCorner) + ".");
             }
 
             //if increased to a sufficiently large size and no subdivisions yet, send subdivision instructions
@@ -1401,7 +1401,7 @@ public abstract class DataStore
             {
                 GriefPrevention.sendMessage(player, TextMode.Warn, Messages.UnclaimCleanupWarning);
                 GriefPrevention.instance.restoreClaim(oldClaim, 20L * 60 * 2);  //2 minutes
-                GriefPrevention.AddLogEntry(player.getName() + " shrank a claim @ " + GriefPrevention.getfriendlyLocationString(playerData.claimResizing.getLesserBoundaryCorner()));
+                GriefPrevention.AddLogEntry(player.getName() + " shrank a claim @ " + GriefPrevention.getFriendlyLocationString(playerData.claimResizing.getLesserBoundaryCorner()));
             }
 
             //clean up

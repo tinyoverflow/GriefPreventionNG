@@ -988,7 +988,7 @@ public class PlayerEventHandler implements Listener
 
             if (makeLogEntry)
             {
-                GriefPrevention.AddLogEntry(player.getName() + " placed suspicious " + bucketEvent.getBucket().name() + " @ " + GriefPrevention.getfriendlyLocationString(block.getLocation()), CustomLogEntryTypes.SuspiciousActivity, true);
+                GriefPrevention.AddLogEntry(player.getName() + " placed suspicious " + bucketEvent.getBucket().name() + " @ " + GriefPrevention.getFriendlyLocationString(block.getLocation()), CustomLogEntryTypes.SuspiciousActivity, true);
             }
         }
     }
