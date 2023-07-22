@@ -694,47 +694,6 @@ public class GriefPrevention extends JavaPlugin
         outConfig.set("GriefPrevention.Abridged Logs.Included Entry Types.Debug", this.config_logs_debugEnabled);
         outConfig.set("GriefPrevention.Abridged Logs.Included Entry Types.Muted Chat Messages", this.config_logs_mutedChatEnabled);
         outConfig.set("GriefPrevention.ConfigVersion", 1);
-
-        try
-        {
-            outConfig.save(DataStore.configFilePath);
-        }
-        catch (IOException exception)
-        {
-            AddLogEntry("Unable to write to the configuration file at \"" + DataStore.configFilePath + "\"");
-        }
-
-        //try to parse the list of commands which should be banned during pvp combat
-        this.config_pvp_blockedCommands = new ArrayList<>();
-        commands = bannedPvPCommandsList.split(";");
-        for (String command : commands)
-        {
-            this.config_pvp_blockedCommands.add(command.trim().toLowerCase());
-        }
-    }
-
-    private ClaimsMode configStringToClaimsMode(String configSetting)
-    {
-        if (configSetting.equalsIgnoreCase("Survival"))
-        {
-            return ClaimsMode.Survival;
-        }
-        else if (configSetting.equalsIgnoreCase("Creative"))
-        {
-            return ClaimsMode.Creative;
-        }
-        else if (configSetting.equalsIgnoreCase("Disabled"))
-        {
-            return ClaimsMode.Disabled;
-        }
-        else if (configSetting.equalsIgnoreCase("SurvivalRequiringClaims"))
-        {
-            return ClaimsMode.SurvivalRequiringClaims;
-        }
-        else
-        {
-            return null;
-        }
     }
 
     public DataStore getDataStore()
@@ -838,12 +797,6 @@ public class GriefPrevention extends JavaPlugin
         return this.config_claims_worldModes.get((location.getWorld())) == ClaimsMode.Creative;
     }
 
-    public String allowBuild(Player player, Location location)
-    {
-        // TODO check all derivatives and rework API
-        return this.allowBuild(player, location, location.getBlock().getType());
-    }
-
     public String allowBuild(Player player, Location location, Material material)
     {
         if (!GriefPrevention.instance.claimsEnabledForWorld(location.getWorld())) return null;
@@ -900,11 +853,6 @@ public class GriefPrevention extends JavaPlugin
     public String allowBreak(Player player, Block block, Location location)
     {
         return this.allowBreak(player, block, location, new BlockBreakEvent(block, player));
-    }
-
-    public String allowBreak(Player player, Material material, Location location, BlockBreakEvent breakEvent)
-    {
-        return this.allowBreak(player, location.getBlock(), location, breakEvent);
     }
 
     public String allowBreak(Player player, Block block, Location location, BlockBreakEvent breakEvent)
@@ -1004,45 +952,6 @@ public class GriefPrevention extends JavaPlugin
         //when done processing, this task will create a main thread task to actually update the world with processing results
         RestoreNatureProcessingTask task = new RestoreNatureProcessingTask(snapshots, miny, chunk.getWorld().getEnvironment(), lesserBoundaryCorner.getBlock().getBiome(), lesserBoundaryCorner, greaterBoundaryCorner, this.getSeaLevel(chunk.getWorld()), aggressiveMode, GriefPrevention.instance.creativeRulesApply(lesserBoundaryCorner), playerReceivingVisualization);
         GriefPrevention.instance.getServer().getScheduler().runTaskLaterAsynchronously(GriefPrevention.instance, task, delayInTicks);
-    }
-
-    private Set<Material> parseMaterialListFromConfig(List<String> stringsToParse)
-    {
-        Set<Material> materials = EnumSet.noneOf(Material.class);
-
-        //for each string in the list
-        for (int i = 0; i < stringsToParse.size(); i++)
-        {
-            String string = stringsToParse.get(i);
-
-            //defensive coding
-            if (string == null) continue;
-
-            //try to parse the string value into a material
-            Material material = Material.getMaterial(string.toUpperCase());
-
-            //null value returned indicates an error parsing the string from the config file
-            if (material == null)
-            {
-                //check if string has failed validity before
-                if (!string.contains("can't"))
-                {
-                    //update string, which will go out to config file to help user find the error entry
-                    stringsToParse.set(i, string + "     <-- can't understand this entry, see BukkitDev documentation");
-
-                    //warn about invalid material in log
-                    GriefPrevention.AddLogEntry(String.format("ERROR: Invalid material %s.  Please update your config.yml.", string));
-                }
-            }
-
-            //otherwise material is valid, add it
-            else
-            {
-                materials.add(material);
-            }
-        }
-
-        return materials;
     }
 
     public int getSeaLevel(World world)
