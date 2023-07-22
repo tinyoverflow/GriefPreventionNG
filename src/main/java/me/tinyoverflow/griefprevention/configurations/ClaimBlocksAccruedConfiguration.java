@@ -22,4 +22,8 @@ public class ClaimBlocksAccruedConfiguration
     @Setting
     @Comment("The distance in blocks a player has to move between payouts to be considered active.")
     public int idleDistanceThreshold = 0;
+
+    public boolean isAccrualEnabled() {
+        return accruePerHour > 0;
+    }
 }

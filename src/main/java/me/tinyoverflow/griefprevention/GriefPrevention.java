@@ -75,50 +75,6 @@ public class GriefPrevention extends JavaPlugin
     public ArrayList<PendingItemProtection> pendingItemWatchList = new ArrayList<>();
     //claim mode for each world
     public ConcurrentHashMap<World, ClaimsMode> config_claims_worldModes;
-    public boolean config_claims_preventGlobalMonsterEggs; //whether monster eggs can be placed regardless of trust.
-    public boolean config_claims_preventTheft;                        //whether containers and crafting blocks are protectable
-    public boolean config_claims_protectCreatures;                    //whether claimed animals may be injured by players without permission
-    public boolean config_claims_protectHorses;                        //whether horses on a claim should be protected by that claim's rules
-    //configuration variables, loaded/saved from a config.yml
-    public boolean config_claims_protectDonkeys;                    //whether donkeys on a claim should be protected by that claim's rules
-    public boolean config_claims_protectLlamas;                        //whether llamas on a claim should be protected by that claim's rules
-    public boolean config_claims_preventButtonsSwitches;            //whether buttons and switches are protectable
-    public boolean config_claims_lockWoodenDoors;                    //whether wooden doors should be locked by default (require /accesstrust)
-    public boolean config_claims_lockTrapDoors;                        //whether trap doors should be locked by default (require /accesstrust)
-    public boolean config_claims_lockFenceGates;                    //whether fence gates should be locked by default (require /accesstrust)
-    public boolean config_claims_preventNonPlayerCreatedPortals;    // whether portals where we cannot determine the creating player should be prevented from creation in claims
-    public boolean config_claims_enderPearlsRequireAccessTrust;        //whether teleporting into a claim with a pearl requires access trust
-    public boolean config_claims_raidTriggersRequireBuildTrust;      //whether raids are triggered by a player that doesn't have build permission in that claim
-    public int config_claims_maxClaimsPerPlayer;                    //maximum number of claims per player
-    public boolean config_claims_respectWorldGuard;                 //whether claim creations requires WG build permission in creation area
-    public boolean config_claims_villagerTradingRequiresTrust;      //whether trading with a claimed villager requires permission
-    public int config_claims_initialBlocks;                            //the number of claim blocks a new player starts with
-    public double config_claims_abandonReturnRatio;                 //the portion of claim blocks returned to a player when a claim is abandoned
-    public int config_claims_blocksAccruedPerHour_default;            //how many additional blocks players get each hour of play (can be zero) without any special permissions
-    public int config_claims_maxAccruedBlocks_default;                //the limit on accrued blocks (over time) for players without any special permissions.  doesn't limit purchased or admin-gifted blocks
-    public int config_claims_accruedIdleThreshold;                    //how far (in blocks) a player must move in order to not be considered afk/idle when determining accrued claim blocks
-    public int config_claims_accruedIdlePercent;                    //how much percentage of claim block accruals should idle players get
-    public int config_claims_maxDepth;                                //limit on how deep claims can go
-    public int config_claims_expirationDays;                        //how many days of inactivity before a player loses his claims
-    public int config_claims_expirationExemptionTotalBlocks;        //total claim blocks amount which will exempt a player from claim expiration
-    public int config_claims_expirationExemptionBonusBlocks;        //bonus claim blocks amount which will exempt a player from claim expiration
-    public int config_claims_automaticClaimsForNewPlayersRadius;    //how big automatic new player claims (when they place a chest) should be.  -1 to disable
-    public int config_claims_automaticClaimsForNewPlayersRadiusMin; //how big automatic new player claims must be. 0 to disable
-    public int config_claims_claimsExtendIntoGroundDistance;        //how far below the shoveled block a new claim will reach
-    public int config_claims_minWidth;                                //minimum width for non-admin claims
-    public int config_claims_minArea;                               //minimum area for non-admin claims
-    public int config_claims_chestClaimExpirationDays;                //number of days of inactivity before an automatic chest claim will be deleted
-    public int config_claims_unusedClaimExpirationDays;                //number of days of inactivity before an unused (nothing build) claim will be deleted
-    public boolean config_claims_survivalAutoNatureRestoration;        //whether survival claims will be automatically restored to nature when auto-deleted
-    public boolean config_claims_allowTrappedInAdminClaims;            //whether it should be allowed to use /trapped in adminclaims.
-    public Material config_claims_investigationTool;                //which material will be used to investigate claims with a right click
-    public Material config_claims_modificationTool;                    //which material will be used to create/resize claims with a right click
-    public ArrayList<String> config_claims_commandsRequiringAccessTrust; //the list of slash commands requiring access trust when in a claim
-    public boolean config_claims_supplyPlayerManual;                //whether to give new players a book with land claim help in it
-    public int config_claims_manualDeliveryDelaySeconds;            //how long to wait before giving a book to a new player
-    public boolean config_claims_firespreads;                        //whether fire will spread in claims
-    public boolean config_claims_firedamages;                        //whether fire will damage in claims
-    public boolean config_claims_lecternReadingRequiresAccessTrust;                    //reading lecterns requires access trust
     public boolean config_pvp_protectFreshSpawns;                    //whether to make newly spawned players immune until they pick up an item
     public boolean config_pvp_punishLogout;                            //whether to kill players who log out during PvP combat
     public int config_pvp_combatTimeoutSeconds;                        //how long combat is considered to continue after the most recent damage
@@ -422,10 +378,10 @@ public class GriefPrevention extends JavaPlugin
 
         //unless claim block accrual is disabled, start the recurring per 10 minute event to give claim blocks to online players
         //20L ~ 1 second
-        if (this.config_claims_blocksAccruedPerHour_default > 0)
+        if (getPluginConfig().getClaimConfiguration().getClaimBlocks().accrued.isAccrualEnabled())
         {
             DeliverClaimBlocksTask task = new DeliverClaimBlocksTask(null, this);
-            this.getServer().getScheduler().scheduleSyncRepeatingTask(this, task, 20L * 60 * 10, 20L * 60 * 10);
+            getServer().getScheduler().scheduleSyncRepeatingTask(this, task, 20L * 60 * 10, 20L * 60 * 10);
         }
 
         //start the recurring cleanup event for entities in creative worlds
@@ -594,77 +550,6 @@ public class GriefPrevention extends JavaPlugin
         //get (deprecated) pvp lava dump proximity note and use it if it exists (in the new config format it will be overwritten later).
         config_pvp_allowLavaNearPlayers = config.getBoolean("GriefPrevention.PvP.AllowLavaDumpingNearOtherPlayers", false);
 
-        //decide claim mode for each world
-        this.config_claims_worldModes = new ConcurrentHashMap<>();
-        this.config_creativeWorldsExist = false;
-        for (World world : worlds)
-        {
-            //is it specified in the config file?
-            String configSetting = config.getString("GriefPrevention.Claims.Mode." + world.getName());
-            if (configSetting != null)
-            {
-                ClaimsMode claimsMode = this.configStringToClaimsMode(configSetting);
-                if (claimsMode != null)
-                {
-                    this.config_claims_worldModes.put(world, claimsMode);
-                    if (claimsMode == ClaimsMode.Creative) this.config_creativeWorldsExist = true;
-                    continue;
-                }
-                else
-                {
-                    GriefPrevention.AddLogEntry("Error: Invalid claim mode \"" + configSetting + "\".  Options are Survival, Creative, and Disabled.");
-                    this.config_claims_worldModes.put(world, ClaimsMode.Creative);
-                    this.config_creativeWorldsExist = true;
-                }
-            }
-
-            //was it specified in a deprecated config node?
-            if (deprecated_creativeClaimsEnabledWorldNames.contains(world.getName()))
-            {
-                this.config_claims_worldModes.put(world, ClaimsMode.Creative);
-                this.config_creativeWorldsExist = true;
-            }
-            else if (deprecated_claimsEnabledWorldNames.contains(world.getName()))
-            {
-                this.config_claims_worldModes.put(world, ClaimsMode.Survival);
-            }
-
-            //does the world's name indicate its purpose?
-            else if (world.getName().toLowerCase().contains("survival"))
-            {
-                this.config_claims_worldModes.put(world, ClaimsMode.Survival);
-            }
-            else if (world.getName().toLowerCase().contains("creative"))
-            {
-                this.config_claims_worldModes.put(world, ClaimsMode.Creative);
-                this.config_creativeWorldsExist = true;
-            }
-
-            //decide a default based on server type and world type
-            else if (this.getServer().getDefaultGameMode() == GameMode.CREATIVE)
-            {
-                this.config_claims_worldModes.put(world, ClaimsMode.Creative);
-                this.config_creativeWorldsExist = true;
-            }
-            else if (world.getEnvironment() == Environment.NORMAL)
-            {
-                this.config_claims_worldModes.put(world, ClaimsMode.Survival);
-            }
-            else
-            {
-                this.config_claims_worldModes.put(world, ClaimsMode.Disabled);
-            }
-
-            //if the setting WOULD be disabled but this is a server upgrading from the old config format,
-            //then default to survival mode for safety's sake (to protect any admin claims which may
-            //have been created there)
-            if (this.config_claims_worldModes.get(world) == ClaimsMode.Disabled &&
-                    deprecated_claimsEnabledWorldNames.size() > 0)
-            {
-                this.config_claims_worldModes.put(world, ClaimsMode.Survival);
-            }
-        }
-
         //pvp worlds list
         this.config_pvp_specifiedWorlds = new HashMap<>();
         for (World world : worlds)
@@ -681,61 +566,6 @@ public class GriefPrevention extends JavaPlugin
             outConfig.set("GriefPrevention.SeaLevelOverrides." + world.getName(), seaLevelOverride);
             this.config_seaLevelOverride.put(world.getName(), seaLevelOverride);
         }
-
-        this.config_claims_preventGlobalMonsterEggs = config.getBoolean("GriefPrevention.Claims.PreventGlobalMonsterEggs", true);
-        this.config_claims_preventTheft = config.getBoolean("GriefPrevention.Claims.PreventTheft", true);
-        this.config_claims_protectCreatures = config.getBoolean("GriefPrevention.Claims.ProtectCreatures", true);
-        this.config_claims_protectHorses = config.getBoolean("GriefPrevention.Claims.ProtectHorses", true);
-        this.config_claims_protectDonkeys = config.getBoolean("GriefPrevention.Claims.ProtectDonkeys", true);
-        this.config_claims_protectLlamas = config.getBoolean("GriefPrevention.Claims.ProtectLlamas", true);
-        this.config_claims_preventButtonsSwitches = config.getBoolean("GriefPrevention.Claims.PreventButtonsSwitches", true);
-        this.config_claims_lockWoodenDoors = config.getBoolean("GriefPrevention.Claims.LockWoodenDoors", false);
-        this.config_claims_lockTrapDoors = config.getBoolean("GriefPrevention.Claims.LockTrapDoors", false);
-        this.config_claims_lockFenceGates = config.getBoolean("GriefPrevention.Claims.LockFenceGates", true);
-        this.config_claims_preventNonPlayerCreatedPortals = config.getBoolean("GriefPrevention.Claims.PreventNonPlayerCreatedPortals", false);
-        this.config_claims_enderPearlsRequireAccessTrust = config.getBoolean("GriefPrevention.Claims.EnderPearlsRequireAccessTrust", true);
-        this.config_claims_raidTriggersRequireBuildTrust = config.getBoolean("GriefPrevention.Claims.RaidTriggersRequireBuildTrust", true);
-        this.config_claims_initialBlocks = config.getInt("GriefPrevention.Claims.InitialBlocks", 100);
-        this.config_claims_blocksAccruedPerHour_default = config.getInt("GriefPrevention.Claims.BlocksAccruedPerHour", 100);
-        this.config_claims_blocksAccruedPerHour_default = config.getInt("GriefPrevention.Claims.Claim Blocks Accrued Per Hour.Default", config_claims_blocksAccruedPerHour_default);
-        this.config_claims_maxAccruedBlocks_default = config.getInt("GriefPrevention.Claims.MaxAccruedBlocks", 80000);
-        this.config_claims_maxAccruedBlocks_default = config.getInt("GriefPrevention.Claims.Max Accrued Claim Blocks.Default", this.config_claims_maxAccruedBlocks_default);
-        this.config_claims_accruedIdleThreshold = config.getInt("GriefPrevention.Claims.AccruedIdleThreshold", 0);
-        this.config_claims_accruedIdleThreshold = config.getInt("GriefPrevention.Claims.Accrued Idle Threshold", this.config_claims_accruedIdleThreshold);
-        this.config_claims_accruedIdlePercent = config.getInt("GriefPrevention.Claims.AccruedIdlePercent", 0);
-        this.config_claims_abandonReturnRatio = config.getDouble("GriefPrevention.Claims.AbandonReturnRatio", 1.0D);
-        this.config_claims_automaticClaimsForNewPlayersRadius = config.getInt("GriefPrevention.Claims.AutomaticNewPlayerClaimsRadius", 4);
-        this.config_claims_automaticClaimsForNewPlayersRadiusMin = Math.max(0, Math.min(this.config_claims_automaticClaimsForNewPlayersRadius,
-                config.getInt("GriefPrevention.Claims.AutomaticNewPlayerClaimsRadiusMinimum", 0)));
-        this.config_claims_claimsExtendIntoGroundDistance = Math.abs(config.getInt("GriefPrevention.Claims.ExtendIntoGroundDistance", 5));
-        this.config_claims_minWidth = config.getInt("GriefPrevention.Claims.MinimumWidth", 5);
-        this.config_claims_minArea = config.getInt("GriefPrevention.Claims.MinimumArea", 100);
-        this.config_claims_maxDepth = config.getInt("GriefPrevention.Claims.MaximumDepth", Integer.MIN_VALUE);
-        if (configVersion < 1 && this.config_claims_maxDepth == 0)
-        {
-            // If MaximumDepth is untouched in an older configuration, correct it.
-            this.config_claims_maxDepth = Integer.MIN_VALUE;
-            AddLogEntry("Updated default value for GriefPrevention.Claims.MaximumDepth to " + Integer.MIN_VALUE);
-        }
-        this.config_claims_chestClaimExpirationDays = config.getInt("GriefPrevention.Claims.Expiration.ChestClaimDays", 7);
-        this.config_claims_unusedClaimExpirationDays = config.getInt("GriefPrevention.Claims.Expiration.UnusedClaimDays", 14);
-        this.config_claims_expirationDays = config.getInt("GriefPrevention.Claims.Expiration.AllClaims.DaysInactive", 60);
-        this.config_claims_expirationExemptionTotalBlocks = config.getInt("GriefPrevention.Claims.Expiration.AllClaims.ExceptWhenOwnerHasTotalClaimBlocks", 10000);
-        this.config_claims_expirationExemptionBonusBlocks = config.getInt("GriefPrevention.Claims.Expiration.AllClaims.ExceptWhenOwnerHasBonusClaimBlocks", 5000);
-        this.config_claims_survivalAutoNatureRestoration = config.getBoolean("GriefPrevention.Claims.Expiration.AutomaticNatureRestoration.SurvivalWorlds", false);
-        this.config_claims_allowTrappedInAdminClaims = config.getBoolean("GriefPrevention.Claims.AllowTrappedInAdminClaims", false);
-
-        this.config_claims_maxClaimsPerPlayer = config.getInt("GriefPrevention.Claims.MaximumNumberOfClaimsPerPlayer", 0);
-        this.config_claims_respectWorldGuard = config.getBoolean("GriefPrevention.Claims.CreationRequiresWorldGuardBuildPermission", true);
-        this.config_claims_villagerTradingRequiresTrust = config.getBoolean("GriefPrevention.Claims.VillagerTradingRequiresPermission", true);
-        String accessTrustSlashCommands = config.getString("GriefPrevention.Claims.CommandsRequiringAccessTrust", "/sethome");
-        this.config_claims_supplyPlayerManual = config.getBoolean("GriefPrevention.Claims.DeliverManuals", true);
-        this.config_claims_manualDeliveryDelaySeconds = config.getInt("GriefPrevention.Claims.ManualDeliveryDelaySeconds", 30);
-        this.config_claims_ravagersBreakBlocks = config.getBoolean("GriefPrevention.Claims.RavagersBreakBlocks", true);
-
-        this.config_claims_firespreads = config.getBoolean("GriefPrevention.Claims.FireSpreadsInClaims", false);
-        this.config_claims_firedamages = config.getBoolean("GriefPrevention.Claims.FireDamagesInClaims", false);
-        this.config_claims_lecternReadingRequiresAccessTrust = config.getBoolean("GriefPrevention.Claims.LecternReadingRequiresAccessTrust", true);
 
         this.config_pvp_protectFreshSpawns = config.getBoolean("GriefPrevention.PvP.ProtectFreshSpawns", true);
         this.config_pvp_punishLogout = config.getBoolean("GriefPrevention.PvP.PunishLogout", true);
@@ -773,34 +603,6 @@ public class GriefPrevention extends JavaPlugin
         this.config_rabbitsEatCrops = config.getBoolean("GriefPrevention.RabbitsEatCrops", true);
         this.config_zombiesBreakDoors = config.getBoolean("GriefPrevention.HardModeZombiesBreakDoors", false);
 
-        //default for claim investigation tool
-        String investigationToolMaterialName = Material.STICK.name();
-
-        //get investigation tool from config
-        investigationToolMaterialName = config.getString("GriefPrevention.Claims.InvestigationTool", investigationToolMaterialName);
-
-        //validate investigation tool
-        this.config_claims_investigationTool = Material.getMaterial(investigationToolMaterialName);
-        if (this.config_claims_investigationTool == null)
-        {
-            GriefPrevention.AddLogEntry("ERROR: Material " + investigationToolMaterialName + " not found.  Defaulting to the stick.  Please update your config.yml.");
-            this.config_claims_investigationTool = Material.STICK;
-        }
-
-        //default for claim creation/modification tool
-        String modificationToolMaterialName = Material.GOLDEN_SHOVEL.name();
-
-        //get modification tool from config
-        modificationToolMaterialName = config.getString("GriefPrevention.Claims.ModificationTool", modificationToolMaterialName);
-
-        //validate modification tool
-        this.config_claims_modificationTool = Material.getMaterial(modificationToolMaterialName);
-        if (this.config_claims_modificationTool == null)
-        {
-            GriefPrevention.AddLogEntry("ERROR: Material " + modificationToolMaterialName + " not found.  Defaulting to the golden shovel.  Please update your config.yml.");
-            this.config_claims_modificationTool = Material.GOLDEN_SHOVEL;
-        }
-
         this.config_pvp_noCombatInPlayerLandClaims = config.getBoolean("GriefPrevention.PvP.ProtectPlayersInLandClaims.PlayerOwnedClaims", true);
         this.config_pvp_noCombatInAdminLandClaims = config.getBoolean("GriefPrevention.PvP.ProtectPlayersInLandClaims.AdministrativeClaims", true);
         this.config_pvp_noCombatInAdminSubdivisions = config.getBoolean("GriefPrevention.PvP.ProtectPlayersInLandClaims.AdministrativeSubdivisions", true);
@@ -826,60 +628,6 @@ public class GriefPrevention extends JavaPlugin
         this.config_logs_adminEnabled = config.getBoolean("GriefPrevention.Abridged Logs.Included Entry Types.Administrative Activity", false);
         this.config_logs_debugEnabled = config.getBoolean("GriefPrevention.Abridged Logs.Included Entry Types.Debug", false);
         this.config_logs_mutedChatEnabled = config.getBoolean("GriefPrevention.Abridged Logs.Included Entry Types.Muted Chat Messages", false);
-
-        //claims mode by world
-        for (World world : this.config_claims_worldModes.keySet())
-        {
-            outConfig.set(
-                    "GriefPrevention.Claims.Mode." + world.getName(),
-                    this.config_claims_worldModes.get(world).name());
-        }
-
-
-        outConfig.set("GriefPrevention.Claims.PreventGlobalMonsterEggs", this.config_claims_preventGlobalMonsterEggs);
-        outConfig.set("GriefPrevention.Claims.PreventTheft", this.config_claims_preventTheft);
-        outConfig.set("GriefPrevention.Claims.ProtectCreatures", this.config_claims_protectCreatures);
-        outConfig.set("GriefPrevention.Claims.PreventButtonsSwitches", this.config_claims_preventButtonsSwitches);
-        outConfig.set("GriefPrevention.Claims.LockWoodenDoors", this.config_claims_lockWoodenDoors);
-        outConfig.set("GriefPrevention.Claims.LockTrapDoors", this.config_claims_lockTrapDoors);
-        outConfig.set("GriefPrevention.Claims.LockFenceGates", this.config_claims_lockFenceGates);
-        outConfig.set("GriefPrevention.Claims.EnderPearlsRequireAccessTrust", this.config_claims_enderPearlsRequireAccessTrust);
-        outConfig.set("GriefPrevention.Claims.RaidTriggersRequireBuildTrust", this.config_claims_raidTriggersRequireBuildTrust);
-        outConfig.set("GriefPrevention.Claims.ProtectHorses", this.config_claims_protectHorses);
-        outConfig.set("GriefPrevention.Claims.ProtectDonkeys", this.config_claims_protectDonkeys);
-        outConfig.set("GriefPrevention.Claims.ProtectLlamas", this.config_claims_protectLlamas);
-        outConfig.set("GriefPrevention.Claims.InitialBlocks", this.config_claims_initialBlocks);
-        outConfig.set("GriefPrevention.Claims.Claim Blocks Accrued Per Hour.Default", this.config_claims_blocksAccruedPerHour_default);
-        outConfig.set("GriefPrevention.Claims.Max Accrued Claim Blocks.Default", this.config_claims_maxAccruedBlocks_default);
-        outConfig.set("GriefPrevention.Claims.Accrued Idle Threshold", this.config_claims_accruedIdleThreshold);
-        outConfig.set("GriefPrevention.Claims.AccruedIdlePercent", this.config_claims_accruedIdlePercent);
-        outConfig.set("GriefPrevention.Claims.AbandonReturnRatio", this.config_claims_abandonReturnRatio);
-        outConfig.set("GriefPrevention.Claims.AutomaticNewPlayerClaimsRadius", this.config_claims_automaticClaimsForNewPlayersRadius);
-        outConfig.set("GriefPrevention.Claims.AutomaticNewPlayerClaimsRadiusMinimum", this.config_claims_automaticClaimsForNewPlayersRadiusMin);
-        outConfig.set("GriefPrevention.Claims.ExtendIntoGroundDistance", this.config_claims_claimsExtendIntoGroundDistance);
-        outConfig.set("GriefPrevention.Claims.MinimumWidth", this.config_claims_minWidth);
-        outConfig.set("GriefPrevention.Claims.MinimumArea", this.config_claims_minArea);
-        outConfig.set("GriefPrevention.Claims.MaximumDepth", this.config_claims_maxDepth);
-        outConfig.set("GriefPrevention.Claims.InvestigationTool", this.config_claims_investigationTool.name());
-        outConfig.set("GriefPrevention.Claims.ModificationTool", this.config_claims_modificationTool.name());
-        outConfig.set("GriefPrevention.Claims.Expiration.ChestClaimDays", this.config_claims_chestClaimExpirationDays);
-        outConfig.set("GriefPrevention.Claims.Expiration.UnusedClaimDays", this.config_claims_unusedClaimExpirationDays);
-        outConfig.set("GriefPrevention.Claims.Expiration.AllClaims.DaysInactive", this.config_claims_expirationDays);
-        outConfig.set("GriefPrevention.Claims.Expiration.AllClaims.ExceptWhenOwnerHasTotalClaimBlocks", this.config_claims_expirationExemptionTotalBlocks);
-        outConfig.set("GriefPrevention.Claims.Expiration.AllClaims.ExceptWhenOwnerHasBonusClaimBlocks", this.config_claims_expirationExemptionBonusBlocks);
-        outConfig.set("GriefPrevention.Claims.Expiration.AutomaticNatureRestoration.SurvivalWorlds", this.config_claims_survivalAutoNatureRestoration);
-        outConfig.set("GriefPrevention.Claims.AllowTrappedInAdminClaims", this.config_claims_allowTrappedInAdminClaims);
-        outConfig.set("GriefPrevention.Claims.MaximumNumberOfClaimsPerPlayer", this.config_claims_maxClaimsPerPlayer);
-        outConfig.set("GriefPrevention.Claims.CreationRequiresWorldGuardBuildPermission", this.config_claims_respectWorldGuard);
-        outConfig.set("GriefPrevention.Claims.VillagerTradingRequiresPermission", this.config_claims_villagerTradingRequiresTrust);
-        outConfig.set("GriefPrevention.Claims.CommandsRequiringAccessTrust", accessTrustSlashCommands);
-        outConfig.set("GriefPrevention.Claims.DeliverManuals", config_claims_supplyPlayerManual);
-        outConfig.set("GriefPrevention.Claims.ManualDeliveryDelaySeconds", config_claims_manualDeliveryDelaySeconds);
-        outConfig.set("GriefPrevention.Claims.RavagersBreakBlocks", config_claims_ravagersBreakBlocks);
-
-        outConfig.set("GriefPrevention.Claims.FireSpreadsInClaims", config_claims_firespreads);
-        outConfig.set("GriefPrevention.Claims.FireDamagesInClaims", config_claims_firedamages);
-        outConfig.set("GriefPrevention.Claims.LecternReadingRequiresAccessTrust", config_claims_lecternReadingRequiresAccessTrust);
 
         for (World world : worlds)
         {
@@ -954,17 +702,6 @@ public class GriefPrevention extends JavaPlugin
         catch (IOException exception)
         {
             AddLogEntry("Unable to write to the configuration file at \"" + DataStore.configFilePath + "\"");
-        }
-
-        //try to parse the list of commands requiring access trust in land claims
-        this.config_claims_commandsRequiringAccessTrust = new ArrayList<>();
-        String[] commands = accessTrustSlashCommands.split(";");
-        for (String command : commands)
-        {
-            if (!command.isEmpty())
-            {
-                this.config_claims_commandsRequiringAccessTrust.add(command.trim().toLowerCase());
-            }
         }
 
         //try to parse the list of commands which should be banned during pvp combat

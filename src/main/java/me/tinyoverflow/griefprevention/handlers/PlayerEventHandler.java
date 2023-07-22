@@ -235,7 +235,7 @@ public class PlayerEventHandler implements Listener
         //if requires access trust, check for permission
         boolean isMonitoredCommand = false;
         String lowerCaseMessage = message.toLowerCase();
-        for (String monitoredCommand : instance.config_claims_commandsRequiringAccessTrust)
+        for (String monitoredCommand : instance.getPluginConfig().getClaimConfiguration().getCommandTrustLimits().accessTrust)
         {
             if (lowerCaseMessage.startsWith(monitoredCommand))
             {

@@ -1,5 +1,6 @@
 package me.tinyoverflow.griefprevention.configurations;
 
+import me.tinyoverflow.griefprevention.ClaimsMode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
@@ -11,7 +12,11 @@ public class ClaimConfiguration
 {
     @Setting
     @Comment("How the plugin should work in different worlds (Disabled, Survival, SurvivalRequiringClaims, Creative).")
-    private Map<String, String> mode = Map.of("world", "Survival", "world_nether", "Disabled", "world_the_end", "Disabled");
+    private Map<String, ClaimsMode> mode = Map.of(
+            "world", ClaimsMode.Survival,
+            "world_nether", ClaimsMode.Disabled,
+            "world_the_end", ClaimsMode.Disabled
+    );
 
     @Setting
     @Comment("Whether the /trapped command can be used inside admin claims.")
