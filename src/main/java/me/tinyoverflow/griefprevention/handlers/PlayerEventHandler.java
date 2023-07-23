@@ -235,7 +235,7 @@ public class PlayerEventHandler implements Listener
         //if requires access trust, check for permission
         boolean isMonitoredCommand = false;
         String lowerCaseMessage = message.toLowerCase();
-        for (String monitoredCommand : instance.getPluginConfig().getClaimConfiguration().getCommandTrustLimits().accessTrust)
+        for (String monitoredCommand : instance.getPluginConfig().getClaimConfiguration().getCommandTrustLimitsConfiguration().accessTrust)
         {
             if (lowerCaseMessage.startsWith(monitoredCommand))
             {
@@ -368,7 +368,7 @@ public class PlayerEventHandler implements Listener
             if (instance.config_claims_worldModes.get(player.getWorld()) == ClaimsMode.Survival && !player.hasPermission("griefprevention.adminclaims") && this.dataStore.claims.size() > 10)
             {
                 WelcomeTask task = new WelcomeTask(player);
-                Bukkit.getScheduler().scheduleSyncDelayedTask(instance, task, instance.getPluginConfig().getClaimConfiguration().getManual().delay * 20L);
+                Bukkit.getScheduler().scheduleSyncDelayedTask(instance, task, instance.getPluginConfig().getClaimConfiguration().getManualConfiguration().delay * 20L);
             }
         }
 
@@ -538,7 +538,7 @@ public class PlayerEventHandler implements Listener
 
         //FEATURE: prevent players from using ender pearls to gain access to secured claims
         TeleportCause cause = event.getCause();
-        if (cause == TeleportCause.CHORUS_FRUIT || (cause == TeleportCause.ENDER_PEARL && instance.getPluginConfig().getClaimConfiguration().getProtection().preventEnderPearls))
+        if (cause == TeleportCause.CHORUS_FRUIT || (cause == TeleportCause.ENDER_PEARL && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingEnderPearls()))
         {
             Claim toClaim = this.dataStore.getClaimAt(event.getTo(), false, playerData.lastClaim);
             if (toClaim != null)
@@ -589,7 +589,7 @@ public class PlayerEventHandler implements Listener
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerTriggerRaid(RaidTriggerEvent event)
     {
-        if (!instance.getPluginConfig().getClaimConfiguration().getProtection().preventRaidTriggers)
+        if (!instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingRaidTriggers())
             return;
 
         Player player = event.getPlayer();
@@ -627,10 +627,10 @@ public class PlayerEventHandler implements Listener
         if (!instance.claimsEnabledForWorld(entity.getWorld())) return;
 
         //allow horse protection to be overridden to allow management from other plugins
-        if (!instance.getPluginConfig().getClaimConfiguration().getMobs().protectHorses && entity instanceof AbstractHorse) return;
-        if (!instance.getPluginConfig().getClaimConfiguration().getMobs().protectDonkeys && entity instanceof Donkey) return;
-        if (!instance.getPluginConfig().getClaimConfiguration().getMobs().protectDonkeys && entity instanceof Mule) return;
-        if (!instance.getPluginConfig().getClaimConfiguration().getMobs().protectLlamas && entity instanceof Llama) return;
+        if (!instance.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectHorses && entity instanceof AbstractHorse) return;
+        if (!instance.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys && entity instanceof Donkey) return;
+        if (!instance.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys && entity instanceof Mule) return;
+        if (!instance.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectLlamas && entity instanceof Llama) return;
 
         PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
 
@@ -735,7 +735,7 @@ public class PlayerEventHandler implements Listener
         }
 
         //if the entity is a vehicle and we're preventing theft in claims
-        if (instance.getPluginConfig().getClaimConfiguration().getProtection().lockContainers && entity instanceof Vehicle)
+        if (instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().lockContainers && entity instanceof Vehicle)
         {
             //if the entity is in a claim
             Claim claim = this.dataStore.getClaimAt(entity.getLocation(), false, null);
@@ -756,7 +756,7 @@ public class PlayerEventHandler implements Listener
         }
 
         //if the entity is an animal, apply container rules
-        if ((instance.getPluginConfig().getClaimConfiguration().getProtection().lockContainers && (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER && instance.getPluginConfig().getClaimConfiguration().getProtection().preventVillagerTrades))
+        if ((instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().lockContainers && (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingVillagerTrades()))
         {
             //if the entity is in a claim
             Claim claim = this.dataStore.getClaimAt(entity.getLocation(), false, null);
@@ -783,7 +783,7 @@ public class PlayerEventHandler implements Listener
         ItemStack itemInHand = instance.getItemInHand(player, event.getHand());
 
         //if preventing theft, prevent leashing claimed creatures
-        if (instance.getPluginConfig().getClaimConfiguration().getProtection().lockContainers && entity instanceof Creature && itemInHand.getType() == Material.LEAD)
+        if (instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().lockContainers && entity instanceof Creature && itemInHand.getType() == Material.LEAD)
         {
             Claim claim = this.dataStore.getClaimAt(entity.getLocation(), false, playerData.lastClaim);
             if (claim != null)
@@ -881,7 +881,7 @@ public class PlayerEventHandler implements Listener
         //if he's switching to the golden shovel
         int newSlot = event.getNewSlot();
         ItemStack newItemStack = player.getInventory().getItem(newSlot);
-        if (newItemStack != null && newItemStack.getType() == instance.getPluginConfig().getClaimConfiguration().getTools().getModificationTool())
+        if (newItemStack != null && newItemStack.getType() == instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool())
         {
             //give the player his available claim blocks count and claiming instructions, but only if he keeps the shovel equipped for a minimum time, to avoid mouse wheel spam
             if (instance.claimsEnabledForWorld(player.getWorld()))
@@ -1114,7 +1114,7 @@ public class PlayerEventHandler implements Listener
         }
 
         //apply rules for containers and crafting blocks
-        if (clickedBlock != null && instance.getPluginConfig().getClaimConfiguration().getProtection().lockContainers && (
+        if (clickedBlock != null && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().lockContainers && (
                 event.getAction() == Action.RIGHT_CLICK_BLOCK && (
                         (this.isInventoryHolder(clickedBlock) && clickedBlock.getType() != Material.LECTERN) ||
                                 clickedBlockType == Material.ANVIL ||
@@ -1186,15 +1186,15 @@ public class PlayerEventHandler implements Listener
         //otherwise apply rules for doors and beds, if configured that way
         else if (clickedBlock != null &&
 
-                (instance.getPluginConfig().getClaimConfiguration().getProtection().lockWoodenDoors && Tag.DOORS.isTagged(clickedBlockType) ||
+                (instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingWoodenDoors() && Tag.DOORS.isTagged(clickedBlockType) ||
 
-                instance.getPluginConfig().getClaimConfiguration().getProtection().lockSwitches && Tag.BEDS.isTagged(clickedBlockType) ||
+                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingSwitches() && Tag.BEDS.isTagged(clickedBlockType) ||
 
-                instance.getPluginConfig().getClaimConfiguration().getProtection().lockTrapDoors && Tag.TRAPDOORS.isTagged(clickedBlockType) ||
+                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingTrapDoors() && Tag.TRAPDOORS.isTagged(clickedBlockType) ||
 
-                instance.getPluginConfig().getClaimConfiguration().getProtection().lockLecterns && clickedBlockType == Material.LECTERN ||
+                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingLecterns() && clickedBlockType == Material.LECTERN ||
 
-                instance.getPluginConfig().getClaimConfiguration().getProtection().lockFenceGates && Tag.FENCE_GATES.isTagged(clickedBlockType)))
+                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingFenceGates() && Tag.FENCE_GATES.isTagged(clickedBlockType)))
         {
             if (playerData == null) playerData = this.dataStore.getPlayerData(player.getUniqueId());
             Claim claim = this.dataStore.getClaimAt(clickedBlock.getLocation(), false, playerData.lastClaim);
@@ -1213,7 +1213,7 @@ public class PlayerEventHandler implements Listener
         }
 
         //otherwise apply rules for buttons and switches
-        else if (clickedBlock != null && instance.getPluginConfig().getClaimConfiguration().getProtection().lockSwitches && (Tag.BUTTONS.isTagged(clickedBlockType) || clickedBlockType == Material.LEVER))
+        else if (clickedBlock != null && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingSwitches() && (Tag.BUTTONS.isTagged(clickedBlockType) || clickedBlockType == Material.LEVER))
         {
             if (playerData == null) playerData = this.dataStore.getPlayerData(player.getUniqueId());
             Claim claim = this.dataStore.getClaimAt(clickedBlock.getLocation(), false, playerData.lastClaim);
@@ -1232,7 +1232,7 @@ public class PlayerEventHandler implements Listener
         }
 
         //otherwise apply rule for cake
-        else if (clickedBlock != null && instance.getPluginConfig().getClaimConfiguration().getProtection().lockContainers && (clickedBlockType == Material.CAKE || Tag.CANDLE_CAKES.isTagged(clickedBlockType)))
+        else if (clickedBlock != null && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().lockContainers && (clickedBlockType == Material.CAKE || Tag.CANDLE_CAKES.isTagged(clickedBlockType)))
         {
             if (playerData == null) playerData = this.dataStore.getPlayerData(player.getUniqueId());
             Claim claim = this.dataStore.getClaimAt(clickedBlock.getLocation(), false, playerData.lastClaim);
@@ -1306,7 +1306,7 @@ public class PlayerEventHandler implements Listener
             // Require build permission for items that may have an effect on the world when used.
             if (clickedBlock != null && (materialInHand == Material.BONE_MEAL
                     || materialInHand == Material.ARMOR_STAND
-                    || (spawn_eggs.contains(materialInHand) && GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtection().preventMonsterEggs)
+                    || (spawn_eggs.contains(materialInHand) && GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingMonsterEggs())
                     || materialInHand == Material.END_CRYSTAL
                     || materialInHand == Material.FLINT_AND_STEEL
                     || materialInHand == Material.INK_SAC
@@ -1411,7 +1411,7 @@ public class PlayerEventHandler implements Listener
             }
 
             //if he's investigating a claim
-            else if (materialInHand == instance.getPluginConfig().getClaimConfiguration().getTools().getInvestigationTool() && hand == EquipmentSlot.HAND)
+            else if (materialInHand == instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getInvestigationTool() && hand == EquipmentSlot.HAND)
             {
                 //if claims are disabled in this world, do nothing
                 if (!instance.claimsEnabledForWorld(player.getWorld())) return;
@@ -1517,7 +1517,7 @@ public class PlayerEventHandler implements Listener
             }
 
             //if it's a golden shovel
-            else if (materialInHand != instance.getPluginConfig().getClaimConfiguration().getTools().getModificationTool() || hand != EquipmentSlot.HAND) return;
+            else if (materialInHand != instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool() || hand != EquipmentSlot.HAND) return;
 
             event.setCancelled(true);  //GriefPrevention exclusively reserves this tool  (e.g. no grass path creation for golden shovel)
 
@@ -1750,7 +1750,7 @@ public class PlayerEventHandler implements Listener
                 }
 
                 newy1 = playerData.claimResizing.getLesserBoundaryCorner().getBlockY();
-                newy2 = clickedBlock.getY() - instance.getPluginConfig().getClaimConfiguration().getCreation().extendIntoGroundDistance;
+                newy2 = clickedBlock.getY() - instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance;
 
                 this.dataStore.resizeClaimWithChecks(player, playerData, newx1, newx2, newy1, newy2, newz1, newz2);
 
@@ -1811,7 +1811,7 @@ public class PlayerEventHandler implements Listener
                             CreateClaimResult result = this.dataStore.createClaim(
                                     player.getWorld(),
                                     playerData.lastShovelLocation.getBlockX(), clickedBlock.getX(),
-                                    playerData.lastShovelLocation.getBlockY() - instance.getPluginConfig().getClaimConfiguration().getCreation().extendIntoGroundDistance, clickedBlock.getY() - instance.getPluginConfig().getClaimConfiguration().getCreation().extendIntoGroundDistance,
+                                    playerData.lastShovelLocation.getBlockY() - instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance, clickedBlock.getY() - instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance,
                                     playerData.lastShovelLocation.getBlockZ(), clickedBlock.getZ(),
                                     null,  //owner is not used for subdivisions
                                     playerData.claimSubdividing,
@@ -1877,9 +1877,9 @@ public class PlayerEventHandler implements Listener
                 }
 
                 //if he's at the claim count per player limit already and doesn't have permission to bypass, display an error message
-                if (instance.getPluginConfig().getClaimConfiguration().getCreation().maximumClaims > 0 &&
+                if (instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumClaims > 0 &&
                         !player.hasPermission("griefprevention.overrideclaimcountlimit") &&
-                        playerData.getClaims().size() >= instance.getPluginConfig().getClaimConfiguration().getCreation().maximumClaims)
+                        playerData.getClaims().size() >= instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumClaims)
                 {
                     GriefPrevention.sendMessage(player, TextMode.Err, Messages.ClaimCreationFailedOverClaimCountLimit);
                     return;
@@ -1917,22 +1917,22 @@ public class PlayerEventHandler implements Listener
 
                 if (playerData.shovelMode != ShovelMode.Admin)
                 {
-                    if (newClaimWidth < instance.getPluginConfig().getClaimConfiguration().getCreation().minimumWidth || newClaimHeight < instance.getPluginConfig().getClaimConfiguration().getCreation().minimumWidth)
+                    if (newClaimWidth < instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumWidth || newClaimHeight < instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumWidth)
                     {
                         //this IF block is a workaround for craftbukkit bug which fires two events for one interaction
                         if (newClaimWidth != 1 && newClaimHeight != 1)
                         {
-                            GriefPrevention.sendMessage(player, TextMode.Err, Messages.NewClaimTooNarrow, String.valueOf(instance.getPluginConfig().getClaimConfiguration().getCreation().minimumWidth));
+                            GriefPrevention.sendMessage(player, TextMode.Err, Messages.NewClaimTooNarrow, String.valueOf(instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumWidth));
                         }
                         return;
                     }
 
                     int newArea = newClaimWidth * newClaimHeight;
-                    if (newArea < instance.getPluginConfig().getClaimConfiguration().getCreation().minimumArea)
+                    if (newArea < instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea)
                     {
                         if (newArea != 1)
                         {
-                            GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimInsufficientArea, String.valueOf(instance.getPluginConfig().getClaimConfiguration().getCreation().minimumArea));
+                            GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimInsufficientArea, String.valueOf(instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea));
                         }
 
                         return;
@@ -1960,7 +1960,7 @@ public class PlayerEventHandler implements Listener
                 CreateClaimResult result = this.dataStore.createClaim(
                         player.getWorld(),
                         lastShovelLocation.getBlockX(), clickedBlock.getX(),
-                        lastShovelLocation.getBlockY() - instance.getPluginConfig().getClaimConfiguration().getCreation().extendIntoGroundDistance, clickedBlock.getY() - instance.getPluginConfig().getClaimConfiguration().getCreation().extendIntoGroundDistance,
+                        lastShovelLocation.getBlockY() - instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance, clickedBlock.getY() - instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance,
                         lastShovelLocation.getBlockZ(), clickedBlock.getZ(),
                         playerID,
                         null, null,

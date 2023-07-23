@@ -226,15 +226,15 @@ public class PlayerData
                 this.accruedClaimBlocks = storageData.accruedClaimBlocks;
 
                 //ensure at least minimum accrued are accrued (in case of settings changes to increase initial amount)
-                if (GriefPrevention.instance.config_advanced_fixNegativeClaimblockAmounts && (this.accruedClaimBlocks < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocks().initial))
+                if (GriefPrevention.instance.config_advanced_fixNegativeClaimblockAmounts && (this.accruedClaimBlocks < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().initial))
                 {
-                    this.accruedClaimBlocks = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocks().initial;
+                    this.accruedClaimBlocks = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().initial;
                 }
 
             }
             else
             {
-                this.accruedClaimBlocks = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocks().initial;
+                this.accruedClaimBlocks = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().initial;
             }
         }
 
@@ -336,7 +336,7 @@ public class PlayerData
     public int getAccruedClaimBlocksLimit()
     {
         if (this.AccruedClaimBlocksLimit < 0)
-            return GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocks().accrued.limit;
+            return GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().accrued.limit;
         return this.AccruedClaimBlocksLimit;
     }
 

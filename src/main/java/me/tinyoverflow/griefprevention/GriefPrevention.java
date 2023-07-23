@@ -431,7 +431,7 @@ public class GriefPrevention extends JavaPlugin
 
         //unless claim block accrual is disabled, start the recurring per 10-minute event to give claim blocks to online players
         //20L ~ 1 second
-        if (getPluginConfig().getClaimConfiguration().getClaimBlocks().accrued.isAccrualEnabled())
+        if (getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().accrued.isAccrualEnabled())
         {
             DeliverClaimBlocksTask task = new DeliverClaimBlocksTask(null, this);
             getServer().getScheduler().scheduleSyncRepeatingTask(this, task, 20L * 60 * 10, 20L * 60 * 10);
@@ -859,7 +859,7 @@ public class GriefPrevention extends JavaPlugin
             if (this.creativeRulesApply(location) || this.config_claims_worldModes.get(location.getWorld()) == ClaimsMode.SurvivalRequiringClaims)
             {
                 //exception: when chest claims are enabled, players who have zero land claims and are placing a chest
-                if (material != Material.CHEST || playerData.getClaims().size() > 0 || GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticPreferredRadius == -1)
+                if (material != Material.CHEST || playerData.getClaims().size() > 0 || GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius == -1)
                 {
                     String reason = this.dataStore.getMessage(Messages.NoBuildOutsideClaims);
                     if (player.hasPermission("griefprevention.ignoreclaims"))

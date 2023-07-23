@@ -31,7 +31,7 @@ public class WelcomeTask implements Runnable
         GriefPrevention.sendMessage(player, TextMode.Instr, Messages.SurvivalBasicsVideo2, DataStore.SURVIVAL_VIDEO_URL);
 
         //give the player a reference book for later
-        if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getManual().enabled)
+        if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getManualConfiguration().enabled)
         {
             ItemFactory factory = Bukkit.getItemFactory();
             BookMeta meta = (BookMeta) factory.getItemMeta(Material.WRITTEN_BOOK);
@@ -46,11 +46,11 @@ public class WelcomeTask implements Runnable
 
             page1.append(URL).append("\n\n");
             page1.append(intro).append("\n\n");
-            String editToolName = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getTools().getModificationTool().name().replace('_', ' ').toLowerCase();
-            String infoToolName = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getTools().getInvestigationTool().name().replace('_', ' ').toLowerCase();
+            String editToolName = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool().name().replace('_', ' ').toLowerCase();
+            String infoToolName = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getInvestigationTool().name().replace('_', ' ').toLowerCase();
             String configClaimTools = datastore.getMessage(Messages.BookTools, editToolName, infoToolName);
             page1.append(configClaimTools);
-            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticPreferredRadius < 0)
+            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius < 0)
             {
                 page1.append(datastore.getMessage(Messages.BookDisabledChestClaims));
             }

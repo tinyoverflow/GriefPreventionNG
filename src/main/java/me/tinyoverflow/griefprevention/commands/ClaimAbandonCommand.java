@@ -70,7 +70,7 @@ public class ClaimAbandonCommand extends BaseCommand implements PlayerCommandExe
             }
 
             //adjust claim blocks when abandoning a top level claim
-            double abandonReturnRatio = getPlugin().getPluginConfig().getClaimConfiguration().getClaimBlocks().abandonReturnRatio;
+            double abandonReturnRatio = getPlugin().getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().abandonReturnRatio;
             if (abandonReturnRatio != 1.0d && claim.parent == null && claim.ownerID.equals(playerData.playerID))
             {
                 playerData.setAccruedClaimBlocks(playerData.getAccruedClaimBlocks() - (int) Math.ceil((claim.getArea() * (1 - abandonReturnRatio))));

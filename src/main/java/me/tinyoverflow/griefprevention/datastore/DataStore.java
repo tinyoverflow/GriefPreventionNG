@@ -751,8 +751,8 @@ public abstract class DataStore
         int smallx, bigx, smally, bigy, smallz, bigz;
 
         int worldMinY = world.getMinHeight();
-        y1 = Math.max(worldMinY, Math.max(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().maximumDepth, y1));
-        y2 = Math.max(worldMinY, Math.max(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().maximumDepth, y2));
+        y1 = Math.max(worldMinY, Math.max(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumDepth, y1));
+        y2 = Math.max(worldMinY, Math.max(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumDepth, y2));
 
         //determine small versus big inputs
         if (x1 < x2)
@@ -844,7 +844,7 @@ public abstract class DataStore
         }
 
         //if worldguard is installed, also prevent claims from overlapping any worldguard regions
-        if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().requireWorldGuard && this.worldGuard != null && creatingPlayer != null)
+        if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().requireWorldGuard && this.worldGuard != null && creatingPlayer != null)
         {
             if (!this.worldGuard.canBuild(newClaim.lesserBoundaryCorner, newClaim.greaterBoundaryCorner, creatingPlayer))
             {
@@ -973,7 +973,7 @@ public abstract class DataStore
         // Use the lowest of the old and new depths.
         newDepth = Math.min(newDepth, oldDepth);
         // Cap depth to maximum depth allowed by the configuration.
-        newDepth = Math.max(newDepth, GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().maximumDepth);
+        newDepth = Math.max(newDepth, GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumDepth);
         // Cap the depth to the world's minimum height.
         World world = Objects.requireNonNull(claim.getLesserBoundaryCorner().getWorld());
         newDepth = Math.max(newDepth, world.getMinHeight());
@@ -1275,16 +1275,16 @@ public abstract class DataStore
 
             if (!player.hasPermission("griefprevention.adminclaims") && !playerData.claimResizing.isAdminClaim() && smaller)
             {
-                if (newWidth < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumWidth || newHeight < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumWidth)
+                if (newWidth < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumWidth || newHeight < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumWidth)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimTooNarrow, String.valueOf(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumWidth));
+                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimTooNarrow, String.valueOf(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumWidth));
                     return;
                 }
 
                 int newArea = newWidth * newHeight;
-                if (newArea < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumArea)
+                if (newArea < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimInsufficientArea, String.valueOf(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumArea));
+                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimInsufficientArea, String.valueOf(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea));
                     return;
                 }
             }

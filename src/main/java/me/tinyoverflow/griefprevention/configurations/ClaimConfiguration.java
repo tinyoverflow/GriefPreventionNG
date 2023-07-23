@@ -1,5 +1,6 @@
 package me.tinyoverflow.griefprevention.configurations;
 
+import lombok.Data;
 import me.tinyoverflow.griefprevention.ClaimsMode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
@@ -8,11 +9,12 @@ import org.spongepowered.configurate.objectmapping.meta.Setting;
 import java.util.Map;
 
 @ConfigSerializable
+@Data
 public class ClaimConfiguration
 {
     @Setting
     @Comment("How the plugin should work in different worlds (Disabled, Survival, SurvivalRequiringClaims, Creative).")
-    private Map<String, ClaimsMode> mode = Map.of(
+    private final Map<String, ClaimsMode> worldModes = Map.of(
             "world", ClaimsMode.Survival,
             "world_nether", ClaimsMode.Disabled,
             "world_the_end", ClaimsMode.Disabled
@@ -20,80 +22,33 @@ public class ClaimConfiguration
 
     @Setting
     @Comment("Whether the /trapped command can be used inside admin claims.")
-    private boolean allowTrappedInAdminClaims = false;
+    private final boolean allowTrappedInAdminClaims = false;
 
     @Setting("mobs")
-    private ClaimMobsConfiguration mobs = new ClaimMobsConfiguration();
+    private final ClaimMobsConfiguration mobsConfiguration = new ClaimMobsConfiguration();
 
     @Setting("claim-blocks")
-    private ClaimBlocksConfiguration claimBlocks = new ClaimBlocksConfiguration();
+    private final ClaimBlocksConfiguration claimBlocksConfiguration = new ClaimBlocksConfiguration();
 
     @Setting("tools")
-    private ClaimToolsConfiguration tools = new ClaimToolsConfiguration();
+    private final ClaimToolsConfiguration toolsConfiguration = new ClaimToolsConfiguration();
 
     @Setting("expiration")
-    private ClaimExpirationConfiguration expiration = new ClaimExpirationConfiguration();
+    private final ClaimExpirationConfiguration expirationConfiguration = new ClaimExpirationConfiguration();
 
     @Setting("command-trust-limits")
-    private ClaimCommandTrustLimitsConfiguration commandTrustLimits = new ClaimCommandTrustLimitsConfiguration();
+    private final ClaimCommandTrustLimitsConfiguration commandTrustLimitsConfiguration = new ClaimCommandTrustLimitsConfiguration();
 
     @Setting("protection")
-    private ClaimProtectionConfiguration protection = new ClaimProtectionConfiguration();
+    private final ClaimProtectionConfiguration protectionConfiguration = new ClaimProtectionConfiguration();
 
     @Setting("creation")
-    private ClaimCreationConfiguration creation = new ClaimCreationConfiguration();
+    private final ClaimCreationConfiguration creationConfiguration = new ClaimCreationConfiguration();
 
     @Setting("manual")
-    private ClaimManualConfiguration manual = new ClaimManualConfiguration();
+    private final ClaimManualConfiguration manualConfiguration = new ClaimManualConfiguration();
 
-    public Map<String, ClaimsMode> getWorldModes()
-    {
-        return this.mode;
-    }
-
-    public boolean isTrappedInAdminClaimsAllowed()
-    {
-        return this.allowTrappedInAdminClaims;
-    }
-
-    public ClaimMobsConfiguration getMobs()
-    {
-        return this.mobs;
-    }
-
-    public ClaimBlocksConfiguration getClaimBlocks()
-    {
-        return this.claimBlocks;
-    }
-
-    public ClaimToolsConfiguration getTools()
-    {
-        return this.tools;
-    }
-
-    public ClaimExpirationConfiguration getExpiration()
-    {
-        return this.expiration;
-    }
-
-    public ClaimCommandTrustLimitsConfiguration getCommandTrustLimits()
-    {
-        return this.commandTrustLimits;
-    }
-
-    public ClaimProtectionConfiguration getProtection()
-    {
-        return this.protection;
-    }
-
-    public ClaimCreationConfiguration getCreation()
-    {
-        return this.creation;
-    }
-
-    public ClaimManualConfiguration getManual()
-    {
-        return this.manual;
-    }
+    @Setting("restoration")
+    private final ClaimRestorationConfiguration restorationConfiguration = new ClaimRestorationConfiguration();
 }
 

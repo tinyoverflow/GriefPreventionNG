@@ -93,7 +93,7 @@ public class AutoExtendClaimTask implements Runnable
         this.lowestExistingY = Math.min(lowestExistingY, claim.getLesserBoundaryCorner().getBlockY());
         this.minY = Math.max(
                 Objects.requireNonNull(claim.getLesserBoundaryCorner().getWorld()).getMinHeight(),
-                GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().maximumDepth);
+                GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumDepth);
     }
 
     @Override

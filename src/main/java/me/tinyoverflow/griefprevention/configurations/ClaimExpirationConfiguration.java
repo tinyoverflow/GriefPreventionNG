@@ -20,10 +20,6 @@ public class ClaimExpirationConfiguration
     public int allClaimsDays = 60;
 
     @Setting
-    @Comment("Whether to restore nature when a claim gets removed.")
-    public boolean restoreNature = false;
-
-    @Setting
     @Comment("Do not automatically remove claims if at least one of the exceptions apply.")
     public ClaimExpirationExceptionConfiguration exceptions = new ClaimExpirationExceptionConfiguration();
 }

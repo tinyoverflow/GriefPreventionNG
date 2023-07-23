@@ -30,7 +30,7 @@ public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
     {
         return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.claim")
-                .withOptionalArguments(new IntegerArgument("radius", getPlugin().getPluginConfig().getClaimConfiguration().getCreation().automaticMinimumRadius))
+                .withOptionalArguments(new IntegerArgument("radius", getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticMinimumRadius))
                 .executesPlayer(this);
     }
 
@@ -46,17 +46,17 @@ public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
         PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
 
         //if he's at the claim count per player limit already and doesn't have permission to bypass, display an error message
-        if (getPlugin().getPluginConfig().getClaimConfiguration().getCreation().maximumClaims > 0 &&
+        if (getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumClaims > 0 &&
                 !player.hasPermission("griefprevention.overrideclaimcountlimit") &&
-                playerData.getClaims().size() >= getPlugin().getPluginConfig().getClaimConfiguration().getCreation().maximumClaims)
+                playerData.getClaims().size() >= getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumClaims)
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.ClaimCreationFailedOverClaimCountLimit);
             return;
         }
 
         //default is chest claim radius, unless -1
-        int radius = getPlugin().getPluginConfig().getClaimConfiguration().getCreation().automaticPreferredRadius;
-        if (radius < 0) radius = (int) Math.ceil(Math.sqrt(getPlugin().getPluginConfig().getClaimConfiguration().getCreation().minimumArea) / 2);
+        int radius = getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius;
+        if (radius < 0) radius = (int) Math.ceil(Math.sqrt(getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea) / 2);
 
         //if player has any claims, respect claim minimum size setting
         if (playerData.getClaims().size() > 0)
@@ -64,19 +64,19 @@ public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
             //if player has exactly one land claim, this requires the claim modification tool to be in hand (or creative mode player)
             if (playerData.getClaims().size() == 1 &&
                     player.getGameMode() != GameMode.CREATIVE &&
-                    !player.getInventory().getItemInMainHand().getType().equals(getPlugin().getPluginConfig().getClaimConfiguration().getTools().getModificationTool()))
+                    !player.getInventory().getItemInMainHand().getType().equals(getPlugin().getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool()))
             {
                 GriefPrevention.sendMessage(player, TextMode.Err, Messages.MustHoldModificationToolForThat);
                 return;
             }
 
-            radius = (int) Math.ceil(Math.sqrt(getPlugin().getPluginConfig().getClaimConfiguration().getCreation().minimumArea) / 2);
+            radius = (int) Math.ceil(Math.sqrt(getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea) / 2);
         }
 
         //allow for specifying the radius
         if (args.getOptional("radius").isPresent())
         {
-            if (playerData.getClaims().size() < 2 && player.getGameMode() != GameMode.CREATIVE && player.getInventory().getItemInMainHand().getType() != getPlugin().getPluginConfig().getClaimConfiguration().getTools().getModificationTool())
+            if (playerData.getClaims().size() < 2 && player.getGameMode() != GameMode.CREATIVE && player.getInventory().getItemInMainHand().getType() != getPlugin().getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool())
             {
                 GriefPrevention.sendMessage(player, TextMode.Err, Messages.RadiusRequiresGoldenShovel);
                 return;
@@ -120,8 +120,8 @@ public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
 
         CreateClaimResult result = getPlugin().getDataStore().createClaim(lc.getWorld(),
                 lc.getBlockX(), gc.getBlockX(),
-                lc.getBlockY() - getPlugin().getPluginConfig().getClaimConfiguration().getCreation().extendIntoGroundDistance - 1,
-                gc.getWorld().getHighestBlockYAt(gc) - getPlugin().getPluginConfig().getClaimConfiguration().getCreation().extendIntoGroundDistance - 1,
+                lc.getBlockY() - getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance - 1,
+                gc.getWorld().getHighestBlockYAt(gc) - getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance - 1,
                 lc.getBlockZ(), gc.getBlockZ(),
                 player.getUniqueId(), null, null, player);
         if (!result.succeeded || result.claim == null)

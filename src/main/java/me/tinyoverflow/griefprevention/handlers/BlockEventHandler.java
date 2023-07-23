@@ -313,7 +313,7 @@ public class BlockEventHandler implements Listener
             if (block.getY() <= claim.lesserBoundaryCorner.getBlockY() && claim.checkPermission(player, ClaimPermission.Build, placeEvent) == null)
             {
                 //extend the claim downward
-                this.dataStore.extendClaim(claim, block.getY() - GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().extendIntoGroundDistance);
+                this.dataStore.extendClaim(claim, block.getY() - GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance);
             }
 
             //allow for a build warning in the future
@@ -323,22 +323,22 @@ public class BlockEventHandler implements Listener
         //FEATURE: automatically create a claim when a player who has no claims places a chest
 
         //otherwise if there's no claim, the player is placing a chest, and new player automatic claims are enabled
-        else if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticPreferredRadius > -1 && player.hasPermission("griefprevention.createclaims") && block.getType() == Material.CHEST)
+        else if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius > -1 && player.hasPermission("griefprevention.createclaims") && block.getType() == Material.CHEST)
         {
             //if the chest is too deep underground, don't create the claim and explain why
-            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtection().lockContainers && block.getY() < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().maximumDepth)
+            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().lockContainers && block.getY() < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumDepth)
             {
                 GriefPrevention.sendMessage(player, TextMode.Warn, Messages.TooDeepToClaim);
                 return;
             }
 
-            int radius = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticPreferredRadius;
+            int radius = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius;
 
             //if the player doesn't have any claims yet, automatically create a claim centered at the chest
             if (playerData.getClaims().size() == 0 && player.getGameMode() == GameMode.SURVIVAL)
             {
                 //radius == 0 means protect ONLY the chest
-                if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticPreferredRadius == 0)
+                if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius == 0)
                 {
                     this.dataStore.createClaim(block.getWorld(), block.getX(), block.getX(), block.getY(), block.getY(), block.getZ(), block.getZ(), player.getUniqueId(), null, null, player);
                     GriefPrevention.sendMessage(player, TextMode.Success, Messages.ChestClaimConfirmation);
@@ -348,7 +348,7 @@ public class BlockEventHandler implements Listener
                 else
                 {
                     //if failure due to insufficient claim blocks available
-                    if (playerData.getRemainingClaimBlocks() < Math.pow(1 + 2 * GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticMinimumRadius, 2))
+                    if (playerData.getRemainingClaimBlocks() < Math.pow(1 + 2 * GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticMinimumRadius, 2))
                     {
                         GriefPrevention.sendMessage(player, TextMode.Warn, Messages.NoEnoughBlocksForChestClaim);
                         return;
@@ -357,7 +357,7 @@ public class BlockEventHandler implements Listener
                     //as long as the automatic claim overlaps another existing claim, shrink it
                     //note that since the player had permission to place the chest, at the very least, the automatic claim will include the chest
                     CreateClaimResult result = null;
-                    while (radius >= GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticMinimumRadius)
+                    while (radius >= GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticMinimumRadius)
                     {
                         int area = (radius * 2 + 1) * (radius * 2 + 1);
                         if (playerData.getRemainingClaimBlocks() >= area)
@@ -365,7 +365,7 @@ public class BlockEventHandler implements Listener
                             result = this.dataStore.createClaim(
                                     block.getWorld(),
                                     block.getX() - radius, block.getX() + radius,
-                                    block.getY() - GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().extendIntoGroundDistance, block.getY(),
+                                    block.getY() - GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance, block.getY(),
                                     block.getZ() - radius, block.getZ() + radius,
                                     player.getUniqueId(),
                                     null, null,
@@ -402,7 +402,7 @@ public class BlockEventHandler implements Listener
             }
 
             //check to see if this chest is in a claim, and warn when it isn't
-            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtection().lockContainers && this.dataStore.getClaimAt(block.getLocation(), false, playerData.lastClaim) == null)
+            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().lockContainers && this.dataStore.getClaimAt(block.getLocation(), false, playerData.lastClaim) == null)
             {
                 GriefPrevention.sendMessage(player, TextMode.Warn, Messages.UnprotectedChestWarning);
             }
@@ -805,7 +805,7 @@ public class BlockEventHandler implements Listener
         //never spread into a claimed area, regardless of settings
         if (this.dataStore.getClaimAt(spreadEvent.getBlock().getLocation(), false, null) != null)
         {
-            if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtection().preventFireSpread)
+            if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingFireSpread())
                 return;
 
             spreadEvent.setCancelled(true);
@@ -860,7 +860,7 @@ public class BlockEventHandler implements Listener
         //never burn claimed blocks, regardless of settings
         if (this.dataStore.getClaimAt(burnEvent.getBlock().getLocation(), false, null) != null)
         {
-            if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtection().preventFireDamage)
+            if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingFireDamage())
                 return;
 
             burnEvent.setCancelled(true);
@@ -1157,7 +1157,7 @@ public class BlockEventHandler implements Listener
         }
 
         // Ignore this event if preventNonPlayerCreatedPortals config option is disabled, and we don't know the entity.
-        if (!(event.getEntity() instanceof Player) && !GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtection().preventNonPlayerPortals)
+        if (!(event.getEntity() instanceof Player) && !GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingNonPlayerPortals())
         {
             return;
         }

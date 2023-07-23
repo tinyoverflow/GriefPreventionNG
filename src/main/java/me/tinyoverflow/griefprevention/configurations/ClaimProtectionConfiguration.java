@@ -1,70 +1,72 @@
 package me.tinyoverflow.griefprevention.configurations;
 
+import lombok.Data;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 @ConfigSerializable
+@Data
 public class ClaimProtectionConfiguration
 {
-    @Setting
+    @Setting("protect-vehicles")
     @Comment("Requires access trust to break vehicles.")
-    public boolean protectVehicles = true;
+    private final boolean protectingVehicles = true;
 
-    @Setting
+    @Setting("lock-containers")
     @Comment("Requires access trust to access all kinds of containers.")
-    public boolean lockContainers = true;
+    private final boolean lockContainers = true;
 
-    @Setting
+    @Setting("lock-wooden-doors")
     @Comment("Requires access trust to interact with wooden doors.")
-    public boolean lockWoodenDoors = true;
+    public final boolean lockingWoodenDoors = true;
 
-    @Setting
+    @Setting("lock-fence-gates")
     @Comment("Requires access trust to interact with fence gates.")
-    public boolean lockFenceGates = true;
+    private final boolean lockingFenceGates = true;
 
-    @Setting
+    @Setting("lock-trap-doors")
     @Comment("Requires access trust to interact with trap doors.")
-    public boolean lockTrapDoors = true;
+    private final boolean lockingTrapDoors = true;
 
-    @Setting
+    @Setting("lock-switches")
     @Comment("Requires access trust to interact with buttons, levers and pressure plates.")
-    public boolean lockSwitches = true;
+    private final boolean lockingSwitches = true;
 
-    @Setting
+    @Setting("lock-lecterns")
     @Comment("Requires access trust to interact with a lectern.")
-    public boolean lockLecterns = true;
+    private final boolean lockingLecterns = true;
 
-    @Setting
+    @Setting("prevent-monster-eggs")
     @Comment("Allow placing monster eggs regardless of trust.")
-    public boolean preventMonsterEggs = true;
+    private final boolean preventingMonsterEggs = true;
 
-    @Setting
+    @Setting("prevent-ender-pearls")
     @Comment("Requires access trust to use an ender pearl to teleport into a claim.")
-    public boolean preventEnderPearls = true;
+    private final boolean preventingEnderPearls = true;
 
-    @Setting
+    @Setting("prevent-raid-triggers")
     @Comment("Requires build trust to be able to trigger a raid.")
-    public boolean preventRaidTriggers = true;
+    private final boolean preventingRaidTriggers = true;
 
-    @Setting
+    @Setting("prevent-ravager-damage")
     @Comment("Whether or not to prevent ravagers from damaging blocks inside a claim.")
-    public boolean preventRavagerDamage = false;
+    private final boolean preventingRavagerDamage = false;
 
-    @Setting
+    @Setting("prevent-fire-spread")
     @Comment("Whether fire will spread inside claims.")
-    public boolean preventFireSpread = true;
+    private final boolean preventingFireSpread = true;
 
-    @Setting
+    @Setting("prevent-fire-damage")
     @Comment("Whether fire will do damage inside claims.")
-    public boolean preventFireDamage = true;
+    private final boolean preventingFireDamage = true;
 
-    @Setting
+    @Setting("prevent-non-player-portals")
     @Comment("Prevent creation of portals inside claims when the creating player is unknown.")
-    public boolean preventNonPlayerPortals = true;
+    private final boolean preventingNonPlayerPortals = true;
 
-    @Setting
+    @Setting("prevent-villager-trades")
     @Comment("Require access trust to be able to trade with claimed villagers.")
-    public boolean preventVillagerTrades = true;
+    private final boolean preventingVillagerTrades = true;
 }
 

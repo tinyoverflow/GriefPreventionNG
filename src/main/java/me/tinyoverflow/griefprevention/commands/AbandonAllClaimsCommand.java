@@ -49,7 +49,7 @@ public class AbandonAllClaimsCommand extends BaseCommand implements PlayerComman
             return;
         }
 
-        double abandonReturnRatio = getPlugin().getPluginConfig().getClaimConfiguration().getClaimBlocks().abandonReturnRatio;
+        double abandonReturnRatio = getPlugin().getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().abandonReturnRatio;
         if (abandonReturnRatio != 1.0D)
         {
             //adjust claim blocks
