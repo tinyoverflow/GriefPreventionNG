@@ -538,7 +538,7 @@ public class PlayerEventHandler implements Listener
 
         //FEATURE: prevent players from using ender pearls to gain access to secured claims
         TeleportCause cause = event.getCause();
-        if (cause == TeleportCause.CHORUS_FRUIT || (cause == TeleportCause.ENDER_PEARL && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingEnderPearls()))
+        if (cause == TeleportCause.CHORUS_FRUIT || (cause == TeleportCause.ENDER_PEARL && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventEnderPearlsEnabled()))
         {
             Claim toClaim = this.dataStore.getClaimAt(event.getTo(), false, playerData.lastClaim);
             if (toClaim != null)
@@ -589,7 +589,7 @@ public class PlayerEventHandler implements Listener
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerTriggerRaid(RaidTriggerEvent event)
     {
-        if (!instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingRaidTriggers())
+        if (!instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventRaidTriggersEnabled())
             return;
 
         Player player = event.getPlayer();
@@ -756,7 +756,7 @@ public class PlayerEventHandler implements Listener
         }
 
         //if the entity is an animal, apply container rules
-        if ((instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().lockContainers && (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingVillagerTrades()))
+        if ((instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().lockContainers && (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventVillagerTradesEnabled()))
         {
             //if the entity is in a claim
             Claim claim = this.dataStore.getClaimAt(entity.getLocation(), false, null);
@@ -1186,15 +1186,15 @@ public class PlayerEventHandler implements Listener
         //otherwise apply rules for doors and beds, if configured that way
         else if (clickedBlock != null &&
 
-                (instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingWoodenDoors() && Tag.DOORS.isTagged(clickedBlockType) ||
+                (instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockWoodenDoorsEnabled() && Tag.DOORS.isTagged(clickedBlockType) ||
 
-                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingSwitches() && Tag.BEDS.isTagged(clickedBlockType) ||
+                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockSwitchesEnabled() && Tag.BEDS.isTagged(clickedBlockType) ||
 
-                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingTrapDoors() && Tag.TRAPDOORS.isTagged(clickedBlockType) ||
+                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockTrapDoorsEnabled() && Tag.TRAPDOORS.isTagged(clickedBlockType) ||
 
-                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingLecterns() && clickedBlockType == Material.LECTERN ||
+                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockLecternsEnabled() && clickedBlockType == Material.LECTERN ||
 
-                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingFenceGates() && Tag.FENCE_GATES.isTagged(clickedBlockType)))
+                instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockFenceGatesEnabled() && Tag.FENCE_GATES.isTagged(clickedBlockType)))
         {
             if (playerData == null) playerData = this.dataStore.getPlayerData(player.getUniqueId());
             Claim claim = this.dataStore.getClaimAt(clickedBlock.getLocation(), false, playerData.lastClaim);
@@ -1213,7 +1213,7 @@ public class PlayerEventHandler implements Listener
         }
 
         //otherwise apply rules for buttons and switches
-        else if (clickedBlock != null && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockingSwitches() && (Tag.BUTTONS.isTagged(clickedBlockType) || clickedBlockType == Material.LEVER))
+        else if (clickedBlock != null && instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockSwitchesEnabled() && (Tag.BUTTONS.isTagged(clickedBlockType) || clickedBlockType == Material.LEVER))
         {
             if (playerData == null) playerData = this.dataStore.getPlayerData(player.getUniqueId());
             Claim claim = this.dataStore.getClaimAt(clickedBlock.getLocation(), false, playerData.lastClaim);
@@ -1306,7 +1306,7 @@ public class PlayerEventHandler implements Listener
             // Require build permission for items that may have an effect on the world when used.
             if (clickedBlock != null && (materialInHand == Material.BONE_MEAL
                     || materialInHand == Material.ARMOR_STAND
-                    || (spawn_eggs.contains(materialInHand) && GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingMonsterEggs())
+                    || (spawn_eggs.contains(materialInHand) && GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventMonsterEggsEnabled())
                     || materialInHand == Material.END_CRYSTAL
                     || materialInHand == Material.FLINT_AND_STEEL
                     || materialInHand == Material.INK_SAC

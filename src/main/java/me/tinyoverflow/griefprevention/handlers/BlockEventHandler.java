@@ -805,7 +805,7 @@ public class BlockEventHandler implements Listener
         //never spread into a claimed area, regardless of settings
         if (this.dataStore.getClaimAt(spreadEvent.getBlock().getLocation(), false, null) != null)
         {
-            if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingFireSpread())
+            if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventFireSpreadEnabled())
                 return;
 
             spreadEvent.setCancelled(true);
@@ -860,7 +860,7 @@ public class BlockEventHandler implements Listener
         //never burn claimed blocks, regardless of settings
         if (this.dataStore.getClaimAt(burnEvent.getBlock().getLocation(), false, null) != null)
         {
-            if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingFireDamage())
+            if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventFireDamageEnabled())
                 return;
 
             burnEvent.setCancelled(true);
@@ -1157,7 +1157,7 @@ public class BlockEventHandler implements Listener
         }
 
         // Ignore this event if preventNonPlayerCreatedPortals config option is disabled, and we don't know the entity.
-        if (!(event.getEntity() instanceof Player) && !GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventingNonPlayerPortals())
+        if (!(event.getEntity() instanceof Player) && !GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventNonPlayerPortalsEnabled())
         {
             return;
         }

@@ -819,7 +819,7 @@ public class EntityDamageHandler implements Listener
     public void onVehicleDamage(@NotNull VehicleDamageEvent event)
     {
         //all of this is anti theft code
-        if (!instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isProtectingVehicles()) return;
+        if (!instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isProtectVehiclesEnabled()) return;
 
         //don't track in worlds where claims are not enabled
         if (!instance.claimsEnabledForWorld(event.getVehicle().getWorld())) return;
