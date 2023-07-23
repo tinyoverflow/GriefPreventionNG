@@ -20,16 +20,68 @@ package me.tinyoverflow.griefprevention;
 
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
-import me.tinyoverflow.griefprevention.commands.*;
+import me.tinyoverflow.griefprevention.commands.AbandonAllClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.AdjustBonusClaimBlocksAllCommand;
+import me.tinyoverflow.griefprevention.commands.AdjustBonusClaimBlocksCommand;
+import me.tinyoverflow.griefprevention.commands.AdjustClaimBlockLimitCommand;
+import me.tinyoverflow.griefprevention.commands.AdminClaimListCommand;
+import me.tinyoverflow.griefprevention.commands.AdminClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.BasicClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.BuyClaimBlocksCommand;
+import me.tinyoverflow.griefprevention.commands.ClaimAbandonCommand;
+import me.tinyoverflow.griefprevention.commands.ClaimBookCommand;
+import me.tinyoverflow.griefprevention.commands.ClaimCommand;
+import me.tinyoverflow.griefprevention.commands.ClaimExplosionsCommand;
+import me.tinyoverflow.griefprevention.commands.ClaimExtendCommand;
+import me.tinyoverflow.griefprevention.commands.ClaimsListCommand;
+import me.tinyoverflow.griefprevention.commands.CommandManager;
+import me.tinyoverflow.griefprevention.commands.DeleteAllAdminClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.DeleteAllClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.DeleteClaimCommand;
+import me.tinyoverflow.griefprevention.commands.DeleteClaimsInWorldCommand;
+import me.tinyoverflow.griefprevention.commands.DeleteUserClaimsInWorldCommand;
+import me.tinyoverflow.griefprevention.commands.GivePetCommand;
+import me.tinyoverflow.griefprevention.commands.IgnoreClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.RestoreNatureCommand;
+import me.tinyoverflow.griefprevention.commands.RestoreNatureFillCommand;
+import me.tinyoverflow.griefprevention.commands.RestrictSubClaimCommand;
+import me.tinyoverflow.griefprevention.commands.SellClaimBlocksCommand;
+import me.tinyoverflow.griefprevention.commands.SetAccruedClaimBlocksCommand;
+import me.tinyoverflow.griefprevention.commands.SiegeCommand;
+import me.tinyoverflow.griefprevention.commands.SubdivideClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.TransferClaimCommand;
+import me.tinyoverflow.griefprevention.commands.TrappedCommand;
+import me.tinyoverflow.griefprevention.commands.TrustCommand;
+import me.tinyoverflow.griefprevention.commands.TrustListCommand;
+import me.tinyoverflow.griefprevention.commands.UnlockItemsCommand;
+import me.tinyoverflow.griefprevention.commands.UntrustCommand;
 import me.tinyoverflow.griefprevention.configurations.GriefPreventionConfiguration;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
 import me.tinyoverflow.griefprevention.datastore.DatabaseDataStore;
 import me.tinyoverflow.griefprevention.datastore.FlatFileDataStore;
 import me.tinyoverflow.griefprevention.events.PreventBlockBreakEvent;
-import me.tinyoverflow.griefprevention.handlers.*;
-import me.tinyoverflow.griefprevention.tasks.*;
-import org.bukkit.*;
-import org.bukkit.World.Environment;
+import me.tinyoverflow.griefprevention.handlers.BlockEventHandler;
+import me.tinyoverflow.griefprevention.handlers.EconomyHandler;
+import me.tinyoverflow.griefprevention.handlers.EntityDamageHandler;
+import me.tinyoverflow.griefprevention.handlers.EntityEventHandler;
+import me.tinyoverflow.griefprevention.handlers.PlayerEventHandler;
+import me.tinyoverflow.griefprevention.handlers.SiegeEventHandler;
+import me.tinyoverflow.griefprevention.tasks.CheckForPortalTrapTask;
+import me.tinyoverflow.griefprevention.tasks.DeliverClaimBlocksTask;
+import me.tinyoverflow.griefprevention.tasks.EntityCleanupTask;
+import me.tinyoverflow.griefprevention.tasks.FindUnusedClaimsTask;
+import me.tinyoverflow.griefprevention.tasks.PvPImmunityValidationTask;
+import me.tinyoverflow.griefprevention.tasks.RestoreNatureProcessingTask;
+import me.tinyoverflow.griefprevention.tasks.SendPlayerMessageTask;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.Statistic;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -50,14 +102,16 @@ import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class GriefPrevention extends JavaPlugin
 {
@@ -102,12 +156,12 @@ public class GriefPrevention extends JavaPlugin
     public boolean config_whisperNotifications;                    //whether whispered messages will broadcast to administrators in game
     public boolean config_signNotifications;                        //whether sign content will broadcast to administrators in game
     public boolean config_visualizationAntiCheatCompat;              // whether to engage compatibility mode for anti-cheat plugins
-    public boolean config_endermenMoveBlocks;                        //whether or not endermen may move blocks around
-    public boolean config_claims_ravagersBreakBlocks;                //whether or not ravagers may break blocks in claims
+    public boolean config_endermenMoveBlocks;                        //whether endermen may move blocks around
+    public boolean config_claims_ravagersBreakBlocks;                //whether ravagers may break blocks in claims
     public boolean config_silverfishBreakBlocks;                    //whether silverfish may break blocks
-    public boolean config_creaturesTrampleCrops;                    //whether or not non-player entities may trample crops
-    public boolean config_rabbitsEatCrops;                          //whether or not rabbits may eat crops
-    public boolean config_zombiesBreakDoors;                        //whether or not hard-mode zombies may break down wooden doors
+    public boolean config_creaturesTrampleCrops;                    //whether non-player entities may trample crops
+    public boolean config_rabbitsEatCrops;                          //whether rabbits may eat crops
+    public boolean config_zombiesBreakDoors;                        //whether hard-mode zombies may break down wooden doors
     public HashMap<String, Integer> config_seaLevelOverride;        //override for sea level, because bukkit doesn't report the right value for all situations
     public boolean config_limitTreeGrowth;                          //whether trees should be prevented from growing into a claim from outside
     public PistonMode config_pistonMovement;                            //Setting for piston check options
@@ -122,7 +176,7 @@ public class GriefPrevention extends JavaPlugin
     public boolean config_logs_adminEnabled;
     public boolean config_logs_debugEnabled;
     public boolean config_logs_mutedChatEnabled;
-    //Track scheduled "rescues" so we can cancel them if the player happens to teleport elsewhere so we can cancel it.
+    //Track scheduled "rescues" so we can cancel them if the player happens to teleport elsewhere, so we can cancel it.
     public ConcurrentHashMap<UUID, BukkitTask> portalReturnTaskMap = new ConcurrentHashMap<>();
     //log entry manager for GP's custom log files
     CustomLogger customLogger;
@@ -134,7 +188,6 @@ public class GriefPrevention extends JavaPlugin
     private HoconConfigurationLoader configurationLoader;
     private ConfigurationNode configurationNode;
     private GriefPreventionConfiguration configuration;
-    private boolean config_creativeWorldsExist;                     //note on whether there are any creative mode worlds, to save cpu cycles on a common hash lookup
     private EconomyHandler economyHandler;
     private String databaseUrl;
     private String databaseUserName;
@@ -284,12 +337,12 @@ public class GriefPrevention extends JavaPlugin
                 player.getStatistic(Statistic.PICKUP, Material.BIRCH_LOG) > 0 ||
                 player.getStatistic(Statistic.PICKUP, Material.JUNGLE_LOG) > 0 ||
                 player.getStatistic(Statistic.PICKUP, Material.ACACIA_LOG) > 0 ||
-                player.getStatistic(Statistic.PICKUP, Material.DARK_OAK_LOG) > 0) return false;
+                player.getStatistic(Statistic.PICKUP, Material.DARK_OAK_LOG) > 0)
+            return false;
 
         PlayerData playerData = instance.dataStore.getPlayerData(player.getUniqueId());
-        if (playerData.getClaims().size() > 0) return false;
 
-        return true;
+        return playerData.getClaims().size() == 0;
     }
 
     public void onLoad()
@@ -376,7 +429,7 @@ public class GriefPrevention extends JavaPlugin
         String dataMode = (this.dataStore instanceof FlatFileDataStore) ? "(File Mode)" : "(Database Mode)";
         AddLogEntry("Finished loading data " + dataMode + ".");
 
-        //unless claim block accrual is disabled, start the recurring per 10 minute event to give claim blocks to online players
+        //unless claim block accrual is disabled, start the recurring per 10-minute event to give claim blocks to online players
         //20L ~ 1 second
         if (getPluginConfig().getClaimConfiguration().getClaimBlocks().accrued.isAccrualEnabled())
         {
@@ -511,10 +564,6 @@ public class GriefPrevention extends JavaPlugin
         //load the config if it exists
         FileConfiguration config = YamlConfiguration.loadConfiguration(new File(DataStore.configFilePath));
         FileConfiguration outConfig = new YamlConfiguration();
-        outConfig.options().header("Default values are perfect for most servers.  If you want to customize and have a question, look for the answer here first: http://dev.bukkit.org/bukkit-plugins/grief-prevention/pages/setup-and-configuration/");
-
-        //read configuration settings (note defaults)
-        int configVersion = config.getInt("GriefPrevention.ConfigVersion", 0);
 
         //get (deprecated node) claims world names from the config file
         List<World> worlds = this.getServer().getWorlds();
@@ -759,14 +808,12 @@ public class GriefPrevention extends JavaPlugin
         Location candidateLocation = player.getLocation();
         while (true)
         {
-            Claim claim = null;
-            claim = GriefPrevention.instance.dataStore.getClaimAt(candidateLocation, false, null);
+            Claim claim = GriefPrevention.instance.dataStore.getClaimAt(candidateLocation, false, null);
 
             //if there's a claim here, keep looking
             if (claim != null)
             {
                 candidateLocation = new Location(claim.lesserBoundaryCorner.getWorld(), claim.lesserBoundaryCorner.getBlockX() - 1, claim.lesserBoundaryCorner.getBlockY(), claim.lesserBoundaryCorner.getBlockZ() - 1);
-                continue;
             }
 
             //otherwise find a safe place to teleport the player
@@ -792,8 +839,6 @@ public class GriefPrevention extends JavaPlugin
     //determines whether creative anti-grief rules apply at a location
     public boolean creativeRulesApply(Location location)
     {
-        if (!this.config_creativeWorldsExist) return false;
-
         return this.config_claims_worldModes.get((location.getWorld())) == ClaimsMode.Creative;
     }
 
@@ -814,7 +859,7 @@ public class GriefPrevention extends JavaPlugin
             if (this.creativeRulesApply(location) || this.config_claims_worldModes.get(location.getWorld()) == ClaimsMode.SurvivalRequiringClaims)
             {
                 //exception: when chest claims are enabled, players who have zero land claims and are placing a chest
-                if (material != Material.CHEST || playerData.getClaims().size() > 0 || GriefPrevention.instance.config_claims_automaticClaimsForNewPlayersRadius == -1)
+                if (material != Material.CHEST || playerData.getClaims().size() > 0 || GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticPreferredRadius == -1)
                 {
                     String reason = this.dataStore.getMessage(Messages.NoBuildOutsideClaims);
                     if (player.hasPermission("griefprevention.ignoreclaims"))
@@ -927,7 +972,7 @@ public class GriefPrevention extends JavaPlugin
 
     public void restoreChunk(Chunk chunk, int miny, boolean aggressiveMode, long delayInTicks, Player playerReceivingVisualization)
     {
-        //build a snapshot of this chunk, including 1 block boundary outside of the chunk all the way around
+        //build a snapshot of this chunk, including 1 block boundary outside the chunk all the way around
         int maxHeight = chunk.getWorld().getMaxHeight();
         BlockSnapshot[][][] snapshots = new BlockSnapshot[18][maxHeight][18];
         Block startBlock = chunk.getBlock(0, 0, 0);
@@ -1083,8 +1128,7 @@ public class GriefPrevention extends JavaPlugin
                 try
                 {
                     UUID playerID = player.getUniqueId();
-                    if (playerID == null) continue;
-                    long lastSeen = player.getLastPlayed();
+                    long lastSeen = player.getLastLogin();
 
                     //if the player has been seen in the last 90 days, cache his name/UUID pair
                     long diff = now - lastSeen;

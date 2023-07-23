@@ -60,6 +60,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -117,9 +118,9 @@ public abstract class DataStore
     private int currentSchemaVersion = -1;  //-1 means not determined yet
 
     //video links
-    public static final String SURVIVAL_VIDEO_URL = "" + ChatColor.DARK_AQUA + ChatColor.UNDERLINE + "bit.ly/mcgpuser" + ChatColor.RESET;
-    public static final String CREATIVE_VIDEO_URL = "" + ChatColor.DARK_AQUA + ChatColor.UNDERLINE + "bit.ly/mcgpcrea" + ChatColor.RESET;
-    public static final String SUBDIVISION_VIDEO_URL = "" + ChatColor.DARK_AQUA + ChatColor.UNDERLINE + "bit.ly/mcgpsub" + ChatColor.RESET;
+    public static final String SURVIVAL_VIDEO_URL = String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpuser" + ChatColor.RESET;
+    public static final String CREATIVE_VIDEO_URL = String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpcrea" + ChatColor.RESET;
+    public static final String SUBDIVISION_VIDEO_URL = String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpsub" + ChatColor.RESET;
 
 
     //world guard reference, if available
@@ -255,7 +256,7 @@ public abstract class DataStore
 
     abstract void saveGroupBonusBlocks(String groupName, int amount);
 
-    public class NoTransferException extends RuntimeException
+    public static class NoTransferException extends RuntimeException
     {
         private static final long serialVersionUID = 1L;
 
@@ -399,15 +400,12 @@ public abstract class DataStore
 
     String locationToString(Location location)
     {
-        StringBuilder stringBuilder = new StringBuilder(location.getWorld().getName());
-        stringBuilder.append(locationStringDelimiter);
-        stringBuilder.append(location.getBlockX());
-        stringBuilder.append(locationStringDelimiter);
-        stringBuilder.append(location.getBlockY());
-        stringBuilder.append(locationStringDelimiter);
-        stringBuilder.append(location.getBlockZ());
-
-        return stringBuilder.toString();
+        return location.getWorld().getName() + locationStringDelimiter +
+                location.getBlockX() +
+                locationStringDelimiter +
+                location.getBlockY() +
+                locationStringDelimiter +
+                location.getBlockZ();
     }
 
     //turns a location string back into a location
@@ -570,26 +568,21 @@ public abstract class DataStore
                 Entity[] entities = chunk.getEntities();
                 for (Entity entity : entities)
                 {
-                    if (entity instanceof Tameable)
+                    if (entity instanceof Tameable pet)
                     {
-                        Tameable pet = (Tameable) entity;
                         if (pet.isTamed())
                         {
                             AnimalTamer owner = pet.getOwner();
                             if (owner != null)
                             {
                                 UUID ownerID = owner.getUniqueId();
-                                if (ownerID != null)
+                                if (ownerID.equals(claim.ownerID))
                                 {
-                                    if (ownerID.equals(claim.ownerID))
+                                    pet.setTamed(false);
+                                    pet.setOwner(null);
+                                    if (pet instanceof InventoryHolder holder)
                                     {
-                                        pet.setTamed(false);
-                                        pet.setOwner(null);
-                                        if (pet instanceof InventoryHolder)
-                                        {
-                                            InventoryHolder holder = (InventoryHolder) pet;
-                                            holder.getInventory().clear();
-                                        }
+                                        holder.getInventory().clear();
                                     }
                                 }
                             }
@@ -617,8 +610,8 @@ public abstract class DataStore
      * of which claim is correct.
      *
      * @param location the location
-     * @param ignoreHeight whether or not to check containment vertically
-     * @param ignoreSubclaims whether or not subclaims should be returned over claims
+     * @param ignoreHeight whether to check containment vertically
+     * @param ignoreSubclaims whether subclaims should be returned over claims
      * @param cachedClaim the cached claim, if any
      * @return the claim containing the location or null if no claim exists there
      */
@@ -758,8 +751,8 @@ public abstract class DataStore
         int smallx, bigx, smally, bigy, smallz, bigz;
 
         int worldMinY = world.getMinHeight();
-        y1 = Math.max(worldMinY, Math.max(GriefPrevention.instance.config_claims_maxDepth, y1));
-        y2 = Math.max(worldMinY, Math.max(GriefPrevention.instance.config_claims_maxDepth, y2));
+        y1 = Math.max(worldMinY, Math.max(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().maximumDepth, y1));
+        y2 = Math.max(worldMinY, Math.max(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().maximumDepth, y2));
 
         //determine small versus big inputs
         if (x1 < x2)
@@ -851,7 +844,7 @@ public abstract class DataStore
         }
 
         //if worldguard is installed, also prevent claims from overlapping any worldguard regions
-        if (GriefPrevention.instance.config_claims_respectWorldGuard && this.worldGuard != null && creatingPlayer != null)
+        if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().requireWorldGuard && this.worldGuard != null && creatingPlayer != null)
         {
             if (!this.worldGuard.canBuild(newClaim.lesserBoundaryCorner, newClaim.greaterBoundaryCorner, creatingPlayer))
             {
@@ -930,7 +923,7 @@ public abstract class DataStore
 
                 //write data to file
                 File playerDataFile = new File(playerDataFolderPath + File.separator + playerID + ".ignore");
-                Files.write(fileContent.toString().trim().getBytes("UTF-8"), playerDataFile);
+                Files.write(fileContent.toString().trim().getBytes(StandardCharsets.UTF_8), playerDataFile);
             }
 
             //if any problem, log it
@@ -980,7 +973,7 @@ public abstract class DataStore
         // Use the lowest of the old and new depths.
         newDepth = Math.min(newDepth, oldDepth);
         // Cap depth to maximum depth allowed by the configuration.
-        newDepth = Math.max(newDepth, GriefPrevention.instance.config_claims_maxDepth);
+        newDepth = Math.max(newDepth, GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().maximumDepth);
         // Cap the depth to the world's minimum height.
         World world = Objects.requireNonNull(claim.getLesserBoundaryCorner().getWorld());
         newDepth = Math.max(newDepth, world.getMinHeight());
@@ -1069,8 +1062,8 @@ public abstract class DataStore
         defenderData.lastSiegeEndTimeStamp = System.currentTimeMillis();
 
         //start a cooldown for this attacker/defender pair
-        Long now = Calendar.getInstance().getTimeInMillis();
-        Long cooldownEnd = now + 1000 * 60 * GriefPrevention.instance.getPluginConfig().getSiegeConfiguration().getCooldownEnd();  //one hour from now
+        long now = Calendar.getInstance().getTimeInMillis();
+        long cooldownEnd = now + 1000L * 60 * GriefPrevention.instance.getPluginConfig().getSiegeConfiguration().getCooldownEnd();  //one hour from now
         this.siegeCooldownRemaining.put(siegeData.attacker.getName() + "_" + siegeData.defender.getName(), cooldownEnd);
 
         //start cooldowns for every attacker/involved claim pair
@@ -1118,10 +1111,9 @@ public abstract class DataStore
         //if the siege ended due to death, transfer inventory to winner
         if (drops != null)
         {
-
             Player winner = GriefPrevention.instance.getServer().getPlayer(winnerName);
-
             Player loser = GriefPrevention.instance.getServer().getPlayer(loserName);
+
             if (winner != null && loser != null)
             {
                 //try to add any drops to the winner's inventory
@@ -1132,7 +1124,6 @@ public abstract class DataStore
                     HashMap<Integer, ItemStack> wontFitItems = winner.getInventory().addItem(stack);
 
                     //drop any remainder on the ground at his feet
-                    Object[] keys = wontFitItems.keySet().toArray();
                     Location winnerLocation = winner.getLocation();
                     for (Map.Entry<Integer, ItemStack> wontFitItem : wontFitItems.entrySet())
                     {
@@ -1229,7 +1220,7 @@ public abstract class DataStore
         ArrayList<Claim> claimsToDelete = new ArrayList<>();
         for (Claim claim : this.claims)
         {
-            if ((playerID == claim.ownerID || (playerID != null && playerID.equals(claim.ownerID))))
+            if ((Objects.equals(playerID, claim.ownerID)))
                 claimsToDelete.add(claim);
         }
 
@@ -1284,16 +1275,16 @@ public abstract class DataStore
 
             if (!player.hasPermission("griefprevention.adminclaims") && !playerData.claimResizing.isAdminClaim() && smaller)
             {
-                if (newWidth < GriefPrevention.instance.config_claims_minWidth || newHeight < GriefPrevention.instance.config_claims_minWidth)
+                if (newWidth < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumWidth || newHeight < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumWidth)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimTooNarrow, String.valueOf(GriefPrevention.instance.config_claims_minWidth));
+                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimTooNarrow, String.valueOf(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumWidth));
                     return;
                 }
 
                 int newArea = newWidth * newHeight;
-                if (newArea < GriefPrevention.instance.config_claims_minArea)
+                if (newArea < GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumArea)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimInsufficientArea, String.valueOf(GriefPrevention.instance.config_claims_minArea));
+                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeClaimInsufficientArea, String.valueOf(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().minimumArea));
                     return;
                 }
             }
@@ -1712,7 +1703,7 @@ public abstract class DataStore
         //save any changes
         try
         {
-            config.options().header("Use a YAML editor like NotepadPlusPlus to edit this file.  \nAfter editing, back up your changes before reloading the server in case you made a syntax error.  \nUse dollar signs ($) for formatting codes, which are documented here: http://minecraft.gamepedia.com/Formatting_codes");
+            config.options().header("Use a YAML editor like NotepadPlusPlus to edit this file.  \nAfter editing, back up your changes before reloading the server in case you made a syntax error.  \nUse dollar signs ($) for formatting codes, which are documented here: https://minecraft.gamepedia.com/Formatting_codes");
             config.save(DataStore.messagesFilePath);
         }
         catch (IOException exception)
@@ -1769,7 +1760,7 @@ public abstract class DataStore
             {
                 playerID = UUIDFetcher.getUUIDOf(name);
             }
-            catch (Exception ex) { }
+            catch (Exception ignored) { }
 
             //if successful, replace player name with corresponding UUID
             if (playerID != null)

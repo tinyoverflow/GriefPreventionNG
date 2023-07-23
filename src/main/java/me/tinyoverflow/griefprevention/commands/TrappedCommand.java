@@ -62,7 +62,7 @@ public class TrappedCommand extends BaseCommand implements PlayerCommandExecutor
         }
 
         //if the player is in an administrative claim and AllowTrappedInAdminClaims is false, he should contact an admin
-        if (!GriefPrevention.instance.config_claims_allowTrappedInAdminClaims && claim.isAdminClaim() && event.getDestination() == null)
+        if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().isTrappedInAdminClaimsAllowed() && claim.isAdminClaim() && event.getDestination() == null)
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.TrappedWontWorkHere);
             return;

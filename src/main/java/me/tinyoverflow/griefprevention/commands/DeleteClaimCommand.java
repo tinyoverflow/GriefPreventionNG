@@ -49,7 +49,7 @@ public class DeleteClaimCommand extends BaseCommand implements PlayerCommandExec
                     this.getPlugin().getDataStore().deleteClaim(claim, true, true);
 
                     //if in a creative mode world, /restorenature the claim
-                    if (GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()) || GriefPrevention.instance.config_claims_survivalAutoNatureRestoration)
+                    if (GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()) || GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpiration().restoreNature)
                     {
                         GriefPrevention.instance.restoreClaim(claim, 0);
                     }

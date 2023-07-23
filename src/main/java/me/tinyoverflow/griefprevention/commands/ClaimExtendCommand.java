@@ -40,7 +40,7 @@ public class ClaimExtendCommand extends BaseCommand implements PlayerCommandExec
 
         //requires claim modification tool in hand
         if (player.getGameMode() != GameMode.CREATIVE &&
-                player.getInventory().getItemInMainHand().getType() != GriefPrevention.instance.config_claims_modificationTool)
+                player.getInventory().getItemInMainHand().getType() != GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getTools().getModificationTool())
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.MustHoldModificationToolForThat);
             return;

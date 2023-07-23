@@ -46,7 +46,7 @@ public class ClaimConfiguration
     @Setting("manual")
     private ClaimManualConfiguration manual = new ClaimManualConfiguration();
 
-    public Map<String, String> getWorldModes()
+    public Map<String, ClaimsMode> getWorldModes()
     {
         return this.mode;
     }

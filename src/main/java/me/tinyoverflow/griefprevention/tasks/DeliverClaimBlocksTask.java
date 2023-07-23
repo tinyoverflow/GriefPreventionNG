@@ -40,7 +40,9 @@ public class DeliverClaimBlocksTask implements Runnable
     {
         this.player = player;
         this.instance = instance;
-        this.idleThresholdSquared = instance.config_claims_accruedIdleThreshold * instance.config_claims_accruedIdleThreshold;
+
+        int idleThreshold = instance.getPluginConfig().getClaimConfiguration().getClaimBlocks().accrued.idleDistanceThreshold;
+        this.idleThresholdSquared = idleThreshold * idleThreshold;
     }
 
     @Override
@@ -90,18 +92,18 @@ public class DeliverClaimBlocksTask implements Runnable
         try
         {
             //determine how fast blocks accrue for this player //RoboMWM: addons determine this instead
-            int accrualRate = instance.config_claims_blocksAccruedPerHour_default;
+            int accrualRate = instance.getPluginConfig().getClaimConfiguration().getClaimBlocks().accrued.accruePerHour;
 
             //determine idle accrual rate when idle
             if (isIdle)
             {
-                if (instance.config_claims_accruedIdlePercent <= 0)
+                if (instance.getPluginConfig().getClaimConfiguration().getClaimBlocks().accrued.idleRatio <= 0)
                 {
                     GriefPrevention.AddLogEntry(player.getName() + " wasn't active enough to accrue claim blocks this round.", CustomLogEntryTypes.Debug, true);
                     return; //idle accrual percentage is disabled
                 }
 
-                accrualRate = (int) (accrualRate * (instance.config_claims_accruedIdlePercent / 100.0D));
+                accrualRate = (int) (accrualRate * (instance.getPluginConfig().getClaimConfiguration().getClaimBlocks().accrued.idleRatio / 100.0D));
             }
 
             //fire event for addons

@@ -50,17 +50,17 @@ class CleanupUnusedClaimTask implements Runnable
 
         //determine area of the default chest claim
         int areaOfDefaultClaim = 0;
-        if (GriefPrevention.instance.config_claims_automaticClaimsForNewPlayersRadius >= 0)
+        if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticPreferredRadius >= 0)
         {
-            areaOfDefaultClaim = (int) Math.pow(GriefPrevention.instance.config_claims_automaticClaimsForNewPlayersRadius * 2 + 1, 2);
+            areaOfDefaultClaim = (int) Math.pow(GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreation().automaticPreferredRadius * 2 + 1, 2);
         }
 
         //if this claim is a chest claim and those are set to expire
-        if (ownerData.getClaims().size() == 1 && claim.getArea() <= areaOfDefaultClaim && GriefPrevention.instance.config_claims_chestClaimExpirationDays > 0)
+        if (ownerData.getClaims().size() == 1 && claim.getArea() <= areaOfDefaultClaim && GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpiration().chestClaimDays > 0)
         {
             //if the owner has been gone at least a week, and if he has ONLY the new player claim, it will be removed
             Calendar sevenDaysAgo = Calendar.getInstance();
-            sevenDaysAgo.add(Calendar.DATE, -GriefPrevention.instance.config_claims_chestClaimExpirationDays);
+            sevenDaysAgo.add(Calendar.DATE, -GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpiration().chestClaimDays);
             if (sevenDaysAgo.getTime().after(new Date(ownerInfo.getLastPlayed())))
             {
                 if (expireEventCanceled())
@@ -69,7 +69,7 @@ class CleanupUnusedClaimTask implements Runnable
                 GriefPrevention.instance.dataStore.deleteClaim(claim, true, true);
 
                 //if configured to do so, restore the land to natural
-                if (GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()) || GriefPrevention.instance.config_claims_survivalAutoNatureRestoration)
+                if (GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()) || GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpiration().restoreNature)
                 {
                     GriefPrevention.instance.restoreClaim(claim, 0);
                 }
@@ -79,10 +79,10 @@ class CleanupUnusedClaimTask implements Runnable
         }
 
         //if configured to always remove claims after some inactivity period without exceptions...
-        else if (GriefPrevention.instance.config_claims_expirationDays > 0)
+        else if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpiration().allClaimsDays > 0)
         {
             Calendar earliestPermissibleLastLogin = Calendar.getInstance();
-            earliestPermissibleLastLogin.add(Calendar.DATE, -GriefPrevention.instance.config_claims_expirationDays);
+            earliestPermissibleLastLogin.add(Calendar.DATE, -GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpiration().allClaimsDays);
 
             if (earliestPermissibleLastLogin.getTime().after(new Date(ownerInfo.getLastPlayed())))
             {
@@ -100,14 +100,14 @@ class CleanupUnusedClaimTask implements Runnable
                 for (Claim claim : claims)
                 {
                     //if configured to do so, restore the land to natural
-                    if (GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()) || GriefPrevention.instance.config_claims_survivalAutoNatureRestoration)
+                    if (GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()) || GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpiration().restoreNature)
                     {
                         GriefPrevention.instance.restoreClaim(claim, 0);
                     }
                 }
             }
         }
-        else if (GriefPrevention.instance.config_claims_unusedClaimExpirationDays > 0 && GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()))
+        else if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpiration().unusedClaimDays > 0 && GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()))
         {
             //avoid scanning large claims and administrative claims
             if (claim.isAdminClaim() || claim.getWidth() > 25 || claim.getHeight() > 25) return;
@@ -121,7 +121,7 @@ class CleanupUnusedClaimTask implements Runnable
             {
                 //if the owner has been gone at least a week, and if he has ONLY the new player claim, it will be removed
                 Calendar sevenDaysAgo = Calendar.getInstance();
-                sevenDaysAgo.add(Calendar.DATE, -GriefPrevention.instance.config_claims_unusedClaimExpirationDays);
+                sevenDaysAgo.add(Calendar.DATE, -GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpiration().unusedClaimDays);
                 boolean claimExpired = sevenDaysAgo.getTime().after(new Date(ownerInfo.getLastPlayed()));
                 if (claimExpired)
                 {

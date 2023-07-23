@@ -148,10 +148,10 @@ public class EntityDamageHandler implements Listener
         if (isHostile(event.getEntity())) return;
 
         //horse protections can be disabled
-        if (event.getEntity() instanceof Horse && !instance.config_claims_protectHorses) return;
-        if (event.getEntity() instanceof Donkey && !instance.config_claims_protectDonkeys) return;
-        if (event.getEntity() instanceof Mule && !instance.config_claims_protectDonkeys) return;
-        if (event.getEntity() instanceof Llama && !instance.config_claims_protectLlamas) return;
+        if (event.getEntity() instanceof Horse && !instance.getPluginConfig().getClaimConfiguration().getMobs().protectHorses) return;
+        if (event.getEntity() instanceof Donkey && !instance.getPluginConfig().getClaimConfiguration().getMobs().protectDonkeys) return;
+        if (event.getEntity() instanceof Mule && !instance.getPluginConfig().getClaimConfiguration().getMobs().protectDonkeys) return;
+        if (event.getEntity() instanceof Llama && !instance.getPluginConfig().getClaimConfiguration().getMobs().protectLlamas) return;
         //protected death loot can't be destroyed, only picked up or despawned due to expiration
         if (event.getEntityType() == EntityType.DROPPED_ITEM)
         {
@@ -571,7 +571,7 @@ public class EntityDamageHandler implements Listener
 
         if (entityType == EntityType.VILLAGER
                 // Allow disabling villager protections in the config.
-                && (!instance.config_claims_protectCreatures
+                && (!instance.getPluginConfig().getClaimConfiguration().getMobs().protectCreatures
                 // Always allow zombies and raids to target villagers.
                 //why exception?  so admins can set up a village which can't be CHANGED by players, but must be "protected" by players.
                 || event.getDamager() instanceof Zombie
@@ -629,7 +629,7 @@ public class EntityDamageHandler implements Listener
             @Nullable Projectile arrow,
             boolean sendMessages)
     {
-        if (!(event.getEntity() instanceof Creature) || !instance.config_claims_protectCreatures)
+        if (!(event.getEntity() instanceof Creature) || !instance.getPluginConfig().getClaimConfiguration().getMobs().protectCreatures)
             return false;
 
         //if entity is tameable and has an owner, apply special rules
@@ -819,7 +819,7 @@ public class EntityDamageHandler implements Listener
     public void onVehicleDamage(@NotNull VehicleDamageEvent event)
     {
         //all of this is anti theft code
-        if (!instance.config_claims_preventTheft) return;
+        if (!instance.getPluginConfig().getClaimConfiguration().getProtection().protectVehicles) return;
 
         //don't track in worlds where claims are not enabled
         if (!instance.claimsEnabledForWorld(event.getVehicle().getWorld())) return;

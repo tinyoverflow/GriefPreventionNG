@@ -10,11 +10,11 @@ public class ClaimToolsConfiguration
 {
     @Setting
     @Comment("The material to use to investigate claims.")
-    public Material investigation = Material.STICK;
+    private Material investigation = Material.STICK;
 
     @Setting
     @Comment("The material to use to create and modify claims.")
-    public Material modification = Material.GOLDEN_SHOVEL;
+    private Material modification = Material.GOLDEN_SHOVEL;
 
     public Material getInvestigationTool()
     {

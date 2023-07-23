@@ -8,6 +8,10 @@ import org.spongepowered.configurate.objectmapping.meta.Setting;
 public class ClaimProtectionConfiguration
 {
     @Setting
+    @Comment("Requires access trust to break vehicles.")
+    public boolean protectVehicles = true;
+
+    @Setting
     @Comment("Requires access trust to access all kinds of containers.")
     public boolean lockContainers = true;
 
@@ -54,5 +58,13 @@ public class ClaimProtectionConfiguration
     @Setting
     @Comment("Whether fire will do damage inside claims.")
     public boolean preventFireDamage = true;
+
+    @Setting
+    @Comment("Prevent creation of portals inside claims when the creating player is unknown.")
+    public boolean preventNonPlayerPortals = true;
+
+    @Setting
+    @Comment("Require access trust to be able to trade with claimed villagers.")
+    public boolean preventVillagerTrades = true;
 }
 
