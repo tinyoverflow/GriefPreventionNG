@@ -1,7 +1,6 @@
 package me.tinyoverflow.griefprevention.configurations;
 
 import lombok.Data;
-import lombok.Getter;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;

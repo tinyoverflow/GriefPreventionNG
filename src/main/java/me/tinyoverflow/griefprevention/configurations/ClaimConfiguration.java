@@ -2,11 +2,13 @@ package me.tinyoverflow.griefprevention.configurations;
 
 import lombok.Data;
 import me.tinyoverflow.griefprevention.ClaimsMode;
+import org.bukkit.World;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import java.util.Map;
+import java.util.Optional;
 
 @ConfigSerializable
 @Data
@@ -50,5 +52,27 @@ public class ClaimConfiguration
 
     @Setting("restoration")
     private final ClaimRestorationConfiguration restorationConfiguration = new ClaimRestorationConfiguration();
+
+    /**
+     * Determines whether protection rules apply to the specified world.
+     *
+     * @param world The world to check for.
+     * @return True if protection is not disabled, false otherwise.
+     */
+    public boolean isWorldEnabled(World world)
+    {
+        return worldModes.containsKey(world.getName()) &&
+               worldModes.get(world.getName()) != ClaimsMode.Disabled;
+    }
+
+    public Optional<ClaimsMode> getWorldMode(World world)
+    {
+        String worldName = world.getName();
+        if (worldModes.containsKey(worldName)) {
+            return Optional.of(worldModes.get(worldName));
+        }
+
+        return Optional.empty();
+    }
 }
 
