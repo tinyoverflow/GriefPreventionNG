@@ -19,7 +19,7 @@ public class ClaimProtectionConfiguration
 
     @Setting("lock-wooden-doors")
     @Comment("Requires access trust to interact with wooden doors.")
-    public final boolean lockWoodenDoorsEnabled = true;
+    private final boolean lockWoodenDoorsEnabled = true;
 
     @Setting("lock-fence-gates")
     @Comment("Requires access trust to interact with fence gates.")

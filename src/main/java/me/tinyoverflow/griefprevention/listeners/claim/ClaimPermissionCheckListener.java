@@ -1,4 +1,4 @@
-package me.tinyoverflow.griefprevention.handlers;
+package me.tinyoverflow.griefprevention.listeners.claim;
 
 import me.tinyoverflow.griefprevention.Claim;
 import me.tinyoverflow.griefprevention.ClaimPermission;
@@ -14,7 +14,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
-public class SiegeEventHandler implements Listener
+public class ClaimPermissionCheckListener implements Listener
 {
 
     @EventHandler(priority = EventPriority.LOWEST)
