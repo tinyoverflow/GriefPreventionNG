@@ -25,7 +25,7 @@ import org.bukkit.event.Listener;
 public class PlayerEventHandler implements Listener {
     static int longestNameLength = 10;
 
-    static void makeSocialLogEntry(String name, String message) {
+    public static void makeSocialLogEntry(String name, String message) {
         StringBuilder entryBuilder = new StringBuilder(name);
         for (int i = name.length(); i < longestNameLength; i++) {
             entryBuilder.append(' ');

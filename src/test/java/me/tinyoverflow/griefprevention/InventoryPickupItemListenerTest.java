@@ -1,7 +1,7 @@
 package me.tinyoverflow.griefprevention;
 
 import me.tinyoverflow.griefprevention.datastore.DataStore;
-import me.tinyoverflow.griefprevention.handlers.BlockEventHandler;
+import me.tinyoverflow.griefprevention.listeners.inventory.InventoryPickupItemListener;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.entity.Item;
@@ -17,19 +17,13 @@ import org.mockito.Mockito;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-public class BlockEventHandlerTest
-{
+public class InventoryPickupItemListenerTest {
     private static final UUID PLAYER_UUID = UUID.fromString("fa8d60a7-9645-4a9f-b74d-173966174739");
 
     @Test
-    void verifyNormalHopperPassthrough()
-    {
+    void verifyNormalHopperPassthrough() {
         // Verify that we don't cancel events for unprotected items.
 
         Item item = mock(Item.class);
@@ -39,7 +33,7 @@ public class BlockEventHandlerTest
         when(inventory.getType()).thenReturn(InventoryType.HOPPER);
         when(event.getItem()).thenReturn(item);
         when(event.getInventory()).thenReturn(inventory);
-        BlockEventHandler handler = new BlockEventHandler(null);
+        InventoryPickupItemListener handler = new InventoryPickupItemListener(null);
 
         handler.onInventoryPickupItem(event);
 
@@ -47,8 +41,7 @@ public class BlockEventHandlerTest
     }
 
     @Test
-    void verifyNoHopperPassthroughWhenItemIsProtected()
-    {
+    void verifyNoHopperPassthroughWhenItemIsProtected() {
         // Verify that we DO cancel events for items that are protected.
 
         Item item = mock(Item.class);
@@ -58,15 +51,14 @@ public class BlockEventHandlerTest
         when(inventory.getType()).thenReturn(InventoryType.HOPPER);
         DataStore dataStore = Mockito.mock(DataStore.class);
         when(dataStore.getPlayerData(PLAYER_UUID)).thenReturn(new PlayerData());
-        BlockEventHandler handler = new BlockEventHandler(dataStore);
+        InventoryPickupItemListener handler = new InventoryPickupItemListener(dataStore);
         InventoryPickupItemEvent event = mock(InventoryPickupItemEvent.class);
         when(event.getInventory()).thenReturn(inventory);
         when(event.getItem()).thenReturn(item);
         Server server = mock(Server.class);
         when(server.getPlayer(PLAYER_UUID)).thenReturn(mock(Player.class));
 
-        try (var bukkit = mockStatic(Bukkit.class))
-        {
+        try (var bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getServer).thenReturn(server);
 
             handler.onInventoryPickupItem(event);
@@ -76,8 +68,7 @@ public class BlockEventHandlerTest
     }
 
     @Test
-    void verifyHopperPassthroughWhenItemIsProtectedButOwnerIsOffline()
-    {
+    void verifyHopperPassthroughWhenItemIsProtectedButOwnerIsOffline() {
         // Verify that we don't cancel events for items that are protected, but where
         // the owner of those items is not logged in.
         // This behaviour matches older versions of GriefPrevention.
@@ -87,15 +78,14 @@ public class BlockEventHandlerTest
                 .thenReturn(List.of(new FixedMetadataValue(mock(Plugin.class), PLAYER_UUID)));
         Inventory inventory = mock(Inventory.class);
         when(inventory.getType()).thenReturn(InventoryType.HOPPER);
-        BlockEventHandler handler = new BlockEventHandler(null);
+        InventoryPickupItemListener handler = new InventoryPickupItemListener(null);
         InventoryPickupItemEvent event = mock(InventoryPickupItemEvent.class);
         when(event.getInventory()).thenReturn(inventory);
         when(event.getItem()).thenReturn(item);
         Server server = mock(Server.class);
         when(server.getPlayer(PLAYER_UUID)).thenReturn(null);
 
-        try (var bukkit = mockStatic(Bukkit.class))
-        {
+        try (var bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getServer).thenReturn(server);
 
             handler.onInventoryPickupItem(event);

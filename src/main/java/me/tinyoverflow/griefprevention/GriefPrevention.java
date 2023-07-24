@@ -26,12 +26,17 @@ import me.tinyoverflow.griefprevention.datastore.DataStore;
 import me.tinyoverflow.griefprevention.datastore.DatabaseDataStore;
 import me.tinyoverflow.griefprevention.datastore.FlatFileDataStore;
 import me.tinyoverflow.griefprevention.events.PreventBlockBreakEvent;
-import me.tinyoverflow.griefprevention.handlers.BlockEventHandler;
 import me.tinyoverflow.griefprevention.handlers.EconomyHandler;
 import me.tinyoverflow.griefprevention.handlers.EntityDamageHandler;
 import me.tinyoverflow.griefprevention.handlers.EntityEventHandler;
+import me.tinyoverflow.griefprevention.listeners.block.*;
 import me.tinyoverflow.griefprevention.listeners.claim.ClaimPermissionCheckListener;
+import me.tinyoverflow.griefprevention.listeners.entity.ProjectileHitListener;
+import me.tinyoverflow.griefprevention.listeners.hanging.HangingBreakListener;
+import me.tinyoverflow.griefprevention.listeners.inventory.InventoryPickupItemListener;
 import me.tinyoverflow.griefprevention.listeners.player.*;
+import me.tinyoverflow.griefprevention.listeners.world.PortalCreateListener;
+import me.tinyoverflow.griefprevention.listeners.world.StructureGrowListener;
 import me.tinyoverflow.griefprevention.tasks.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -142,7 +147,7 @@ public class GriefPrevention extends JavaPlugin {
 
     public GriefPrevention() {
         configurationFile = Paths.get(
-                this.getDataFolder().getPath(),
+                getDataFolder().getPath(),
                 "config.conf"
         );
     }
@@ -276,7 +281,7 @@ public class GriefPrevention extends JavaPlugin {
     public void onLoad() {
         // Load the plugin config first, so we have everything ready
         // for all dependencies that might come up.
-        this.loadPluginConfig();
+        loadPluginConfig();
 
         // As CommandAPI is loaded as a library and not as a plugin,
         // we need to trigger this event manually.
@@ -291,43 +296,43 @@ public class GriefPrevention extends JavaPlugin {
         instance = this;
         log = instance.getLogger();
 
-        this.registerCommands();
+        registerCommands();
 
-        this.customLogger = new CustomLogger();
+        customLogger = new CustomLogger();
 
         AddLogEntry("Finished loading configuration.");
 
         //when datastore initializes, it loads player and claim data, and posts some stats to the log
-        if (this.databaseUrl.length() > 0) {
+        if (databaseUrl.length() > 0) {
             try {
                 DatabaseDataStore databaseStore = new DatabaseDataStore(
-                        this.databaseUrl,
-                        this.databaseUserName,
-                        this.databasePassword
+                        databaseUrl,
+                        databaseUserName,
+                        databasePassword
                 );
 
                 if (FlatFileDataStore.hasData()) {
                     GriefPrevention.AddLogEntry(
                             "There appears to be some data on the hard drive.  Migrating those data to the database...");
-                    FlatFileDataStore flatFileStore = new FlatFileDataStore(this.getDataFolder());
-                    this.dataStore = flatFileStore;
+                    FlatFileDataStore flatFileStore = new FlatFileDataStore(getDataFolder());
+                    dataStore = flatFileStore;
                     flatFileStore.migrateData(databaseStore);
                     GriefPrevention.AddLogEntry("Data migration process complete.");
                 }
 
-                this.dataStore = databaseStore;
+                dataStore = databaseStore;
             } catch (Exception e) {
                 GriefPrevention.AddLogEntry(
                         "Because there was a problem with the database, GriefPrevention will not function properly.  Either update the database config settings resolve the issue, or delete those lines from your config.yml so that GriefPrevention can use the file system to store data.");
                 e.printStackTrace();
-                this.getServer().getPluginManager().disablePlugin(this);
+                getServer().getPluginManager().disablePlugin(this);
                 return;
             }
         }
 
-        //if not using the database because it's not configured or because there was a problem, use the file system to store data
-        //this is the preferred method, as it's simpler than the database scenario
-        if (this.dataStore == null) {
+        // if not using the database because it's not configured or because there was a problem, use the file system to store data
+        // this is the preferred method, as it's simpler than the database scenario
+        if (dataStore == null) {
             File oldclaimdata = new File(getDataFolder(), "ClaimData");
             if (oldclaimdata.exists()) {
                 if (!FlatFileDataStore.hasData()) {
@@ -339,7 +344,7 @@ public class GriefPrevention extends JavaPlugin {
                 }
             }
             try {
-                this.dataStore = new FlatFileDataStore(this.getDataFolder());
+                dataStore = new FlatFileDataStore(getDataFolder());
             } catch (Exception e) {
                 GriefPrevention.AddLogEntry("Unable to initialize the file system data store.  Details:");
                 GriefPrevention.AddLogEntry(e.getMessage());
@@ -347,7 +352,7 @@ public class GriefPrevention extends JavaPlugin {
             }
         }
 
-        String dataMode = (this.dataStore instanceof FlatFileDataStore) ? "(File Mode)" : "(Database Mode)";
+        String dataMode = (dataStore instanceof FlatFileDataStore) ? "(File Mode)" : "(Database Mode)";
         AddLogEntry("Finished loading data " + dataMode + ".");
 
         //unless claim block accrual is disabled, start the recurring per 10-minute event to give claim blocks to online players
@@ -359,11 +364,11 @@ public class GriefPrevention extends JavaPlugin {
 
         //start the recurring cleanup event for entities in creative worlds
         EntityCleanupTask task = new EntityCleanupTask(0);
-        this.getServer().getScheduler().scheduleSyncDelayedTask(GriefPrevention.instance, task, 20L * 60 * 2);
+        getServer().getScheduler().scheduleSyncDelayedTask(GriefPrevention.instance, task, 20L * 60 * 2);
 
         //start recurring cleanup scan for unused claims belonging to inactive players
         FindUnusedClaimsTask task2 = new FindUnusedClaimsTask();
-        this.getServer().getScheduler().scheduleSyncRepeatingTask(
+        getServer().getScheduler().scheduleSyncRepeatingTask(
                 this,
                 task2,
                 20L * 60,
@@ -371,9 +376,39 @@ public class GriefPrevention extends JavaPlugin {
         );
 
         //register for events
-        PluginManager pluginManager = this.getServer().getPluginManager();
+        PluginManager pluginManager = getServer().getPluginManager();
 
-        //player events
+        // Block Events
+        registerEvents(
+                new BlockBreakListener(),
+                new BlockBurnListener(dataStore),
+                new BlockDispenseListener(dataStore),
+                new BlockFormListener(dataStore),
+                new BlockFromToListener(dataStore),
+                new BlockIgniteListener(),
+                new BlockMultiPlaceListener(),
+                new BlockPistonListener(dataStore),
+                new BlockPlaceListener(dataStore),
+                new BlockSpreadListener(dataStore),
+                new SignChangeListener(dataStore)
+        );
+
+        // Entity Events
+        registerEvents(
+                new ProjectileHitListener(dataStore)
+        );
+
+        // Hanging Events
+        registerEvents(
+                new HangingBreakListener(dataStore)
+        );
+
+        // Inventory Events
+        registerEvents(
+                new InventoryPickupItemListener(dataStore)
+        );
+
+        // Player Events
         registerEvents(
                 new PlayerBucketEmptyListener(this, dataStore),
                 new PlayerBucketFillListener(this),
@@ -397,16 +432,18 @@ public class GriefPrevention extends JavaPlugin {
                 new PlayerTeleportListener(this, dataStore)
         );
 
-        //block events
-        BlockEventHandler blockEventHandler = new BlockEventHandler(this.dataStore);
-        pluginManager.registerEvents(blockEventHandler, this);
+        // World Events
+        registerEvents(
+                new PortalCreateListener(dataStore),
+                new StructureGrowListener(dataStore)
+        );
 
         //entity events
-        entityEventHandler = new EntityEventHandler(this.dataStore, this);
+        entityEventHandler = new EntityEventHandler(dataStore, this);
         pluginManager.registerEvents(entityEventHandler, this);
 
         //combat/damage-specific entity events
-        entityDamageHandler = new EntityDamageHandler(this.dataStore, this);
+        entityDamageHandler = new EntityDamageHandler(dataStore, this);
         pluginManager.registerEvents(entityDamageHandler, this);
 
         //siege events
@@ -418,10 +455,10 @@ public class GriefPrevention extends JavaPlugin {
         pluginManager.registerEvents(economyHandler, this);
 
         //cache offline players
-        OfflinePlayer[] offlinePlayers = this.getServer().getOfflinePlayers();
+        OfflinePlayer[] offlinePlayers = getServer().getOfflinePlayers();
         CacheOfflinePlayerNamesThread namesThread = new CacheOfflinePlayerNamesThread(
                 offlinePlayers,
-                this.playerNameToIDMap
+                playerNameToIDMap
         );
         namesThread.setPriority(Thread.MIN_PRIORITY);
         namesThread.start();
@@ -476,15 +513,15 @@ public class GriefPrevention extends JavaPlugin {
 
     private void savePluginConfig() {
         try {
-            this.configurationNode.set(this.configuration);
-            this.configurationLoader.save(this.configurationNode);
+            configurationNode.set(configuration);
+            configurationLoader.save(configurationNode);
         } catch (ConfigurateException e) {
             throw new RuntimeException(e);
         }
     }
 
     public GriefPreventionConfiguration getPluginConfig() {
-        return this.configuration;
+        return configuration;
     }
 
     private void loadPluginConfig() {
@@ -510,13 +547,13 @@ public class GriefPrevention extends JavaPlugin {
         FileConfiguration outConfig = new YamlConfiguration();
 
         //get (deprecated node) claims world names from the config file
-        List<World> worlds = this.getServer().getWorlds();
+        List<World> worlds = getServer().getWorlds();
         List<String> deprecated_claimsEnabledWorldNames = config.getStringList("GriefPrevention.Claims.Worlds");
 
         //validate that list
         for (int i = 0; i < deprecated_claimsEnabledWorldNames.size(); i++) {
             String worldName = deprecated_claimsEnabledWorldNames.get(i);
-            World world = this.getServer().getWorld(worldName);
+            World world = getServer().getWorld(worldName);
             if (world == null) {
                 deprecated_claimsEnabledWorldNames.remove(i--);
             }
@@ -529,7 +566,7 @@ public class GriefPrevention extends JavaPlugin {
         //validate that list
         for (int i = 0; i < deprecated_creativeClaimsEnabledWorldNames.size(); i++) {
             String worldName = deprecated_creativeClaimsEnabledWorldNames.get(i);
-            World world = this.getServer().getWorld(worldName);
+            World world = getServer().getWorld(worldName);
             if (world == null) {
                 deprecated_claimsEnabledWorldNames.remove(i--);
             }
@@ -547,282 +584,282 @@ public class GriefPrevention extends JavaPlugin {
         );
 
         //pvp worlds list
-        this.config_pvp_specifiedWorlds = new HashMap<>();
+        config_pvp_specifiedWorlds = new HashMap<>();
         for (World world : worlds) {
             boolean pvpWorld = config.getBoolean(
                     "GriefPrevention.PvP.RulesEnabledInWorld." + world.getName(),
                     world.getPVP()
             );
-            this.config_pvp_specifiedWorlds.put(world, pvpWorld);
+            config_pvp_specifiedWorlds.put(world, pvpWorld);
         }
 
         //sea level
-        this.config_seaLevelOverride = new HashMap<>();
+        config_seaLevelOverride = new HashMap<>();
         for (World world : worlds) {
             int seaLevelOverride = config.getInt("GriefPrevention.SeaLevelOverrides." + world.getName(), -1);
             outConfig.set("GriefPrevention.SeaLevelOverrides." + world.getName(), seaLevelOverride);
-            this.config_seaLevelOverride.put(world.getName(), seaLevelOverride);
+            config_seaLevelOverride.put(world.getName(), seaLevelOverride);
         }
 
-        this.config_pvp_protectFreshSpawns = config.getBoolean("GriefPrevention.PvP.ProtectFreshSpawns", true);
-        this.config_pvp_punishLogout = config.getBoolean("GriefPrevention.PvP.PunishLogout", true);
-        this.config_pvp_combatTimeoutSeconds = config.getInt("GriefPrevention.PvP.CombatTimeoutSeconds", 15);
-        this.config_pvp_allowCombatItemDrop = config.getBoolean("GriefPrevention.PvP.AllowCombatItemDrop", false);
+        config_pvp_protectFreshSpawns = config.getBoolean("GriefPrevention.PvP.ProtectFreshSpawns", true);
+        config_pvp_punishLogout = config.getBoolean("GriefPrevention.PvP.PunishLogout", true);
+        config_pvp_combatTimeoutSeconds = config.getInt("GriefPrevention.PvP.CombatTimeoutSeconds", 15);
+        config_pvp_allowCombatItemDrop = config.getBoolean("GriefPrevention.PvP.AllowCombatItemDrop", false);
         String bannedPvPCommandsList = config.getString(
                 "GriefPrevention.PvP.BlockedSlashCommands",
                 "/home;/vanish;/spawn;/tpa"
         );
 
-        this.config_economy_claimBlocksMaxBonus = config.getInt("GriefPrevention.Economy.ClaimBlocksMaxBonus", 0);
-        this.config_economy_claimBlocksPurchaseCost = config.getDouble(
+        config_economy_claimBlocksMaxBonus = config.getInt("GriefPrevention.Economy.ClaimBlocksMaxBonus", 0);
+        config_economy_claimBlocksPurchaseCost = config.getDouble(
                 "GriefPrevention.Economy.ClaimBlocksPurchaseCost",
                 0
         );
-        this.config_economy_claimBlocksSellValue = config.getDouble("GriefPrevention.Economy.ClaimBlocksSellValue", 0);
+        config_economy_claimBlocksSellValue = config.getDouble("GriefPrevention.Economy.ClaimBlocksSellValue", 0);
 
-        this.config_lockDeathDropsInPvpWorlds = config.getBoolean(
+        config_lockDeathDropsInPvpWorlds = config.getBoolean(
                 "GriefPrevention.ProtectItemsDroppedOnDeath.PvPWorlds",
                 false
         );
-        this.config_lockDeathDropsInNonPvpWorlds = config.getBoolean(
+        config_lockDeathDropsInNonPvpWorlds = config.getBoolean(
                 "GriefPrevention.ProtectItemsDroppedOnDeath.NonPvPWorlds",
                 true
         );
 
-        this.config_blockClaimExplosions = config.getBoolean("GriefPrevention.BlockLandClaimExplosions", true);
-        this.config_blockSurfaceCreeperExplosions = config.getBoolean(
+        config_blockClaimExplosions = config.getBoolean("GriefPrevention.BlockLandClaimExplosions", true);
+        config_blockSurfaceCreeperExplosions = config.getBoolean(
                 "GriefPrevention.BlockSurfaceCreeperExplosions",
                 true
         );
-        this.config_blockSurfaceOtherExplosions = config.getBoolean(
+        config_blockSurfaceOtherExplosions = config.getBoolean(
                 "GriefPrevention.BlockSurfaceOtherExplosions",
                 true
         );
-        this.config_blockSkyTrees = config.getBoolean("GriefPrevention.LimitSkyTrees", true);
-        this.config_limitTreeGrowth = config.getBoolean("GriefPrevention.LimitTreeGrowth", false);
-        this.config_pistonExplosionSound = config.getBoolean("GriefPrevention.PistonExplosionSound", true);
-        this.config_pistonMovement = PistonMode.of(config.getString("GriefPrevention.PistonMovement", "CLAIMS_ONLY"));
+        config_blockSkyTrees = config.getBoolean("GriefPrevention.LimitSkyTrees", true);
+        config_limitTreeGrowth = config.getBoolean("GriefPrevention.LimitTreeGrowth", false);
+        config_pistonExplosionSound = config.getBoolean("GriefPrevention.PistonExplosionSound", true);
+        config_pistonMovement = PistonMode.of(config.getString("GriefPrevention.PistonMovement", "CLAIMS_ONLY"));
         if (config.isBoolean("GriefPrevention.LimitPistonsToLandClaims") && !config.getBoolean(
                 "GriefPrevention.LimitPistonsToLandClaims"))
-            this.config_pistonMovement = PistonMode.EVERYWHERE_SIMPLE;
+            config_pistonMovement = PistonMode.EVERYWHERE_SIMPLE;
         if (config.isBoolean("GriefPrevention.CheckPistonMovement") && !config.getBoolean(
                 "GriefPrevention.CheckPistonMovement"))
-            this.config_pistonMovement = PistonMode.IGNORED;
+            config_pistonMovement = PistonMode.IGNORED;
 
-        this.config_fireSpreads = config.getBoolean("GriefPrevention.FireSpreads", false);
-        this.config_fireDestroys = config.getBoolean("GriefPrevention.FireDestroys", false);
+        config_fireSpreads = config.getBoolean("GriefPrevention.FireSpreads", false);
+        config_fireDestroys = config.getBoolean("GriefPrevention.FireDestroys", false);
 
-        this.config_visualizationAntiCheatCompat = config.getBoolean(
+        config_visualizationAntiCheatCompat = config.getBoolean(
                 "GriefPrevention.VisualizationAntiCheatCompatMode",
                 false
         );
 
-        this.config_endermenMoveBlocks = config.getBoolean("GriefPrevention.EndermenMoveBlocks", false);
-        this.config_silverfishBreakBlocks = config.getBoolean("GriefPrevention.SilverfishBreakBlocks", false);
-        this.config_creaturesTrampleCrops = config.getBoolean("GriefPrevention.CreaturesTrampleCrops", false);
-        this.config_rabbitsEatCrops = config.getBoolean("GriefPrevention.RabbitsEatCrops", true);
-        this.config_zombiesBreakDoors = config.getBoolean("GriefPrevention.HardModeZombiesBreakDoors", false);
+        config_endermenMoveBlocks = config.getBoolean("GriefPrevention.EndermenMoveBlocks", false);
+        config_silverfishBreakBlocks = config.getBoolean("GriefPrevention.SilverfishBreakBlocks", false);
+        config_creaturesTrampleCrops = config.getBoolean("GriefPrevention.CreaturesTrampleCrops", false);
+        config_rabbitsEatCrops = config.getBoolean("GriefPrevention.RabbitsEatCrops", true);
+        config_zombiesBreakDoors = config.getBoolean("GriefPrevention.HardModeZombiesBreakDoors", false);
 
-        this.config_pvp_noCombatInPlayerLandClaims = config.getBoolean(
+        config_pvp_noCombatInPlayerLandClaims = config.getBoolean(
                 "GriefPrevention.PvP.ProtectPlayersInLandClaims.PlayerOwnedClaims",
                 true
         );
-        this.config_pvp_noCombatInAdminLandClaims = config.getBoolean(
+        config_pvp_noCombatInAdminLandClaims = config.getBoolean(
                 "GriefPrevention.PvP.ProtectPlayersInLandClaims.AdministrativeClaims",
                 true
         );
-        this.config_pvp_noCombatInAdminSubdivisions = config.getBoolean(
+        config_pvp_noCombatInAdminSubdivisions = config.getBoolean(
                 "GriefPrevention.PvP.ProtectPlayersInLandClaims.AdministrativeSubdivisions",
                 true
         );
-        this.config_pvp_allowLavaNearPlayers = config.getBoolean(
+        config_pvp_allowLavaNearPlayers = config.getBoolean(
                 "GriefPrevention.PvP.AllowLavaDumpingNearOtherPlayers.PvPWorlds",
                 true
         );
-        this.config_pvp_allowLavaNearPlayers_NonPvp = config.getBoolean(
+        config_pvp_allowLavaNearPlayers_NonPvp = config.getBoolean(
                 "GriefPrevention.PvP.AllowLavaDumpingNearOtherPlayers.NonPvPWorlds",
                 false
         );
-        this.config_pvp_allowFireNearPlayers = config.getBoolean(
+        config_pvp_allowFireNearPlayers = config.getBoolean(
                 "GriefPrevention.PvP.AllowFlintAndSteelNearOtherPlayers.PvPWorlds",
                 true
         );
-        this.config_pvp_allowFireNearPlayers_NonPvp = config.getBoolean(
+        config_pvp_allowFireNearPlayers_NonPvp = config.getBoolean(
                 "GriefPrevention.PvP.AllowFlintAndSteelNearOtherPlayers.NonPvPWorlds",
                 false
         );
-        this.config_pvp_protectPets = config.getBoolean("GriefPrevention.PvP.ProtectPetsOutsideLandClaims", false);
+        config_pvp_protectPets = config.getBoolean("GriefPrevention.PvP.ProtectPetsOutsideLandClaims", false);
 
         //optional database settings
-        this.databaseUrl = config.getString("GriefPrevention.Database.URL", "");
-        this.databaseUserName = config.getString("GriefPrevention.Database.UserName", "");
-        this.databasePassword = config.getString("GriefPrevention.Database.Password", "");
+        databaseUrl = config.getString("GriefPrevention.Database.URL", "");
+        databaseUserName = config.getString("GriefPrevention.Database.UserName", "");
+        databasePassword = config.getString("GriefPrevention.Database.Password", "");
 
-        this.config_advanced_fixNegativeClaimblockAmounts = config.getBoolean(
+        config_advanced_fixNegativeClaimblockAmounts = config.getBoolean(
                 "GriefPrevention.Advanced.fixNegativeClaimblockAmounts",
                 true
         );
-        this.config_advanced_claim_expiration_check_rate = config.getInt(
+        config_advanced_claim_expiration_check_rate = config.getInt(
                 "GriefPrevention.Advanced.ClaimExpirationCheckRate",
                 60
         );
-        this.config_advanced_offlineplayer_cache_days = config.getInt(
+        config_advanced_offlineplayer_cache_days = config.getInt(
                 "GriefPrevention.Advanced.OfflinePlayer_cache_days",
                 90
         );
 
         //custom logger settings
-        this.config_logs_daysToKeep = config.getInt("GriefPrevention.Abridged Logs.Days To Keep", 7);
-        this.config_logs_socialEnabled = config.getBoolean(
+        config_logs_daysToKeep = config.getInt("GriefPrevention.Abridged Logs.Days To Keep", 7);
+        config_logs_socialEnabled = config.getBoolean(
                 "GriefPrevention.Abridged Logs.Included Entry Types.Social Activity",
                 true
         );
-        this.config_logs_suspiciousEnabled = config.getBoolean(
+        config_logs_suspiciousEnabled = config.getBoolean(
                 "GriefPrevention.Abridged Logs.Included Entry Types.Suspicious Activity",
                 true
         );
-        this.config_logs_adminEnabled = config.getBoolean(
+        config_logs_adminEnabled = config.getBoolean(
                 "GriefPrevention.Abridged Logs.Included Entry Types.Administrative Activity",
                 false
         );
-        this.config_logs_debugEnabled = config.getBoolean(
+        config_logs_debugEnabled = config.getBoolean(
                 "GriefPrevention.Abridged Logs.Included Entry Types.Debug",
                 false
         );
-        this.config_logs_mutedChatEnabled = config.getBoolean(
+        config_logs_mutedChatEnabled = config.getBoolean(
                 "GriefPrevention.Abridged Logs.Included Entry Types.Muted Chat Messages",
                 false
         );
 
         for (World world : worlds) {
-            outConfig.set("GriefPrevention.PvP.RulesEnabledInWorld." + world.getName(), this.pvpRulesApply(world));
+            outConfig.set("GriefPrevention.PvP.RulesEnabledInWorld." + world.getName(), pvpRulesApply(world));
         }
-        outConfig.set("GriefPrevention.PvP.ProtectFreshSpawns", this.config_pvp_protectFreshSpawns);
-        outConfig.set("GriefPrevention.PvP.PunishLogout", this.config_pvp_punishLogout);
-        outConfig.set("GriefPrevention.PvP.CombatTimeoutSeconds", this.config_pvp_combatTimeoutSeconds);
-        outConfig.set("GriefPrevention.PvP.AllowCombatItemDrop", this.config_pvp_allowCombatItemDrop);
+        outConfig.set("GriefPrevention.PvP.ProtectFreshSpawns", config_pvp_protectFreshSpawns);
+        outConfig.set("GriefPrevention.PvP.PunishLogout", config_pvp_punishLogout);
+        outConfig.set("GriefPrevention.PvP.CombatTimeoutSeconds", config_pvp_combatTimeoutSeconds);
+        outConfig.set("GriefPrevention.PvP.AllowCombatItemDrop", config_pvp_allowCombatItemDrop);
         outConfig.set("GriefPrevention.PvP.BlockedSlashCommands", bannedPvPCommandsList);
         outConfig.set(
                 "GriefPrevention.PvP.ProtectPlayersInLandClaims.PlayerOwnedClaims",
-                this.config_pvp_noCombatInPlayerLandClaims
+                config_pvp_noCombatInPlayerLandClaims
         );
         outConfig.set(
                 "GriefPrevention.PvP.ProtectPlayersInLandClaims.AdministrativeClaims",
-                this.config_pvp_noCombatInAdminLandClaims
+                config_pvp_noCombatInAdminLandClaims
         );
         outConfig.set(
                 "GriefPrevention.PvP.ProtectPlayersInLandClaims.AdministrativeSubdivisions",
-                this.config_pvp_noCombatInAdminSubdivisions
+                config_pvp_noCombatInAdminSubdivisions
         );
         outConfig.set(
                 "GriefPrevention.PvP.AllowLavaDumpingNearOtherPlayers.PvPWorlds",
-                this.config_pvp_allowLavaNearPlayers
+                config_pvp_allowLavaNearPlayers
         );
         outConfig.set(
                 "GriefPrevention.PvP.AllowLavaDumpingNearOtherPlayers.NonPvPWorlds",
-                this.config_pvp_allowLavaNearPlayers_NonPvp
+                config_pvp_allowLavaNearPlayers_NonPvp
         );
         outConfig.set(
                 "GriefPrevention.PvP.AllowFlintAndSteelNearOtherPlayers.PvPWorlds",
-                this.config_pvp_allowFireNearPlayers
+                config_pvp_allowFireNearPlayers
         );
         outConfig.set(
                 "GriefPrevention.PvP.AllowFlintAndSteelNearOtherPlayers.NonPvPWorlds",
-                this.config_pvp_allowFireNearPlayers_NonPvp
+                config_pvp_allowFireNearPlayers_NonPvp
         );
-        outConfig.set("GriefPrevention.PvP.ProtectPetsOutsideLandClaims", this.config_pvp_protectPets);
+        outConfig.set("GriefPrevention.PvP.ProtectPetsOutsideLandClaims", config_pvp_protectPets);
 
-        outConfig.set("GriefPrevention.Economy.ClaimBlocksMaxBonus", this.config_economy_claimBlocksMaxBonus);
-        outConfig.set("GriefPrevention.Economy.ClaimBlocksPurchaseCost", this.config_economy_claimBlocksPurchaseCost);
-        outConfig.set("GriefPrevention.Economy.ClaimBlocksSellValue", this.config_economy_claimBlocksSellValue);
+        outConfig.set("GriefPrevention.Economy.ClaimBlocksMaxBonus", config_economy_claimBlocksMaxBonus);
+        outConfig.set("GriefPrevention.Economy.ClaimBlocksPurchaseCost", config_economy_claimBlocksPurchaseCost);
+        outConfig.set("GriefPrevention.Economy.ClaimBlocksSellValue", config_economy_claimBlocksSellValue);
 
-        outConfig.set("GriefPrevention.ProtectItemsDroppedOnDeath.PvPWorlds", this.config_lockDeathDropsInPvpWorlds);
+        outConfig.set("GriefPrevention.ProtectItemsDroppedOnDeath.PvPWorlds", config_lockDeathDropsInPvpWorlds);
         outConfig.set(
                 "GriefPrevention.ProtectItemsDroppedOnDeath.NonPvPWorlds",
-                this.config_lockDeathDropsInNonPvpWorlds
+                config_lockDeathDropsInNonPvpWorlds
         );
 
-        outConfig.set("GriefPrevention.BlockLandClaimExplosions", this.config_blockClaimExplosions);
-        outConfig.set("GriefPrevention.BlockSurfaceCreeperExplosions", this.config_blockSurfaceCreeperExplosions);
-        outConfig.set("GriefPrevention.BlockSurfaceOtherExplosions", this.config_blockSurfaceOtherExplosions);
-        outConfig.set("GriefPrevention.LimitSkyTrees", this.config_blockSkyTrees);
-        outConfig.set("GriefPrevention.LimitTreeGrowth", this.config_limitTreeGrowth);
-        outConfig.set("GriefPrevention.PistonMovement", this.config_pistonMovement.name());
+        outConfig.set("GriefPrevention.BlockLandClaimExplosions", config_blockClaimExplosions);
+        outConfig.set("GriefPrevention.BlockSurfaceCreeperExplosions", config_blockSurfaceCreeperExplosions);
+        outConfig.set("GriefPrevention.BlockSurfaceOtherExplosions", config_blockSurfaceOtherExplosions);
+        outConfig.set("GriefPrevention.LimitSkyTrees", config_blockSkyTrees);
+        outConfig.set("GriefPrevention.LimitTreeGrowth", config_limitTreeGrowth);
+        outConfig.set("GriefPrevention.PistonMovement", config_pistonMovement.name());
         outConfig.set("GriefPrevention.CheckPistonMovement", null);
         outConfig.set("GriefPrevention.LimitPistonsToLandClaims", null);
-        outConfig.set("GriefPrevention.PistonExplosionSound", this.config_pistonExplosionSound);
+        outConfig.set("GriefPrevention.PistonExplosionSound", config_pistonExplosionSound);
 
-        outConfig.set("GriefPrevention.FireSpreads", this.config_fireSpreads);
-        outConfig.set("GriefPrevention.FireDestroys", this.config_fireDestroys);
+        outConfig.set("GriefPrevention.FireSpreads", config_fireSpreads);
+        outConfig.set("GriefPrevention.FireDestroys", config_fireDestroys);
 
-        outConfig.set("GriefPrevention.AdminsGetWhispers", this.config_whisperNotifications);
-        outConfig.set("GriefPrevention.AdminsGetSignNotifications", this.config_signNotifications);
+        outConfig.set("GriefPrevention.AdminsGetWhispers", config_whisperNotifications);
+        outConfig.set("GriefPrevention.AdminsGetSignNotifications", config_signNotifications);
 
-        outConfig.set("GriefPrevention.VisualizationAntiCheatCompatMode", this.config_visualizationAntiCheatCompat);
+        outConfig.set("GriefPrevention.VisualizationAntiCheatCompatMode", config_visualizationAntiCheatCompat);
 
-        outConfig.set("GriefPrevention.EndermenMoveBlocks", this.config_endermenMoveBlocks);
-        outConfig.set("GriefPrevention.SilverfishBreakBlocks", this.config_silverfishBreakBlocks);
-        outConfig.set("GriefPrevention.CreaturesTrampleCrops", this.config_creaturesTrampleCrops);
-        outConfig.set("GriefPrevention.RabbitsEatCrops", this.config_rabbitsEatCrops);
-        outConfig.set("GriefPrevention.HardModeZombiesBreakDoors", this.config_zombiesBreakDoors);
+        outConfig.set("GriefPrevention.EndermenMoveBlocks", config_endermenMoveBlocks);
+        outConfig.set("GriefPrevention.SilverfishBreakBlocks", config_silverfishBreakBlocks);
+        outConfig.set("GriefPrevention.CreaturesTrampleCrops", config_creaturesTrampleCrops);
+        outConfig.set("GriefPrevention.RabbitsEatCrops", config_rabbitsEatCrops);
+        outConfig.set("GriefPrevention.HardModeZombiesBreakDoors", config_zombiesBreakDoors);
 
-        outConfig.set("GriefPrevention.Database.URL", this.databaseUrl);
-        outConfig.set("GriefPrevention.Database.UserName", this.databaseUserName);
-        outConfig.set("GriefPrevention.Database.Password", this.databasePassword);
+        outConfig.set("GriefPrevention.Database.URL", databaseUrl);
+        outConfig.set("GriefPrevention.Database.UserName", databaseUserName);
+        outConfig.set("GriefPrevention.Database.Password", databasePassword);
 
         outConfig.set(
                 "GriefPrevention.Advanced.fixNegativeClaimblockAmounts",
-                this.config_advanced_fixNegativeClaimblockAmounts
+                config_advanced_fixNegativeClaimblockAmounts
         );
         outConfig.set(
                 "GriefPrevention.Advanced.ClaimExpirationCheckRate",
-                this.config_advanced_claim_expiration_check_rate
+                config_advanced_claim_expiration_check_rate
         );
         outConfig.set(
                 "GriefPrevention.Advanced.OfflinePlayer_cache_days",
-                this.config_advanced_offlineplayer_cache_days
+                config_advanced_offlineplayer_cache_days
         );
 
         //custom logger settings
-        outConfig.set("GriefPrevention.Abridged Logs.Days To Keep", this.config_logs_daysToKeep);
+        outConfig.set("GriefPrevention.Abridged Logs.Days To Keep", config_logs_daysToKeep);
         outConfig.set(
                 "GriefPrevention.Abridged Logs.Included Entry Types.Social Activity",
-                this.config_logs_socialEnabled
+                config_logs_socialEnabled
         );
         outConfig.set(
                 "GriefPrevention.Abridged Logs.Included Entry Types.Suspicious Activity",
-                this.config_logs_suspiciousEnabled
+                config_logs_suspiciousEnabled
         );
         outConfig.set(
                 "GriefPrevention.Abridged Logs.Included Entry Types.Administrative Activity",
-                this.config_logs_adminEnabled
+                config_logs_adminEnabled
         );
-        outConfig.set("GriefPrevention.Abridged Logs.Included Entry Types.Debug", this.config_logs_debugEnabled);
+        outConfig.set("GriefPrevention.Abridged Logs.Included Entry Types.Debug", config_logs_debugEnabled);
         outConfig.set(
                 "GriefPrevention.Abridged Logs.Included Entry Types.Muted Chat Messages",
-                this.config_logs_mutedChatEnabled
+                config_logs_mutedChatEnabled
         );
         outConfig.set("GriefPrevention.ConfigVersion", 1);
     }
 
     public DataStore getDataStore() {
-        return this.dataStore;
+        return dataStore;
     }
 
     public void onDisable() {
         //save data for any online players
         @SuppressWarnings("unchecked")
-        Collection<Player> players = (Collection<Player>) this.getServer().getOnlinePlayers();
+        Collection<Player> players = (Collection<Player>) getServer().getOnlinePlayers();
         for (Player player : players) {
             UUID playerID = player.getUniqueId();
-            PlayerData playerData = this.dataStore.getPlayerData(playerID);
-            this.dataStore.savePlayerDataSync(playerID, playerData);
+            PlayerData playerData = dataStore.getPlayerData(playerID);
+            dataStore.savePlayerDataSync(playerID, playerData);
         }
 
-        this.dataStore.close();
+        dataStore.close();
 
         //dump any remaining unwritten log entries
-        this.customLogger.WriteEntries();
+        customLogger.WriteEntries();
 
         AddLogEntry("GriefPrevention disabled.");
     }
@@ -830,7 +867,7 @@ public class GriefPrevention extends JavaPlugin {
     //called when a player spawns, applies protection for that player if necessary
     public void checkPvpProtectionNeeded(Player player) {
         //if anti spawn camping feature is not enabled, do nothing
-        if (!this.config_pvp_protectFreshSpawns) return;
+        if (!config_pvp_protectFreshSpawns) return;
 
         //if pvp is disabled, do nothing
         if (!pvpRulesApply(player.getWorld())) return;
@@ -844,7 +881,7 @@ public class GriefPrevention extends JavaPlugin {
         //check inventory for well, anything
         if (GriefPrevention.isInventoryEmpty(player)) {
             //if empty, apply immunity
-            PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
+            PlayerData playerData = dataStore.getPlayerData(player.getUniqueId());
             playerData.pvpImmune = true;
 
             //inform the player after he finishes respawning
@@ -852,7 +889,7 @@ public class GriefPrevention extends JavaPlugin {
 
             //start a task to re-check this player's inventory every minute until his immunity is gone
             PvPImmunityValidationTask task = new PvPImmunityValidationTask(player);
-            this.getServer().getScheduler().scheduleSyncDelayedTask(this, task, 1200L);
+            getServer().getScheduler().scheduleSyncDelayedTask(this, task, 1200L);
         }
     }
 
@@ -895,20 +932,20 @@ public class GriefPrevention extends JavaPlugin {
 
     //checks whether players can create claims in a world
     public boolean claimsEnabledForWorld(World world) {
-        ClaimsMode mode = this.config_claims_worldModes.get(world);
+        ClaimsMode mode = config_claims_worldModes.get(world);
         return mode != null && mode != ClaimsMode.Disabled;
     }
 
     //determines whether creative anti-grief rules apply at a location
     public boolean creativeRulesApply(Location location) {
-        return this.config_claims_worldModes.get((location.getWorld())) == ClaimsMode.Creative;
+        return config_claims_worldModes.get((location.getWorld())) == ClaimsMode.Creative;
     }
 
     public String allowBuild(Player player, Location location, Material material) {
         if (!GriefPrevention.instance.claimsEnabledForWorld(location.getWorld())) return null;
 
-        PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-        Claim claim = this.dataStore.getClaimAt(location, false, playerData.lastClaim);
+        PlayerData playerData = dataStore.getPlayerData(player.getUniqueId());
+        Claim claim = dataStore.getClaimAt(location, false, playerData.lastClaim);
 
         //exception: administrators in ignore claims mode
         if (playerData.ignoreClaims) return null;
@@ -916,13 +953,13 @@ public class GriefPrevention extends JavaPlugin {
         //wilderness rules
         if (claim == null) {
             //no building in the wilderness in creative mode
-            if (this.creativeRulesApply(location) || this.config_claims_worldModes.get(location.getWorld()) == ClaimsMode.SurvivalRequiringClaims) {
+            if (creativeRulesApply(location) || config_claims_worldModes.get(location.getWorld()) == ClaimsMode.SurvivalRequiringClaims) {
                 //exception: when chest claims are enabled, players who have zero land claims and are placing a chest
                 if (material != Material.CHEST || playerData.getClaims().size() > 0 || GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius == -1) {
-                    String reason = this.dataStore.getMessage(Messages.NoBuildOutsideClaims);
+                    String reason = dataStore.getMessage(Messages.NoBuildOutsideClaims);
                     if (player.hasPermission("griefprevention.ignoreclaims"))
-                        reason += "  " + this.dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
-                    reason += "  " + this.dataStore.getMessage(
+                        reason += "  " + dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
+                    reason += "  " + dataStore.getMessage(
                             Messages.CreativeBasicsVideo2,
                             DataStore.CREATIVE_VIDEO_URL
                     );
@@ -948,7 +985,8 @@ public class GriefPrevention extends JavaPlugin {
             Supplier<String> supplier = claim.checkPermission(
                     player,
                     ClaimPermission.Build,
-                    new BlockPlaceEvent(block,
+                    new BlockPlaceEvent(
+                            block,
                             block.getState(),
                             block,
                             new ItemStack(material),
@@ -965,14 +1003,14 @@ public class GriefPrevention extends JavaPlugin {
     }
 
     public String allowBreak(Player player, Block block, Location location) {
-        return this.allowBreak(player, block, location, new BlockBreakEvent(block, player));
+        return allowBreak(player, block, location, new BlockBreakEvent(block, player));
     }
 
     public String allowBreak(Player player, Block block, Location location, BlockBreakEvent breakEvent) {
         if (!GriefPrevention.instance.claimsEnabledForWorld(location.getWorld())) return null;
 
-        PlayerData playerData = this.dataStore.getPlayerData(player.getUniqueId());
-        Claim claim = this.dataStore.getClaimAt(location, false, playerData.lastClaim);
+        PlayerData playerData = dataStore.getPlayerData(player.getUniqueId());
+        Claim claim = dataStore.getClaimAt(location, false, playerData.lastClaim);
 
         //exception: administrators in ignore claims mode
         if (playerData.ignoreClaims) return null;
@@ -980,11 +1018,11 @@ public class GriefPrevention extends JavaPlugin {
         //wilderness rules
         if (claim == null) {
             //no building in the wilderness in creative mode
-            if (this.creativeRulesApply(location) || this.config_claims_worldModes.get(location.getWorld()) == ClaimsMode.SurvivalRequiringClaims) {
-                String reason = this.dataStore.getMessage(Messages.NoBuildOutsideClaims);
+            if (creativeRulesApply(location) || config_claims_worldModes.get(location.getWorld()) == ClaimsMode.SurvivalRequiringClaims) {
+                String reason = dataStore.getMessage(Messages.NoBuildOutsideClaims);
                 if (player.hasPermission("griefprevention.ignoreclaims"))
-                    reason += "  " + this.dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
-                reason += "  " + this.dataStore.getMessage(Messages.CreativeBasicsVideo2, DataStore.CREATIVE_VIDEO_URL);
+                    reason += "  " + dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
+                reason += "  " + dataStore.getMessage(Messages.CreativeBasicsVideo2, DataStore.CREATIVE_VIDEO_URL);
                 return reason;
             }
 
@@ -1025,7 +1063,7 @@ public class GriefPrevention extends JavaPlugin {
 
         ArrayList<Chunk> chunks = claim.getChunks();
         for (Chunk chunk : chunks) {
-            this.restoreChunk(chunk, this.getSeaLevel(chunk.getWorld()) - 15, false, delayInTicks, null);
+            restoreChunk(chunk, getSeaLevel(chunk.getWorld()) - 15, false, delayInTicks, null);
         }
     }
 
@@ -1061,7 +1099,7 @@ public class GriefPrevention extends JavaPlugin {
                 lesserBoundaryCorner.getBlock().getBiome(),
                 lesserBoundaryCorner,
                 greaterBoundaryCorner,
-                this.getSeaLevel(chunk.getWorld()),
+                getSeaLevel(chunk.getWorld()),
                 aggressiveMode,
                 GriefPrevention.instance.creativeRulesApply(lesserBoundaryCorner),
                 playerReceivingVisualization
@@ -1074,7 +1112,7 @@ public class GriefPrevention extends JavaPlugin {
     }
 
     public int getSeaLevel(World world) {
-        Integer overrideValue = this.config_seaLevelOverride.get(world.getName());
+        Integer overrideValue = config_seaLevelOverride.get(world.getName());
         if (overrideValue == null || overrideValue == -1) {
             return world.getSeaLevel();
         }
@@ -1084,7 +1122,7 @@ public class GriefPrevention extends JavaPlugin {
     }
 
     public boolean pvpRulesApply(World world) {
-        Boolean configSetting = this.config_pvp_specifiedWorlds.get(world);
+        Boolean configSetting = config_pvp_specifiedWorlds.get(world);
         if (configSetting != null) return configSetting;
         return world.getPVP();
     }
@@ -1173,7 +1211,7 @@ public class GriefPrevention extends JavaPlugin {
     }
 
     public EconomyHandler getEconomyHandler() {
-        return this.economyHandler;
+        return economyHandler;
     }
 
     //thread to build the above cache
@@ -1200,8 +1238,8 @@ public class GriefPrevention extends JavaPlugin {
                     if (daysDiff <= config_advanced_offlineplayer_cache_days) {
                         String playerName = player.getName();
                         if (playerName == null) continue;
-                        this.playerNameToIDMap.put(playerName, playerID);
-                        this.playerNameToIDMap.put(playerName.toLowerCase(), playerID);
+                        playerNameToIDMap.put(playerName, playerID);
+                        playerNameToIDMap.put(playerName.toLowerCase(), playerID);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
