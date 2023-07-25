@@ -40,7 +40,7 @@ public class PlayerDropItemListener implements Listener
         //them or give them away to other players before they are defeated
 
         //if in combat, don't let him drop it
-        if (!plugin.config_pvp_allowCombatItemDrop && playerData.inPvpCombat())
+        if (!plugin.getPluginConfig().getPvpConfiguration().isAllowCombatItemDrop() && playerData.inPvpCombat())
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.PvPNoDrop);
             event.setCancelled(true);

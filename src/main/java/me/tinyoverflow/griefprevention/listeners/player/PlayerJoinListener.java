@@ -46,7 +46,7 @@ public class PlayerJoinListener implements Listener
             plugin.checkPvpProtectionNeeded(player);
 
             //if in survival claims mode, send a message about the claim basics video (except for admins - assumed experts)
-            if (plugin.config_claims_worldModes.get(player.getWorld()) == ClaimsMode.Survival && !player.hasPermission("griefprevention.adminclaims") && dataStore.claims.size() > 10)
+            if (plugin.getPluginConfig().getClaimConfiguration().getWorldMode(player.getWorld()) == ClaimsMode.Survival && !player.hasPermission("griefprevention.adminclaims") && dataStore.claims.size() > 10)
             {
                 WelcomeTask task = new WelcomeTask(player);
                 Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, task, plugin.getPluginConfig().getClaimConfiguration().getManualConfiguration().delay * 20L);

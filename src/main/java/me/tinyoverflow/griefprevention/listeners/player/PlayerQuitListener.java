@@ -39,7 +39,7 @@ public class PlayerQuitListener implements Listener
         dataStore.savePlayerData(player.getUniqueId(), playerData);
 
         //FEATURE: players in pvp combat when they log out will die
-        if (plugin.config_pvp_punishLogout && playerData.inPvpCombat())
+        if (plugin.getPluginConfig().getPvpConfiguration().isPunishLogouts() && playerData.inPvpCombat())
         {
             player.setHealth(0);
         }

@@ -4,12 +4,7 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.ClaimPermission;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.events.SaveTrappedPlayerEvent;
 import me.tinyoverflow.griefprevention.tasks.PlayerRescueTask;
 import org.bukkit.Bukkit;
@@ -62,7 +57,7 @@ public class TrappedCommand extends BaseCommand implements PlayerCommandExecutor
         }
 
         //if the player is in an administrative claim and AllowTrappedInAdminClaims is false, he should contact an admin
-        if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().isTrappedInAdminClaimsAllowed() && claim.isAdminClaim() && event.getDestination() == null)
+        if (!GriefPrevention.instance.getPluginConfig().getClaimConfiguration().isAllowTrappedInAdminClaims() && claim.isAdminClaim() && event.getDestination() == null)
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.TrappedWontWorkHere);
             return;

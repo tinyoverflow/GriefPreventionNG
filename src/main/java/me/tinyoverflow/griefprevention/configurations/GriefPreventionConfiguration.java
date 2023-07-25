@@ -16,4 +16,8 @@ public class GriefPreventionConfiguration
     @Setting("siege")
     @Comment("Configures where and how the /siege mode works.")
     private final SiegeConfiguration siegeConfiguration = new SiegeConfiguration();
+
+    @Setting("pvp")
+    @Comment("Restrict some things player can do while PvPing.")
+    private final PvpConfiguration pvpConfiguration = new PvpConfiguration();
 }

@@ -36,108 +36,78 @@ public class PlayerData
 {
     //the player's ID
     public UUID playerID;
-
-    //the player's claims
-    private Vector<Claim> claims = null;
-
-    //how many claim blocks the player has earned via play time
-    private Integer accruedClaimBlocks = null;
-
-    //temporary holding area to avoid opening data files too early
-    private int newlyAccruedClaimBlocks = 0;
-
     //where this player was the last time we checked on him for earning claim blocks
     public Location lastAfkCheckLocation = null;
-
-    //how many claim blocks the player has been gifted by admins, or purchased via economy integration
-    private Integer bonusClaimBlocks = null;
-
     //what "mode" the shovel is in determines what it will do when it's used
     public ShovelMode shovelMode = ShovelMode.Basic;
-
     //radius for restore nature fill mode
     public int fillRadius = 0;
-
     //last place the player used the shovel, useful in creating and resizing claims,
     //because the player must use the shovel twice in those instances
     public Location lastShovelLocation = null;
-
     //the claim this player is currently resizing
     public Claim claimResizing = null;
-
     //the claim this player is currently subdividing
     public Claim claimSubdividing = null;
-
     //whether or not the player has a pending /trapped rescue
     public boolean pendingTrapped = false;
-
     //whether this player was recently warned about building outside land claims
     public boolean warnedAboutBuildingOutsideClaims = false;
-
     //timestamp when last siege ended (where this player was the defender)
     public long lastSiegeEndTimeStamp = 0;
-
     //whether the player was kicked (set and used during logout)
     public boolean wasKicked = false;
-
-    //visualization
-    private transient @Nullable BoundaryVisualization visibleBoundaries = null;
-
-    /** @deprecated Use {@link #getVisibleBoundaries} and {@link #setVisibleBoundaries(BoundaryVisualization)} */
+    /**
+     * @deprecated Use {@link #getVisibleBoundaries} and {@link #setVisibleBoundaries(BoundaryVisualization)}
+     */
     @Deprecated(forRemoval = true, since = "16.18")
     public Visualization currentVisualization = null;
-
     //anti-camping pvp protection
     public boolean pvpImmune = false;
     public long lastSpawn = 0;
-
     //ignore claims mode
     public boolean ignoreClaims = false;
-
     //the last claim this player was in, that we know of
     public Claim lastClaim = null;
-
     //siege
     public SiegeData siegeData = null;
-
     //pvp
     public long lastPvpTimestamp = 0;
     public String lastPvpPlayer = "";
-
     //safety confirmation for deleting multi-subdivision claims
     public boolean warnedAboutMajorDeletion = false;
-
     public InetAddress ipAddress;
-
-    //for addons to set per-player claim limits. Any negative value will use config's value
-    private int AccruedClaimBlocksLimit = -1;
-
     //whether or not this player has received a message about unlocking death drops since his last death
     public boolean receivedDropUnlockAdvertisement = false;
-
     //whether or not this player's dropped items (on death) are unlocked for other players to pick up
     public boolean dropsAreUnlocked = false;
-
     //message to send to player after he respawns
     public String messageOnRespawn = null;
-
     //player which a pet will be given to when it's right-clicked
     public OfflinePlayer petGiveawayRecipient = null;
-
     //timestamp for last "you're building outside your land claims" message
     public Long buildWarningTimestamp = null;
-
     //spot where a player can't talk, used to mute new players until they've moved a little
     //this is an anti-bot strategy.
     public Location noChatLocation = null;
-
     //ignore list
     //true means invisible (admin-forced ignore), false means player-created ignore
     public ConcurrentHashMap<UUID, Boolean> ignoredPlayers = new ConcurrentHashMap<>();
     public boolean ignoreListChanged = false;
-
     //profanity warning, once per play session
     boolean profanityWarned = false;
+    //the player's claims
+    private Vector<Claim> claims = null;
+    //how many claim blocks the player has earned via play time
+    private Integer accruedClaimBlocks = null;
+    //temporary holding area to avoid opening data files too early
+    private int newlyAccruedClaimBlocks = 0;
+    //how many claim blocks the player has been gifted by admins, or purchased via economy integration
+    private Integer bonusClaimBlocks = null;
+    //visualization
+    private transient @Nullable BoundaryVisualization visibleBoundaries = null;
+    //for addons to set per-player claim limits. Any negative value will use config's value
+    private int AccruedClaimBlocksLimit = -1;
 
     //whether or not this player is "in" pvp combat
     public boolean inPvpCombat()
@@ -148,7 +118,7 @@ public class PlayerData
 
         long elapsed = now - this.lastPvpTimestamp;
 
-        if (elapsed > GriefPrevention.instance.config_pvp_combatTimeoutSeconds * 1000) //X seconds
+        if (elapsed > GriefPrevention.instance.getPluginConfig().getPvpConfiguration().getCombatTimeout() * 1000L) //X seconds
         {
             this.lastPvpTimestamp = 0;
             return false;
@@ -231,8 +201,7 @@ public class PlayerData
                     this.accruedClaimBlocks = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().initial;
                 }
 
-            }
-            else
+            } else
             {
                 this.accruedClaimBlocks = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().initial;
             }
@@ -243,8 +212,7 @@ public class PlayerData
             if (storageData.bonusClaimBlocks != null)
             {
                 this.bonusClaimBlocks = storageData.bonusClaimBlocks;
-            }
-            else
+            } else
             {
                 this.bonusClaimBlocks = 0;
             }
@@ -357,7 +325,8 @@ public class PlayerData
 
     public void setVisibleBoundaries(@Nullable BoundaryVisualization visibleBoundaries)
     {
-        if (this.visibleBoundaries != null) {
+        if (this.visibleBoundaries != null)
+        {
             this.visibleBoundaries.revert(Bukkit.getPlayer(playerID));
         }
 

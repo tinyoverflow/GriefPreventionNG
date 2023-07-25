@@ -8,7 +8,6 @@ import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import java.util.Map;
-import java.util.Optional;
 
 @ConfigSerializable
 @Data
@@ -62,17 +61,18 @@ public class ClaimConfiguration
     public boolean isWorldEnabled(World world)
     {
         return worldModes.containsKey(world.getName()) &&
-               worldModes.get(world.getName()) != ClaimsMode.Disabled;
+                worldModes.get(world.getName()) != ClaimsMode.Disabled;
     }
 
-    public Optional<ClaimsMode> getWorldMode(World world)
+    public ClaimsMode getWorldMode(World world)
     {
         String worldName = world.getName();
-        if (worldModes.containsKey(worldName)) {
-            return Optional.of(worldModes.get(worldName));
+        if (worldModes.containsKey(worldName))
+        {
+            return worldModes.get(worldName);
         }
 
-        return Optional.empty();
+        return ClaimsMode.Disabled;
     }
 }
 

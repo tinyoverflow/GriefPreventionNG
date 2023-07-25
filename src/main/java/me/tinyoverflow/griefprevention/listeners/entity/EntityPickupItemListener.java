@@ -41,7 +41,8 @@ public class EntityPickupItemListener implements Listener
         if (event.getEntity() instanceof Monster) return;
 
         Player player = null;
-        if (event.getEntity() instanceof Player) {
+        if (event.getEntity() instanceof Player)
+        {
             player = (Player) event.getEntity();
         }
 
@@ -75,12 +76,14 @@ public class EntityPickupItemListener implements Listener
         event.setCancelled(true);
 
         // Non-players (dolphins, allays) do not need to generate prompts.
-        if (player == null) {
+        if (player == null)
+        {
             return;
         }
 
         // If the owner hasn't been instructed how to unlock, send explanatory messages.
-        if (!playerData.receivedDropUnlockAdvertisement) {
+        if (!playerData.receivedDropUnlockAdvertisement)
+        {
             GriefPrevention.sendMessage(owner.getPlayer(), TextMode.Instr, Messages.DropUnlockAdvertisement);
             GriefPrevention.sendMessage(
                     player,
@@ -98,18 +101,20 @@ public class EntityPickupItemListener implements Listener
         if (player == null || !plugin.pvpRulesApply(player.getWorld())) return;
 
         //if we're preventing spawn camping and the player was previously empty handed...
-        if (plugin.config_pvp_protectFreshSpawns && (plugin.getItemInHand(
+        if (plugin.getPluginConfig().getPvpConfiguration().isProtectFreshSpawns() && (plugin.getItemInHand(
                 player,
                 EquipmentSlot.HAND
         ).getType() == Material.AIR))
         {
             //if that player is currently immune to pvp
             PlayerData playerData = dataStore.getPlayerData(player.getUniqueId());
-            if (playerData.pvpImmune) {
+            if (playerData.pvpImmune)
+            {
                 //if it's been less than 10 seconds since the last time he spawned, don't pick up the item
                 long now = Calendar.getInstance().getTimeInMillis();
                 long elapsedSinceLastSpawn = now - playerData.lastSpawn;
-                if (elapsedSinceLastSpawn < 10000) {
+                if (elapsedSinceLastSpawn < 10000)
+                {
                     event.setCancelled(true);
                     return;
                 }

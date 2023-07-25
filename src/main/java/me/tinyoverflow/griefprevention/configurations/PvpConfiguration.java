@@ -12,6 +12,10 @@ import java.util.List;
 public class PvpConfiguration
 {
     @Setting
+    @Comment("Worlds that should be affected by the following rules.")
+    private final List<String> worlds = List.of("world");
+
+    @Setting
     @Comment("Prevent spawn-trapping by protecting freshly spawned players.")
     private final boolean protectFreshSpawns = true;
 
@@ -42,4 +46,24 @@ public class PvpConfiguration
     @Setting
     @Comment("Whether to protect players from PvP in admin subdivisions.")
     private final boolean protectInAdminSubdivisions = false;
+
+    @Setting
+    @Comment("Whether to allow placing lava near players in a PvP world.")
+    private final boolean allowLavaNearPlayers = true;
+
+    @Setting
+    @Comment("Whether to allow placing lava near players in a Non-PvP world.")
+    private final boolean allowLavaNearPlayersNonPvP = false;
+
+    @Setting
+    @Comment("Whether to allow igniting fire near players in a PvP world.")
+    private final boolean allowFireNearPlayers = true;
+
+    @Setting
+    @Comment("Whether to allow igniting fire near players in a Non-PvP world.")
+    private final boolean allowFireNearPlayersNonPvP = false;
+
+    @Setting
+    @Comment("Whether to allow damaging pets outside of claims in a PvP world.")
+    private final boolean protectPets = false;
 }

@@ -65,7 +65,8 @@ public class EntityDamageListener implements Listener
         Bukkit.getPluginManager().callEvent(pvpEvent);
 
         //if other plugins aren't making an exception to the rule
-        if (!pvpEvent.isCancelled()) {
+        if (!pvpEvent.isCancelled())
+        {
             cancelHandler.run();
         }
         return true;
@@ -80,14 +81,17 @@ public class EntityDamageListener implements Listener
      */
     public static void preventInfiniteBounce(@Nullable Projectile projectile, @NotNull Entity entity)
     {
-        if (projectile != null) {
-            if (projectile.getType() == EntityType.TRIDENT) {
+        if (projectile != null)
+        {
+            if (projectile.getType() == EntityType.TRIDENT)
+            {
                 // Instead of removing a trident, teleport it to the entity's foot location and remove velocity.
                 projectile.teleport(entity);
                 projectile.setVelocity(new Vector());
             }
             // Otherwise remove the projectile.
-            else {
+            else
+            {
                 projectile.remove();
             }
         }
@@ -107,28 +111,30 @@ public class EntityDamageListener implements Listener
 
         //horse protections can be disabled
         if (event.getEntity() instanceof Horse &&
-            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectHorses)
+                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectHorses)
         {
             return;
         }
         if (event.getEntity() instanceof Donkey &&
-            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys)
+                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys)
         {
             return;
         }
         if (event.getEntity() instanceof Mule &&
-            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys)
+                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys)
         {
             return;
         }
         if (event.getEntity() instanceof Llama &&
-            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectLlamas)
+                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectLlamas)
         {
             return;
         }
         //protected death loot can't be destroyed, only picked up or despawned due to expiration
-        if (event.getEntityType() == EntityType.DROPPED_ITEM) {
-            if (event.getEntity().hasMetadata("GP_ITEMOWNER")) {
+        if (event.getEntityType() == EntityType.DROPPED_ITEM)
+        {
+            if (event.getEntity().hasMetadata("GP_ITEMOWNER"))
+            {
                 event.setCancelled(true);
             }
         }
@@ -142,7 +148,8 @@ public class EntityDamageListener implements Listener
         //the rest is only interested in entities damaging entities (ignoring environmental damage)
         if (!(event instanceof EntityDamageByEntityEvent subEvent)) return;
 
-        if (subEvent.getDamager() instanceof LightningStrike && subEvent.getDamager().hasMetadata("GP_TRIDENT")) {
+        if (subEvent.getDamager() instanceof LightningStrike && subEvent.getDamager().hasMetadata("GP_TRIDENT"))
+        {
             event.setCancelled(true);
             return;
         }
@@ -151,19 +158,23 @@ public class EntityDamageListener implements Listener
         Player attacker = null;
         Projectile arrow = null;
         Entity damageSource = subEvent.getDamager();
-        if (damageSource instanceof Player damager) {
+        if (damageSource instanceof Player damager)
+        {
             attacker = damager;
-        }
-        else if (damageSource instanceof Projectile projectile) {
+        } else if (damageSource instanceof Projectile projectile)
+        {
             arrow = projectile;
-            if (arrow.getShooter() instanceof Player shooter) {
+            if (arrow.getShooter() instanceof Player shooter)
+            {
                 attacker = shooter;
             }
         }
 
         // Specific handling for PVP-enabled situations.
-        if (plugin.pvpRulesApply(event.getEntity().getWorld())) {
-            if (event.getEntity() instanceof Player defender) {
+        if (plugin.pvpRulesApply(event.getEntity().getWorld()))
+        {
+            if (event.getEntity() instanceof Player defender)
+            {
                 // Protect players from other players' pets when protected from PVP.
                 if (handlePvpDamageByPet(subEvent, attacker, defender)) return;
 
@@ -171,12 +182,14 @@ public class EntityDamageListener implements Listener
                 if (handlePvpDamageByLingeringPotion(subEvent, attacker, defender)) return;
 
                 // Handle regular PVP with an attacker and defender.
-                if (attacker != null && handlePvpDamageByPlayer(subEvent, attacker, defender, sendMessages)) {
+                if (attacker != null && handlePvpDamageByPlayer(subEvent, attacker, defender, sendMessages))
+                {
                     return;
                 }
-            }
-            else if (event.getEntity() instanceof Tameable tameable) {
-                if (attacker != null && handlePvpPetDamageByPlayer(subEvent, tameable, attacker, sendMessages)) {
+            } else if (event.getEntity() instanceof Tameable tameable)
+            {
+                if (attacker != null && handlePvpPetDamageByPlayer(subEvent, tameable, attacker, sendMessages))
+                {
                     return;
                 }
             }
@@ -189,7 +202,8 @@ public class EntityDamageListener implements Listener
         if (handleClaimedBuildTrustDamageByEntity(subEvent, attacker, sendMessages)) return;
 
         //if the entity is a non-monster creature (remember monsters disqualified above), or a vehicle
-        if (handleCreatureDamageByEntity(subEvent, attacker, arrow, sendMessages)) {
+        if (handleCreatureDamageByEntity(subEvent, attacker, arrow, sendMessages))
+        {
         }
     }
 
@@ -204,7 +218,8 @@ public class EntityDamageListener implements Listener
         if (entity instanceof Monster) return true;
 
         EntityType type = entity.getType();
-        if (type == EntityType.GHAST || type == EntityType.MAGMA_CUBE || type == EntityType.SHULKER) {
+        if (type == EntityType.GHAST || type == EntityType.MAGMA_CUBE || type == EntityType.SHULKER)
+        {
             return true;
         }
 
@@ -214,9 +229,10 @@ public class EntityDamageListener implements Listener
 
         if (entity instanceof Panda panda) return panda.getMainGene() == Panda.Gene.AGGRESSIVE;
 
-        if ((type == EntityType.HOGLIN || type == EntityType.POLAR_BEAR) && entity instanceof Mob mob) {
+        if ((type == EntityType.HOGLIN || type == EntityType.POLAR_BEAR) && entity instanceof Mob mob)
+        {
             return !entity.getPersistentDataContainer().has(luredByPlayer, PersistentDataType.BYTE) &&
-                   mob.getTarget() != null;
+                    mob.getTarget() != null;
         }
 
         return false;
@@ -232,12 +248,13 @@ public class EntityDamageListener implements Listener
     {
         // If PVP is enabled, the damaged entity is not a pet, or the pet has no owner, allow.
         if (plugin.pvpRulesApply(event.getEntity().getWorld())
-            || !(event.getEntity() instanceof Tameable tameable)
-            || !tameable.isTamed())
+                || !(event.getEntity() instanceof Tameable tameable)
+                || !tameable.isTamed())
         {
             return false;
         }
-        switch (event.getCause()) {
+        switch (event.getCause())
+        {
             // Block environmental and easy-to-cause damage sources.
             case BLOCK_EXPLOSION,
                     ENTITY_EXPLOSION,
@@ -247,11 +264,13 @@ public class EntityDamageListener implements Listener
                     LAVA,
                     SUFFOCATION,
                     CONTACT,
-                    DROWNING -> {
+                    DROWNING ->
+            {
                 event.setCancelled(true);
                 return true;
             }
-            default -> {
+            default ->
+            {
                 return false;
             }
         }
@@ -303,19 +322,23 @@ public class EntityDamageListener implements Listener
         PlayerData damagedData = dataStore.getPlayerData(damaged.getUniqueId());
 
         //case 1: recently spawned
-        if (plugin.config_pvp_protectFreshSpawns && damagedData.pvpImmune) {
+        if (plugin.getPluginConfig().getPvpConfiguration().isProtectFreshSpawns() && damagedData.pvpImmune)
+        {
             event.setCancelled(true);
             return true;
         }
 
         //case 2: in a pvp safe zone
         Claim damagedClaim = dataStore.getClaimAt(damaged.getLocation(), false, damagedData.lastClaim);
-        if (damagedClaim != null) {
+        if (damagedClaim != null)
+        {
             damagedData.lastClaim = damagedClaim;
-            if (plugin.claimIsPvPSafeZone(damagedClaim)) {
+            if (plugin.claimIsPvPSafeZone(damagedClaim))
+            {
                 PreventPvPEvent pvpEvent = new PreventPvPEvent(damagedClaim, attacker, damaged);
                 Bukkit.getPluginManager().callEvent(pvpEvent);
-                if (!pvpEvent.isCancelled()) {
+                if (!pvpEvent.isCancelled())
+                {
                     event.setCancelled(true);
                 }
                 return true;
@@ -346,10 +369,13 @@ public class EntityDamageListener implements Listener
         PlayerData attackerData = dataStore.getPlayerData(attacker.getUniqueId());
 
         //FEATURE: prevent pvp in the first minute after spawn and when one or both players have no inventory
-        if (plugin.config_pvp_protectFreshSpawns) {
-            if (attackerData.pvpImmune || defenderData.pvpImmune) {
+        if (plugin.getPluginConfig().getPvpConfiguration().isProtectFreshSpawns())
+        {
+            if (attackerData.pvpImmune || defenderData.pvpImmune)
+            {
                 event.setCancelled(true);
-                if (sendMessages) {
+                if (sendMessages)
+                {
                     GriefPrevention.sendMessage(
                             attacker,
                             TextMode.Err,
@@ -363,8 +389,8 @@ public class EntityDamageListener implements Listener
         //FEATURE: prevent players from engaging in PvP combat inside land claims (when it's disabled)
         // Ignoring claims bypasses this feature.
         if (attackerData.ignoreClaims
-            || !plugin.config_pvp_noCombatInPlayerLandClaims
-               && !plugin.config_pvp_noCombatInAdminLandClaims)
+                || !plugin.getPluginConfig().getPvpConfiguration().isProtectInPlayerClaims()
+                && !plugin.getPluginConfig().getPvpConfiguration().isProtectInAdminClaims())
         {
             return false;
         }
@@ -381,7 +407,7 @@ public class EntityDamageListener implements Listener
                 attackerData,
                 () -> cancelHandler.accept(Messages.CantFightWhileImmune)
         )
-               || handlePvpInClaim(
+                || handlePvpInClaim(
                 attacker,
                 defender,
                 defender.getLocation(),
@@ -412,7 +438,8 @@ public class EntityDamageListener implements Listener
         };
 
         // If the defender is PVP-immune, prevent the attack.
-        if (defenderData.pvpImmune) {
+        if (defenderData.pvpImmune)
+        {
             cancelHandler.run();
             return true;
         }
@@ -450,15 +477,18 @@ public class EntityDamageListener implements Listener
         if (attackerData.ignoreClaims) return true;
 
         // Disallow provocations while PVP-immune.
-        if (attackerData.pvpImmune) {
+        if (attackerData.pvpImmune)
+        {
             event.setCancelled(true);
-            if (sendMessages) {
+            if (sendMessages)
+            {
                 GriefPrevention.sendMessage(attacker, TextMode.Err, Messages.CantFightWhileImmune);
             }
             return true;
         }
 
-        if (plugin.config_pvp_protectPets) {
+        if (plugin.getPluginConfig().getPvpConfiguration().isProtectPets())
+        {
             // Wolves are exempt from pet protections in PVP worlds due to their offensive nature.
             if (event.getEntity().getType() == EntityType.WOLF) return true;
 
@@ -473,12 +503,15 @@ public class EntityDamageListener implements Listener
                     null
             ), attacker, pet);
             Bukkit.getPluginManager().callEvent(pvpEvent);
-            if (!pvpEvent.isCancelled()) {
+            if (!pvpEvent.isCancelled())
+            {
                 event.setCancelled(true);
-                if (sendMessages) {
+                if (sendMessages)
+                {
                     String ownerName = GriefPrevention.lookupPlayerName(owner.getUniqueId());
                     String message = dataStore.getMessage(Messages.NoDamageClaimedEntity, ownerName);
-                    if (attacker.hasPermission("griefprevention.ignoreclaims")) {
+                    if (attacker.hasPermission("griefprevention.ignoreclaims"))
+                    {
                         message += "  " + dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
                     }
                     GriefPrevention.sendMessage(attacker, TextMode.Err, message);
@@ -503,17 +536,17 @@ public class EntityDamageListener implements Listener
     {
         EntityType entityType = event.getEntityType();
         if (entityType != EntityType.ITEM_FRAME
-            && entityType != EntityType.GLOW_ITEM_FRAME
-            && entityType != EntityType.ARMOR_STAND
-            && entityType != EntityType.VILLAGER
-            && entityType != EntityType.ENDER_CRYSTAL)
+                && entityType != EntityType.GLOW_ITEM_FRAME
+                && entityType != EntityType.ARMOR_STAND
+                && entityType != EntityType.VILLAGER
+                && entityType != EntityType.ENDER_CRYSTAL)
         {
             return false;
         }
 
         if (entityType == EntityType.VILLAGER
-            // Allow disabling villager protections in the config.
-            && (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectCreatures
+                // Allow disabling villager protections in the config.
+                && (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectCreatures
                 // Always allow zombies and raids to target villagers.
                 //why exception?  so admins can set up a village which can't be CHANGED by players, but must be "protected" by players.
                 || event.getDamager() instanceof Zombie
@@ -527,7 +560,8 @@ public class EntityDamageListener implements Listener
 
         // Use attacker's cached claim to speed up lookup.
         Claim cachedClaim = null;
-        if (attacker != null) {
+        if (attacker != null)
+        {
             PlayerData playerData = dataStore.getPlayerData(attacker.getUniqueId());
             cachedClaim = playerData.lastClaim;
         }
@@ -538,7 +572,8 @@ public class EntityDamageListener implements Listener
         if (claim == null) return false;
 
         // If attacker isn't a player, cancel.
-        if (attacker == null) {
+        if (attacker == null)
+        {
             event.setCancelled(true);
             return true;
         }
@@ -570,7 +605,7 @@ public class EntityDamageListener implements Listener
             boolean sendMessages)
     {
         if (!(event.getEntity() instanceof Creature) ||
-            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectCreatures)
+                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectCreatures)
         {
             return false;
         }
@@ -582,21 +617,22 @@ public class EntityDamageListener implements Listener
         EntityType damageSourceType = damageSource.getType();
         //if not a player, explosive, or ranged/area of effect attack, allow
         if (attacker == null
-            && damageSourceType != EntityType.CREEPER
-            && damageSourceType != EntityType.WITHER
-            && damageSourceType != EntityType.ENDER_CRYSTAL
-            && damageSourceType != EntityType.AREA_EFFECT_CLOUD
-            && damageSourceType != EntityType.WITCH
-            && !(damageSource instanceof Projectile)
-            && !(damageSource instanceof Explosive)
-            && !(damageSource instanceof ExplosiveMinecart))
+                && damageSourceType != EntityType.CREEPER
+                && damageSourceType != EntityType.WITHER
+                && damageSourceType != EntityType.ENDER_CRYSTAL
+                && damageSourceType != EntityType.AREA_EFFECT_CLOUD
+                && damageSourceType != EntityType.WITCH
+                && !(damageSource instanceof Projectile)
+                && !(damageSource instanceof Explosive)
+                && !(damageSource instanceof ExplosiveMinecart))
         {
             return true;
         }
 
         Claim cachedClaim = null;
         PlayerData playerData = null;
-        if (attacker != null) {
+        if (attacker != null)
+        {
             playerData = dataStore.getPlayerData(attacker.getUniqueId());
             cachedClaim = playerData.lastClaim;
         }
@@ -607,7 +643,8 @@ public class EntityDamageListener implements Listener
         if (claim == null) return false;
 
         // If damaged by anything other than a player, cancel the event.
-        if (attacker == null) {
+        if (attacker == null)
+        {
             event.setCancelled(true);
             // Always remove projectiles shot by non-players.
             if (arrow != null) arrow.remove();
@@ -621,12 +658,14 @@ public class EntityDamageListener implements Listener
         sendMessages &= damageSourceType != EntityType.FIREWORK;
 
         Supplier<String> override = null;
-        if (sendMessages) {
+        if (sendMessages)
+        {
             final Player finalAttacker = attacker;
             override = () ->
             {
                 String message = dataStore.getMessage(Messages.NoDamageClaimedEntity, claim.getOwnerName());
-                if (finalAttacker.hasPermission("griefprevention.ignoreclaims")) {
+                if (finalAttacker.hasPermission("griefprevention.ignoreclaims"))
+                {
                     message += "  " + dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
                 }
                 return message;
@@ -683,15 +722,18 @@ public class EntityDamageListener implements Listener
         if (attackerData.ignoreClaims) return true;
 
         // Allow players to attack wolves (dogs) if under attack by them.
-        if (tameable.getType() == EntityType.WOLF && tameable.getTarget() != null) {
+        if (tameable.getType() == EntityType.WOLF && tameable.getTarget() != null)
+        {
             if (tameable.getTarget() == attacker) return true;
         }
 
         event.setCancelled(true);
-        if (sendMessages) {
+        if (sendMessages)
+        {
             String ownerName = GriefPrevention.lookupPlayerName(owner.getUniqueId());
             String message = dataStore.getMessage(Messages.NoDamageClaimedEntity, ownerName);
-            if (attacker.hasPermission("griefprevention.ignoreclaims")) {
+            if (attacker.hasPermission("griefprevention.ignoreclaims"))
+            {
                 message += "  " + dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
             }
             GriefPrevention.sendMessage(attacker, TextMode.Err, message);

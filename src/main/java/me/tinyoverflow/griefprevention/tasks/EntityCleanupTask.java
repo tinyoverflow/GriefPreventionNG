@@ -52,7 +52,7 @@ public class EntityCleanupTask implements Runnable
         ArrayList<World> worlds = new ArrayList<>();
         for (World world : GriefPrevention.instance.getServer().getWorlds())
         {
-            if (GriefPrevention.instance.config_claims_worldModes.get(world) == ClaimsMode.Creative)
+            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getWorldMode(world) == ClaimsMode.Creative)
             {
                 worlds.add(world);
             }
@@ -71,14 +71,11 @@ public class EntityCleanupTask implements Runnable
                 Entity entity = entities.get(j);
 
                 boolean remove = false;
-                if (entity instanceof Boat) //boats must be occupied
+                if (entity instanceof Boat boat) //boats must be occupied
                 {
-                    Boat boat = (Boat) entity;
                     if (boat.isEmpty()) remove = true;
-                }
-                else if (entity instanceof Vehicle)
+                } else if (entity instanceof Vehicle vehicle)
                 {
-                    Vehicle vehicle = (Vehicle) entity;
 
                     //minecarts in motion must be occupied by a player
                     if (vehicle.getVelocity().lengthSquared() != 0)
@@ -107,8 +104,7 @@ public class EntityCleanupTask implements Runnable
                     if (claim != null)
                     {
                         cachedClaim = claim;
-                    }
-                    else
+                    } else
                     {
                         remove = true;
                     }
@@ -146,6 +142,6 @@ public class EntityCleanupTask implements Runnable
         }
 
         EntityCleanupTask task = new EntityCleanupTask(nextRunPercentageStart);
-        GriefPrevention.instance.getServer().getScheduler().scheduleSyncDelayedTask(GriefPrevention.instance, task, 20L * 60 * 1);
+        GriefPrevention.instance.getServer().getScheduler().scheduleSyncDelayedTask(GriefPrevention.instance, task, 20L * 60);
     }
 }

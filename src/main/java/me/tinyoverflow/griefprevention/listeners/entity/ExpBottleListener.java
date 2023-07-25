@@ -7,8 +7,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ExpBottleEvent;
 
-import java.util.Optional;
-
 public class ExpBottleListener implements Listener
 {
     private final GriefPrevention plugin;
@@ -22,12 +20,11 @@ public class ExpBottleListener implements Listener
     @EventHandler(priority = EventPriority.LOWEST)
     public void onExpBottle(ExpBottleEvent event)
     {
-        Optional<ClaimsMode> worldMode = plugin.getPluginConfig()
+        ClaimsMode worldMode = plugin.getPluginConfig()
                 .getClaimConfiguration()
                 .getWorldMode(event.getEntity().getLocation().getWorld());
 
-        if (worldMode.isPresent() && worldMode.orElseThrow() == ClaimsMode.Creative) {
+        if (worldMode == ClaimsMode.Creative)
             event.setExperience(0);
-        }
     }
 }

@@ -40,22 +40,22 @@ public class PlayerInteractEntityListener implements Listener
 
         //allow horse protection to be overridden to allow management from other plugins
         if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectHorses &&
-            entity instanceof AbstractHorse)
+                entity instanceof AbstractHorse)
         {
             return;
         }
         if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys &&
-            entity instanceof Donkey)
+                entity instanceof Donkey)
         {
             return;
         }
         if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys &&
-            entity instanceof Mule)
+                entity instanceof Mule)
         {
             return;
         }
         if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectLlamas &&
-            entity instanceof Llama)
+                entity instanceof Llama)
         {
             return;
         }
@@ -63,15 +63,20 @@ public class PlayerInteractEntityListener implements Listener
         PlayerData playerData = dataStore.getPlayerData(player.getUniqueId());
 
         //if entity is tameable and has an owner, apply special rules
-        if (entity instanceof Tameable tameable) {
-            if (tameable.isTamed()) {
-                if (tameable.getOwner() != null) {
+        if (entity instanceof Tameable tameable)
+        {
+            if (tameable.isTamed())
+            {
+                if (tameable.getOwner() != null)
+                {
                     UUID ownerID = tameable.getOwner().getUniqueId();
 
                     //if the player interacting is the owner or an admin in ignore claims mode, always allow
-                    if (player.getUniqueId().equals(ownerID) || playerData.ignoreClaims) {
+                    if (player.getUniqueId().equals(ownerID) || playerData.ignoreClaims)
+                    {
                         //if giving away pet, do that instead
-                        if (playerData.petGiveawayRecipient != null) {
+                        if (playerData.petGiveawayRecipient != null)
+                        {
                             tameable.setOwner(playerData.petGiveawayRecipient);
                             playerData.petGiveawayRecipient = null;
                             GriefPrevention.sendMessage(player, TextMode.Success, Messages.PetGiveawayConfirmation);
@@ -80,13 +85,15 @@ public class PlayerInteractEntityListener implements Listener
 
                         return;
                     }
-                    if (!plugin.pvpRulesApply(entity.getLocation().getWorld()) || plugin.config_pvp_protectPets) {
+                    if (!plugin.pvpRulesApply(entity.getLocation().getWorld()) || plugin.getPluginConfig().getPvpConfiguration().isProtectPets())
+                    {
                         //otherwise disallow
                         OfflinePlayer owner = plugin.getServer().getOfflinePlayer(ownerID);
                         String ownerName = owner.getName();
                         if (ownerName == null) ownerName = "someone";
                         String message = plugin.dataStore.getMessage(Messages.NotYourPet, ownerName);
-                        if (player.hasPermission("griefprevention.ignoreclaims")) {
+                        if (player.hasPermission("griefprevention.ignoreclaims"))
+                        {
                             message += "  " + plugin.dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
                         }
                         GriefPrevention.sendMessage(player, TextMode.Err, message);
@@ -94,21 +101,23 @@ public class PlayerInteractEntityListener implements Listener
                         return;
                     }
                 }
-            }
-            else  //world repair code for a now-fixed GP bug //TODO: necessary anymore?
+            } else  //world repair code for a now-fixed GP bug //TODO: necessary anymore?
             {
                 //ensure this entity can be tamed by players
                 tameable.setOwner(null);
-                if (tameable instanceof InventoryHolder holder) {
+                if (tameable instanceof InventoryHolder holder)
+                {
                     holder.getInventory().clear();
                 }
             }
         }
 
         //don't allow interaction with item frames or armor stands in claimed areas without build permission
-        if (entity.getType() == EntityType.ARMOR_STAND || entity instanceof Hanging) {
+        if (entity.getType() == EntityType.ARMOR_STAND || entity instanceof Hanging)
+        {
             String noBuildReason = plugin.allowBuild(player, entity.getLocation(), Material.ITEM_FRAME);
-            if (noBuildReason != null) {
+            if (noBuildReason != null)
+            {
                 GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason);
                 event.setCancelled(true);
                 return;
@@ -116,13 +125,15 @@ public class PlayerInteractEntityListener implements Listener
         }
 
         //limit armor placements when entity count is too high
-        if (entity.getType() == EntityType.ARMOR_STAND && plugin.creativeRulesApply(player.getLocation())) {
+        if (entity.getType() == EntityType.ARMOR_STAND && plugin.creativeRulesApply(player.getLocation()))
+        {
             if (playerData == null) playerData = dataStore.getPlayerData(player.getUniqueId());
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, playerData.lastClaim);
             if (claim == null) return;
 
             String noEntitiesReason = claim.allowMoreEntities(false);
-            if (noEntitiesReason != null) {
+            if (noEntitiesReason != null)
+            {
                 GriefPrevention.sendMessage(player, TextMode.Err, noEntitiesReason);
                 event.setCancelled(true);
                 return;
@@ -133,14 +144,17 @@ public class PlayerInteractEntityListener implements Listener
         if (playerData.ignoreClaims) return;
 
         //don't allow container access during pvp combat
-        if ((entity instanceof StorageMinecart || entity instanceof PoweredMinecart)) {
-            if (playerData.siegeData != null) {
+        if ((entity instanceof StorageMinecart || entity instanceof PoweredMinecart))
+        {
+            if (playerData.siegeData != null)
+            {
                 GriefPrevention.sendMessage(player, TextMode.Err, Messages.SiegeNoContainers);
                 event.setCancelled(true);
                 return;
             }
 
-            if (playerData.inPvpCombat()) {
+            if (playerData.inPvpCombat())
+            {
                 GriefPrevention.sendMessage(player, TextMode.Err, Messages.PvPNoContainers);
                 event.setCancelled(true);
                 return;
@@ -149,19 +163,22 @@ public class PlayerInteractEntityListener implements Listener
 
         //if the entity is a vehicle and we're preventing theft in claims
         if (plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() &&
-            entity instanceof Vehicle)
+                entity instanceof Vehicle)
         {
             //if the entity is in a claim
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, null);
-            if (claim != null) {
+            if (claim != null)
+            {
                 //for storage entities, apply container rules (this is a potential theft)
-                if (entity instanceof InventoryHolder) {
+                if (entity instanceof InventoryHolder)
+                {
                     Supplier<String> noContainersReason = claim.checkPermission(
                             player,
                             ClaimPermission.Inventory,
                             event
                     );
-                    if (noContainersReason != null) {
+                    if (noContainersReason != null)
+                    {
                         GriefPrevention.sendMessage(player, TextMode.Err, noContainersReason.get());
                         event.setCancelled(true);
                         return;
@@ -172,15 +189,18 @@ public class PlayerInteractEntityListener implements Listener
 
         //if the entity is an animal, apply container rules
         if ((plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() &&
-             (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER &&
-                                                                        plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventVillagerTradesEnabled()))
+                (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER &&
+                plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventVillagerTradesEnabled()))
         {
             //if the entity is in a claim
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, null);
-            if (claim != null) {
-                Supplier<String> override = () -> {
+            if (claim != null)
+            {
+                Supplier<String> override = () ->
+                {
                     String message = plugin.dataStore.getMessage(Messages.NoDamageClaimedEntity, claim.getOwnerName());
-                    if (player.hasPermission("griefprevention.ignoreclaims")) {
+                    if (player.hasPermission("griefprevention.ignoreclaims"))
+                    {
                         message += "  " + plugin.dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
                     }
 
@@ -192,7 +212,8 @@ public class PlayerInteractEntityListener implements Listener
                         event,
                         override
                 );
-                if (noContainersReason != null) {
+                if (noContainersReason != null)
+                {
                     GriefPrevention.sendMessage(player, TextMode.Err, noContainersReason.get());
                     event.setCancelled(true);
                     return;
@@ -204,12 +225,14 @@ public class PlayerInteractEntityListener implements Listener
 
         //if preventing theft, prevent leashing claimed creatures
         if (plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() &&
-            entity instanceof Creature && itemInHand.getType() == Material.LEAD)
+                entity instanceof Creature && itemInHand.getType() == Material.LEAD)
         {
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, playerData.lastClaim);
-            if (claim != null) {
+            if (claim != null)
+            {
                 Supplier<String> failureReason = claim.checkPermission(player, ClaimPermission.Inventory, event);
-                if (failureReason != null) {
+                if (failureReason != null)
+                {
                     event.setCancelled(true);
                     GriefPrevention.sendMessage(player, TextMode.Err, failureReason.get());
                     return;
@@ -218,7 +241,8 @@ public class PlayerInteractEntityListener implements Listener
         }
 
         // Name tags may only be used on entities that the player is allowed to kill.
-        if (itemInHand.getType() == Material.NAME_TAG) {
+        if (itemInHand.getType() == Material.NAME_TAG)
+        {
             boolean isCancelled = new EntityDamageByEntityEvent(
                     player,
                     entity,

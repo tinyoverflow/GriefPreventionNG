@@ -21,34 +21,12 @@ package me.tinyoverflow.griefprevention.datastore;
 import com.google.common.io.Files;
 import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationType;
-import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.ClaimPermission;
-import me.tinyoverflow.griefprevention.ClaimsMode;
-import me.tinyoverflow.griefprevention.CreateClaimResult;
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
-import me.tinyoverflow.griefprevention.CustomizableMessage;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.SiegeData;
-import me.tinyoverflow.griefprevention.TextMode;
-import me.tinyoverflow.griefprevention.UUIDFetcher;
+import me.tinyoverflow.griefprevention.*;
+import me.tinyoverflow.griefprevention.events.*;
 import me.tinyoverflow.griefprevention.integrations.WorldGuardWrapper;
-import me.tinyoverflow.griefprevention.events.ClaimModifiedEvent;
-import me.tinyoverflow.griefprevention.events.ClaimResizeEvent;
-import me.tinyoverflow.griefprevention.events.ClaimCreatedEvent;
-import me.tinyoverflow.griefprevention.events.ClaimDeletedEvent;
-import me.tinyoverflow.griefprevention.events.ClaimExtendEvent;
-import me.tinyoverflow.griefprevention.events.ClaimTransferEvent;
 import me.tinyoverflow.griefprevention.tasks.SecureClaimTask;
 import me.tinyoverflow.griefprevention.tasks.SiegeCheckupTask;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.AnimalTamer;
@@ -61,18 +39,7 @@ import org.bukkit.inventory.ItemStack;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -81,58 +48,86 @@ import java.util.stream.Stream;
 public abstract class DataStore
 {
 
-    //in-memory cache for player data
-    protected ConcurrentHashMap<UUID, PlayerData> playerNameToPlayerDataMap = new ConcurrentHashMap<>();
-
-    //in-memory cache for group (permission-based) data
-    protected ConcurrentHashMap<String, Integer> permissionToBonusBlocksMap = new ConcurrentHashMap<>();
-
+    //path information, for where stuff stored on disk is well...  stored
+    public final static String dataLayerFolderPath = "plugins" + File.separator + "GriefPrevention";
+    public final static String configFilePath = dataLayerFolderPath + File.separator + "config.yml";
+    //video links
+    public static final String SURVIVAL_VIDEO_URL = String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpuser" + ChatColor.RESET;
+    public static final String CREATIVE_VIDEO_URL = String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpcrea" + ChatColor.RESET;
+    public static final String SUBDIVISION_VIDEO_URL = String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpsub" + ChatColor.RESET;
+    //pattern for unique user identifiers (UUIDs)
+    protected final static Pattern uuidpattern = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+    //the latest version of the data schema implemented here
+    protected static final int latestSchemaVersion = 3;
+    final static String messagesFilePath = dataLayerFolderPath + File.separator + "messages.yml";
+    static String playerDataFolderPath = dataLayerFolderPath + File.separator + "PlayerData";
+    //turns a location into a string, useful in data storage
+    private final String locationStringDelimiter = ";";
+    //timestamp for each siege cooldown to end
+    private final HashMap<String, Long> siegeCooldownRemaining = new HashMap<>();
     //in-memory cache for claim data
     public ArrayList<Claim> claims = new ArrayList<>();
     public ConcurrentHashMap<Long, ArrayList<Claim>> chunksToClaimsMap = new ConcurrentHashMap<>();
-
-    //in-memory cache for messages
-    private String[] messages;
-
-    //pattern for unique user identifiers (UUIDs)
-    protected final static Pattern uuidpattern = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
-
+    //in-memory cache for player data
+    protected ConcurrentHashMap<UUID, PlayerData> playerNameToPlayerDataMap = new ConcurrentHashMap<>();
+    //in-memory cache for group (permission-based) data
+    protected ConcurrentHashMap<String, Integer> permissionToBonusBlocksMap = new ConcurrentHashMap<>();
     //next claim ID
     Long nextClaimID = (long) 0;
+    //in-memory cache for messages
+    private String[] messages;
+    //current version of the schema of data in secondary storage
+    private int currentSchemaVersion = -1;  //-1 means not determined yet
+    //world guard reference, if available
+    private WorldGuardWrapper worldGuard = null;
 
-    //path information, for where stuff stored on disk is well...  stored
-    public final static String dataLayerFolderPath = "plugins" + File.separator + "GriefPrevention";
-    static String playerDataFolderPath = dataLayerFolderPath + File.separator + "PlayerData";
-    public final static String configFilePath = dataLayerFolderPath + File.separator + "config.yml";
-    final static String messagesFilePath = dataLayerFolderPath + File.separator + "messages.yml";
+    //gets an almost-unique, persistent identifier for a chunk
+    public static Long getChunkHash(long chunkx, long chunkz)
+    {
+        return (chunkz ^ (chunkx << 32));
+    }
 
-    //the latest version of the data schema implemented here
-    protected static final int latestSchemaVersion = 3;
+    //gets an almost-unique, persistent identifier for a chunk
+    public static Long getChunkHash(Location location)
+    {
+        return getChunkHash(location.getBlockX() >> 4, location.getBlockZ() >> 4);
+    }
+
+    public static ArrayList<Long> getChunkHashes(Claim claim)
+    {
+        return getChunkHashes(claim.getLesserBoundaryCorner(), claim.getGreaterBoundaryCorner());
+    }
+
+    public static ArrayList<Long> getChunkHashes(Location min, Location max)
+    {
+        ArrayList<Long> hashes = new ArrayList<>();
+        int smallX = min.getBlockX() >> 4;
+        int smallZ = min.getBlockZ() >> 4;
+        int largeX = max.getBlockX() >> 4;
+        int largeZ = max.getBlockZ() >> 4;
+
+        for (int x = smallX; x <= largeX; x++)
+        {
+            for (int z = smallZ; z <= largeZ; z++)
+            {
+                hashes.add(getChunkHash(x, z));
+            }
+        }
+
+        return hashes;
+    }
 
     //reading and writing the schema version to the data store
     abstract int getSchemaVersionFromStorage();
 
     abstract void updateSchemaVersionInStorage(int versionToSet);
 
-    //current version of the schema of data in secondary storage
-    private int currentSchemaVersion = -1;  //-1 means not determined yet
-
-    //video links
-    public static final String SURVIVAL_VIDEO_URL = String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpuser" + ChatColor.RESET;
-    public static final String CREATIVE_VIDEO_URL = String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpcrea" + ChatColor.RESET;
-    public static final String SUBDIVISION_VIDEO_URL = String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpsub" + ChatColor.RESET;
-
-
-    //world guard reference, if available
-    private WorldGuardWrapper worldGuard = null;
-
     protected int getSchemaVersion()
     {
         if (this.currentSchemaVersion >= 0)
         {
             return this.currentSchemaVersion;
-        }
-        else
+        } else
         {
             this.currentSchemaVersion = this.getSchemaVersionFromStorage();
             return this.currentSchemaVersion;
@@ -208,7 +203,9 @@ public abstract class DataStore
             GriefPrevention.AddLogEntry("Successfully hooked into WorldGuard.");
         }
         //if failed, world guard compat features will just be disabled.
-        catch (IllegalStateException | IllegalArgumentException | ClassCastException | NoClassDefFoundError ignored) { }
+        catch (IllegalStateException | IllegalArgumentException | ClassCastException | NoClassDefFoundError ignored)
+        {
+        }
     }
 
     //removes cached player data from memory
@@ -255,16 +252,6 @@ public abstract class DataStore
     }
 
     abstract void saveGroupBonusBlocks(String groupName, int amount);
-
-    public static class NoTransferException extends RuntimeException
-    {
-        private static final long serialVersionUID = 1L;
-
-        NoTransferException(String message)
-        {
-            super(message);
-        }
-    }
 
     synchronized public void changeClaimOwner(Claim claim, UUID newOwnerID)
     {
@@ -394,9 +381,6 @@ public abstract class DataStore
             }
         }
     }
-
-    //turns a location into a string, useful in data storage
-    private final String locationStringDelimiter = ";";
 
     String locationToString(Location location)
     {
@@ -609,10 +593,10 @@ public abstract class DataStore
      * <p>The cached claim may be null, but will increase performance if you have a reasonable idea
      * of which claim is correct.
      *
-     * @param location the location
-     * @param ignoreHeight whether to check containment vertically
+     * @param location        the location
+     * @param ignoreHeight    whether to check containment vertically
      * @param ignoreSubclaims whether subclaims should be returned over claims
-     * @param cachedClaim the cached claim, if any
+     * @param cachedClaim     the cached claim, if any
      * @return the claim containing the location or null if no claim exists there
      */
     synchronized public Claim getClaimAt(Location location, boolean ignoreHeight, boolean ignoreSubclaims, Claim cachedClaim)
@@ -662,7 +646,7 @@ public abstract class DataStore
                 for (Claim subClaim : claim.children)
                 {
                     if (subClaim.getID() == id)
-                    return subClaim;
+                        return subClaim;
                 }
             }
         }
@@ -684,45 +668,10 @@ public abstract class DataStore
         if (chunkClaims != null)
         {
             return Collections.unmodifiableCollection(chunkClaims);
-        }
-        else
+        } else
         {
             return Collections.unmodifiableCollection(new ArrayList<>());
         }
-    }
-
-    //gets an almost-unique, persistent identifier for a chunk
-    public static Long getChunkHash(long chunkx, long chunkz)
-    {
-        return (chunkz ^ (chunkx << 32));
-    }
-
-    //gets an almost-unique, persistent identifier for a chunk
-    public static Long getChunkHash(Location location)
-    {
-        return getChunkHash(location.getBlockX() >> 4, location.getBlockZ() >> 4);
-    }
-
-    public static ArrayList<Long> getChunkHashes(Claim claim) {
-        return getChunkHashes(claim.getLesserBoundaryCorner(), claim.getGreaterBoundaryCorner());
-    }
-
-    public static ArrayList<Long> getChunkHashes(Location min, Location max) {
-        ArrayList<Long> hashes = new ArrayList<>();
-        int smallX = min.getBlockX() >> 4;
-        int smallZ = min.getBlockZ() >> 4;
-        int largeX = max.getBlockX() >> 4;
-        int largeZ = max.getBlockZ() >> 4;
-
-        for (int x = smallX; x <= largeX; x++)
-        {
-            for (int z = smallZ; z <= largeZ; z++)
-            {
-                hashes.add(getChunkHash(x, z));
-            }
-        }
-
-        return hashes;
     }
 
     /*
@@ -759,8 +708,7 @@ public abstract class DataStore
         {
             smallx = x1;
             bigx = x2;
-        }
-        else
+        } else
         {
             smallx = x2;
             bigx = x1;
@@ -770,8 +718,7 @@ public abstract class DataStore
         {
             smally = y1;
             bigy = y2;
-        }
-        else
+        } else
         {
             smally = y2;
             bigy = y1;
@@ -781,8 +728,7 @@ public abstract class DataStore
         {
             smallz = z1;
             bigz = z2;
-        }
-        else
+        } else
         {
             smallz = z2;
             bigz = z1;
@@ -802,7 +748,7 @@ public abstract class DataStore
         }
 
         //creative mode claims always go to bedrock
-        if (GriefPrevention.instance.config_claims_worldModes.get(world) == ClaimsMode.Creative)
+        if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getWorldMode(world) == ClaimsMode.Creative)
         {
             smally = world.getMinHeight();
         }
@@ -825,8 +771,7 @@ public abstract class DataStore
         if (newClaim.parent != null)
         {
             claimsToCheck = newClaim.parent.children;
-        }
-        else
+        } else
         {
             claimsToCheck = this.claims;
         }
@@ -957,11 +902,12 @@ public abstract class DataStore
     /**
      * Helper method for sanitizing claim depth to find the minimum expected value.
      *
-     * @param claim the claim
+     * @param claim    the claim
      * @param newDepth the new depth
      * @return the sanitized new depth
      */
-    private int sanitizeClaimDepth(Claim claim, int newDepth) {
+    private int sanitizeClaimDepth(Claim claim, int newDepth)
+    {
         if (claim.parent != null) claim = claim.parent;
 
         // Get the old depth including the depth of the lowest subdivision.
@@ -984,15 +930,17 @@ public abstract class DataStore
     /**
      * Helper method for sanitizing and setting claim depth. Saves affected claims.
      *
-     * @param claim the claim
+     * @param claim    the claim
      * @param newDepth the new depth
      */
-    private void setNewDepth(Claim claim, int newDepth) {
+    private void setNewDepth(Claim claim, int newDepth)
+    {
         if (claim.parent != null) claim = claim.parent;
 
         final int depth = sanitizeClaimDepth(claim, newDepth);
 
-        Stream.concat(Stream.of(claim), claim.children.stream()).forEach(localClaim -> {
+        Stream.concat(Stream.of(claim), claim.children.stream()).forEach(localClaim ->
+        {
             localClaim.lesserBoundaryCorner.setY(depth);
             localClaim.greaterBoundaryCorner.setY(Math.max(localClaim.greaterBoundaryCorner.getBlockY(), depth));
             this.saveClaim(localClaim);
@@ -1030,19 +978,16 @@ public abstract class DataStore
             if (siegeData.attacker.getName().equals(loserName))
             {
                 winnerName = siegeData.defender.getName();
-            }
-            else
+            } else
             {
                 winnerName = siegeData.attacker.getName();
             }
-        }
-        else if (winnerName != null && loserName == null)
+        } else if (winnerName != null && loserName == null)
         {
             if (siegeData.attacker.getName().equals(winnerName))
             {
                 loserName = siegeData.defender.getName();
-            }
-            else
+            } else
             {
                 loserName = siegeData.attacker.getName();
             }
@@ -1135,9 +1080,6 @@ public abstract class DataStore
             }
         }
     }
-
-    //timestamp for each siege cooldown to end
-    private final HashMap<String, Long> siegeCooldownRemaining = new HashMap<>();
 
     //whether or not a sieger can siege a particular victim or claim, considering only cooldowns
     synchronized public boolean onCooldown(Player attacker, Player defender, Claim defenderClaim)
@@ -1357,8 +1299,7 @@ public abstract class DataStore
                 if (ownerID == player.getUniqueId())
                 {
                     claimBlocksRemaining = playerData.getRemainingClaimBlocks();
-                }
-                else
+                } else
                 {
                     PlayerData ownerData = this.getPlayerData(ownerID);
                     claimBlocksRemaining = ownerData.getRemainingClaimBlocks();
@@ -1398,8 +1339,7 @@ public abstract class DataStore
             //clean up
             playerData.claimResizing = null;
             playerData.lastShovelLocation = null;
-        }
-        else
+        } else
         {
             if (result.claim != null)
             {
@@ -1408,26 +1348,23 @@ public abstract class DataStore
 
                 //show the player the conflicting claim
                 BoundaryVisualization.visualizeClaim(player, result.claim, VisualizationType.CONFLICT_ZONE);
-            }
-            else
+            } else
             {
                 GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeFailOverlapRegion);
             }
         }
     }
 
-    //educates a player about /adminclaims and /acb, if he can use them 
+    //educates a player about /adminclaims and /acb, if he can use them
     public void tryAdvertiseAdminAlternatives(Player player)
     {
         if (player.hasPermission("griefprevention.adminclaims") && player.hasPermission("griefprevention.adjustclaimblocks"))
         {
             GriefPrevention.sendMessage(player, TextMode.Info, Messages.AdvertiseACandACB);
-        }
-        else if (player.hasPermission("griefprevention.adminclaims"))
+        } else if (player.hasPermission("griefprevention.adminclaims"))
         {
             GriefPrevention.sendMessage(player, TextMode.Info, Messages.AdvertiseAdminClaims);
-        }
-        else if (player.hasPermission("griefprevention.adjustclaimblocks"))
+        } else if (player.hasPermission("griefprevention.adjustclaimblocks"))
         {
             GriefPrevention.sendMessage(player, TextMode.Info, Messages.AdvertiseACB);
         }
@@ -1705,8 +1642,7 @@ public abstract class DataStore
         {
             config.options().header("Use a YAML editor like NotepadPlusPlus to edit this file.  \nAfter editing, back up your changes before reloading the server in case you made a syntax error.  \nUse dollar signs ($) for formatting codes, which are documented here: https://minecraft.gamepedia.com/Formatting_codes");
             config.save(DataStore.messagesFilePath);
-        }
-        catch (IOException exception)
+        } catch (IOException exception)
         {
             GriefPrevention.AddLogEntry("Unable to write to the configuration file at \"" + DataStore.messagesFilePath + "\"");
         }
@@ -1759,8 +1695,9 @@ public abstract class DataStore
             try
             {
                 playerID = UUIDFetcher.getUUIDOf(name);
+            } catch (Exception ignored)
+            {
             }
-            catch (Exception ignored) { }
 
             //if successful, replace player name with corresponding UUID
             if (playerID != null)
@@ -1773,26 +1710,6 @@ public abstract class DataStore
     }
 
     public abstract void close();
-
-    private class SavePlayerDataThread extends Thread
-    {
-        private final UUID playerID;
-        private final PlayerData playerData;
-
-        SavePlayerDataThread(UUID playerID, PlayerData playerData)
-        {
-            this.playerID = playerID;
-            this.playerData = playerData;
-        }
-
-        public void run()
-        {
-            //ensure player data is already read from file before trying to save
-            playerData.getAccruedClaimBlocks();
-            playerData.getClaims();
-            asyncSavePlayerData(this.playerID, this.playerData);
-        }
-    }
 
     //gets all the claims "near" a location
     public Set<Claim> getNearbyClaims(Location location)
@@ -1837,6 +1754,36 @@ public abstract class DataStore
                 this.deleteClaim(claim, false, false);
                 i--;
             }
+        }
+    }
+
+    public static class NoTransferException extends RuntimeException
+    {
+        private static final long serialVersionUID = 1L;
+
+        NoTransferException(String message)
+        {
+            super(message);
+        }
+    }
+
+    private class SavePlayerDataThread extends Thread
+    {
+        private final UUID playerID;
+        private final PlayerData playerData;
+
+        SavePlayerDataThread(UUID playerID, PlayerData playerData)
+        {
+            this.playerID = playerID;
+            this.playerData = playerData;
+        }
+
+        public void run()
+        {
+            //ensure player data is already read from file before trying to save
+            playerData.getAccruedClaimBlocks();
+            playerData.getClaims();
+            asyncSavePlayerData(this.playerID, this.playerData);
         }
     }
 }
