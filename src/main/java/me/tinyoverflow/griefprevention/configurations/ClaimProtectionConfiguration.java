@@ -1,6 +1,5 @@
 package me.tinyoverflow.griefprevention.configurations;
 
-import jdk.jfr.Description;
 import lombok.Data;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
@@ -8,7 +7,8 @@ import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 @ConfigSerializable
 @Data
-public class ClaimProtectionConfiguration {
+public class ClaimProtectionConfiguration
+{
     @Setting("protect-vehicles")
     @Comment("Requires access trust to break vehicles.")
     private final boolean protectVehiclesEnabled = true;
@@ -54,23 +54,23 @@ public class ClaimProtectionConfiguration {
     private final boolean preventRavagerDamageEnabled = false;
 
     @Setting("prevent-endermen-block-moving")
-    @Description("")
+    @Comment("Prevents endermen from pickup up and placing blocks.")
     private final boolean preventEndermenBlockMovingEnabled = true;
 
     @Setting("prevent-silverfish-block-breaking")
-    @Description("Prevents silverfishes from breaking blocks.")
+    @Comment("Prevents silverfishes from breaking blocks.")
     private final boolean preventSilverfishBlockBreakingEnabled = true;
 
     @Setting("prevent-rabbit-crop-eating")
-    @Description("Prevents rabbits from eating crops.")
+    @Comment("Prevents rabbits from eating crops.")
     private final boolean preventRabbitsEatingCropsEnabled = false;
 
     @Setting("prevent-creature-crop-trampling")
-    @Description("Prevents creatures from trampling crops.")
+    @Comment("Prevents creatures from trampling crops.")
     private final boolean preventCreaturesTramplingCropsEnabled = true;
 
     @Setting("prevent-zombie-door-breaking")
-    @Description("Prevents zombies from breaking doors.")
+    @Comment("Prevents zombies from breaking doors.")
     private final boolean preventZombiesBreakingDoorsEnabled = true;
 
     @Setting("prevent-fire-spread")
