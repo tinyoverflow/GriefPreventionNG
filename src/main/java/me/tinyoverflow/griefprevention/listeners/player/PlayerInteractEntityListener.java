@@ -19,31 +19,46 @@ import org.bukkit.inventory.ItemStack;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class PlayerInteractEntityListener implements Listener {
+public class PlayerInteractEntityListener implements Listener
+{
     private final GriefPrevention plugin;
     private final DataStore dataStore;
 
-    public PlayerInteractEntityListener(GriefPrevention plugin, DataStore dataStore) {
+    public PlayerInteractEntityListener(GriefPrevention plugin, DataStore dataStore)
+    {
         this.plugin = plugin;
         this.dataStore = dataStore;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent event)
+    {
         Player player = event.getPlayer();
         Entity entity = event.getRightClicked();
 
         if (!plugin.claimsEnabledForWorld(entity.getWorld())) return;
 
         //allow horse protection to be overridden to allow management from other plugins
-        if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectHorses && entity instanceof AbstractHorse)
+        if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectHorses &&
+            entity instanceof AbstractHorse)
+        {
             return;
-        if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys && entity instanceof Donkey)
+        }
+        if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys &&
+            entity instanceof Donkey)
+        {
             return;
-        if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys && entity instanceof Mule)
+        }
+        if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys &&
+            entity instanceof Mule)
+        {
             return;
-        if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectLlamas && entity instanceof Llama)
+        }
+        if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectLlamas &&
+            entity instanceof Llama)
+        {
             return;
+        }
 
         PlayerData playerData = dataStore.getPlayerData(player.getUniqueId());
 
@@ -71,14 +86,16 @@ public class PlayerInteractEntityListener implements Listener {
                         String ownerName = owner.getName();
                         if (ownerName == null) ownerName = "someone";
                         String message = plugin.dataStore.getMessage(Messages.NotYourPet, ownerName);
-                        if (player.hasPermission("griefprevention.ignoreclaims"))
+                        if (player.hasPermission("griefprevention.ignoreclaims")) {
                             message += "  " + plugin.dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
+                        }
                         GriefPrevention.sendMessage(player, TextMode.Err, message);
                         event.setCancelled(true);
                         return;
                     }
                 }
-            } else  //world repair code for a now-fixed GP bug //TODO: necessary anymore?
+            }
+            else  //world repair code for a now-fixed GP bug //TODO: necessary anymore?
             {
                 //ensure this entity can be tamed by players
                 tameable.setOwner(null);
@@ -131,13 +148,16 @@ public class PlayerInteractEntityListener implements Listener {
         }
 
         //if the entity is a vehicle and we're preventing theft in claims
-        if (plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() && entity instanceof Vehicle) {
+        if (plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() &&
+            entity instanceof Vehicle)
+        {
             //if the entity is in a claim
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, null);
             if (claim != null) {
                 //for storage entities, apply container rules (this is a potential theft)
                 if (entity instanceof InventoryHolder) {
-                    Supplier<String> noContainersReason = claim.checkPermission(player,
+                    Supplier<String> noContainersReason = claim.checkPermission(
+                            player,
                             ClaimPermission.Inventory,
                             event
                     );
@@ -151,18 +171,23 @@ public class PlayerInteractEntityListener implements Listener {
         }
 
         //if the entity is an animal, apply container rules
-        if ((plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() && (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER && plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventVillagerTradesEnabled())) {
+        if ((plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() &&
+             (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER &&
+                                                                        plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventVillagerTradesEnabled()))
+        {
             //if the entity is in a claim
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, null);
             if (claim != null) {
                 Supplier<String> override = () -> {
                     String message = plugin.dataStore.getMessage(Messages.NoDamageClaimedEntity, claim.getOwnerName());
-                    if (player.hasPermission("griefprevention.ignoreclaims"))
+                    if (player.hasPermission("griefprevention.ignoreclaims")) {
                         message += "  " + plugin.dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
+                    }
 
                     return message;
                 };
-                final Supplier<String> noContainersReason = claim.checkPermission(player,
+                final Supplier<String> noContainersReason = claim.checkPermission(
+                        player,
                         ClaimPermission.Inventory,
                         event,
                         override
@@ -178,7 +203,9 @@ public class PlayerInteractEntityListener implements Listener {
         ItemStack itemInHand = plugin.getItemInHand(player, event.getHand());
 
         //if preventing theft, prevent leashing claimed creatures
-        if (plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() && entity instanceof Creature && itemInHand.getType() == Material.LEAD) {
+        if (plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() &&
+            entity instanceof Creature && itemInHand.getType() == Material.LEAD)
+        {
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, playerData.lastClaim);
             if (claim != null) {
                 Supplier<String> failureReason = claim.checkPermission(player, ClaimPermission.Inventory, event);
@@ -192,16 +219,15 @@ public class PlayerInteractEntityListener implements Listener {
 
         // Name tags may only be used on entities that the player is allowed to kill.
         if (itemInHand.getType() == Material.NAME_TAG) {
-            EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(player,
+            boolean isCancelled = new EntityDamageByEntityEvent(
+                    player,
                     entity,
                     EntityDamageEvent.DamageCause.CUSTOM,
                     0
-            );
-            plugin.entityDamageHandler.onEntityDamage(damageEvent);
-            if (damageEvent.isCancelled()) {
-                event.setCancelled(true);
-                // Don't print message - damage event handler should have handled it.
-            }
+            ).callEvent();
+
+            // Don't print message - damage event handler should have handled it.
+            if (isCancelled) event.setCancelled(true);
         }
     }
 }
