@@ -20,19 +20,18 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+@Deprecated(forRemoval = true)
 public class UUIDFetcher
 {
-    private static int PROFILES_PER_REQUEST = 100;
     private static final String PROFILE_URL = "https://api.mojang.com/profiles/minecraft";
+    //cache for username -> uuid lookups
+    public static HashMap<String, UUID> lookupCache;
+    //record of username -> proper casing updates
+    public static HashMap<String, String> correctedNames;
+    private static int PROFILES_PER_REQUEST = 100;
     private final Gson gson = new Gson();
     private final List<String> names;
     private final boolean rateLimiting;
-
-    //cache for username -> uuid lookups
-    public static HashMap<String, UUID> lookupCache;
-
-    //record of username -> proper casing updates
-    public static HashMap<String, String> correctedNames;
 
     public UUIDFetcher(List<String> names, boolean rateLimiting)
     {
@@ -43,6 +42,65 @@ public class UUIDFetcher
     public UUIDFetcher(List<String> names)
     {
         this(names, true);
+    }
+
+    private static void writeBody(HttpURLConnection connection, String body) throws Exception
+    {
+        OutputStream stream = connection.getOutputStream();
+        stream.write(body.getBytes());
+        stream.flush();
+        stream.close();
+    }
+
+    private static HttpURLConnection createConnection() throws Exception
+    {
+        URL url = new URL(PROFILE_URL);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setUseCaches(false);
+        connection.setDoInput(true);
+        connection.setDoOutput(true);
+        return connection;
+    }
+
+    private static UUID getUUID(String id)
+    {
+        return UUID.fromString(id.substring(0, 8) + "-" + id.substring(8, 12) + "-" + id.substring(12, 16) + "-" +
+                               id.substring(16, 20) + "-" + id.substring(20, 32));
+    }
+
+    public static byte[] toBytes(UUID uuid)
+    {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[16]);
+        byteBuffer.putLong(uuid.getMostSignificantBits());
+        byteBuffer.putLong(uuid.getLeastSignificantBits());
+        return byteBuffer.array();
+    }
+
+    public static UUID fromBytes(byte[] array)
+    {
+        if (array.length != 16)
+        {
+            throw new IllegalArgumentException("Illegal byte array length: " + array.length);
+        }
+        ByteBuffer byteBuffer = ByteBuffer.wrap(array);
+        long mostSignificant = byteBuffer.getLong();
+        long leastSignificant = byteBuffer.getLong();
+        return new UUID(mostSignificant, leastSignificant);
+    }
+
+    public static UUID getUUIDOf(String name) throws Exception
+    {
+        UUID result = lookupCache.get(name);
+        if (result == null)
+        {
+            //throw up our hands and report the problem in the logs
+            //this player will lose his land claim blocks, but claims will stay in place as admin claims
+            throw new IllegalArgumentException(name);
+        }
+
+        return result;
     }
 
     public void call() throws Exception
@@ -92,7 +150,7 @@ public class UUIDFetcher
             UUID uuid = lookupCache.get(name);
             if (uuid != null)
             {
-                GriefPrevention.AddLogEntry(name + " --> " + uuid.toString());
+                GriefPrevention.AddLogEntry(name + " --> " + uuid);
                 names.remove(i--);
             }
         }
@@ -108,13 +166,16 @@ public class UUIDFetcher
             names.removeIf(name ->
             {
                 if (name.length() >= 3 && name.length() <= 16 && validNamePattern.matcher(name).find())
+                {
                     return false;
+                }
 
                 GriefPrevention.AddLogEntry(String.format("Cannot convert invalid name: %s", name));
                 return true;
             });
 
-            GriefPrevention.AddLogEntry("Calling Mojang to get UUIDs for remaining unresolved players (this is the slowest step)...");
+            GriefPrevention.AddLogEntry(
+                    "Calling Mojang to get UUIDs for remaining unresolved players (this is the slowest step)...");
 
             for (int i = 0; i * PROFILES_PER_REQUEST < names.size(); i++)
             {
@@ -123,15 +184,17 @@ public class UUIDFetcher
                 do
                 {
                     HttpURLConnection connection = createConnection();
-                    String body = gson.toJson(names.subList(i * PROFILES_PER_REQUEST, Math.min((i + 1) * PROFILES_PER_REQUEST, names.size())));
+                    String body = gson.toJson(names.subList(
+                            i * PROFILES_PER_REQUEST,
+                            Math.min((i + 1) * PROFILES_PER_REQUEST, names.size())
+                    ));
                     writeBody(connection, body);
                     retry = false;
                     array = null;
                     try
                     {
                         array = gson.fromJson(new InputStreamReader(connection.getInputStream()), JsonArray.class);
-                    }
-                    catch (Exception e)
+                    } catch (Exception e)
                     {
                         //in case of error 429 too many requests, pause and then retry later
                         if (e.getMessage().contains("429"))
@@ -142,7 +205,8 @@ public class UUIDFetcher
                             //try reducing it
                             if (i == 0 && PROFILES_PER_REQUEST > 1)
                             {
-                                GriefPrevention.AddLogEntry("Batch size " + PROFILES_PER_REQUEST + " seems too large.  Looking for a workable batch size...");
+                                GriefPrevention.AddLogEntry("Batch size " + PROFILES_PER_REQUEST +
+                                                            " seems too large.  Looking for a workable batch size...");
                                 PROFILES_PER_REQUEST = Math.max(PROFILES_PER_REQUEST - 5, 1);
                             }
 
@@ -150,7 +214,8 @@ public class UUIDFetcher
                             //but wait a little while before trying again.
                             else
                             {
-                                GriefPrevention.AddLogEntry("Mojang says we're sending requests too fast.  Will retry every 30 seconds until we succeed...");
+                                GriefPrevention.AddLogEntry(
+                                        "Mojang says we're sending requests too fast.  Will retry every 30 seconds until we succeed...");
                                 Thread.sleep(30000);
                             }
                         }
@@ -167,7 +232,7 @@ public class UUIDFetcher
                     String id = jsonProfile.get("id").getAsString();
                     String name = jsonProfile.get("name").getAsString();
                     UUID uuid = UUIDFetcher.getUUID(id);
-                    GriefPrevention.AddLogEntry(name + " --> " + uuid.toString());
+                    GriefPrevention.AddLogEntry(name + " --> " + uuid);
                     lookupCache.put(name, uuid);
                     lookupCache.put(name.toLowerCase(), uuid);
                 }
@@ -186,68 +251,10 @@ public class UUIDFetcher
             for (String name : names)
             {
                 UUID uuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(Charsets.UTF_8));
-                GriefPrevention.AddLogEntry(name + " --> " + uuid.toString());
+                GriefPrevention.AddLogEntry(name + " --> " + uuid);
                 lookupCache.put(name, uuid);
                 lookupCache.put(name.toLowerCase(), uuid);
             }
         }
-    }
-
-    private static void writeBody(HttpURLConnection connection, String body) throws Exception
-    {
-        OutputStream stream = connection.getOutputStream();
-        stream.write(body.getBytes());
-        stream.flush();
-        stream.close();
-    }
-
-    private static HttpURLConnection createConnection() throws Exception
-    {
-        URL url = new URL(PROFILE_URL);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setUseCaches(false);
-        connection.setDoInput(true);
-        connection.setDoOutput(true);
-        return connection;
-    }
-
-    private static UUID getUUID(String id)
-    {
-        return UUID.fromString(id.substring(0, 8) + "-" + id.substring(8, 12) + "-" + id.substring(12, 16) + "-" + id.substring(16, 20) + "-" + id.substring(20, 32));
-    }
-
-    public static byte[] toBytes(UUID uuid)
-    {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[16]);
-        byteBuffer.putLong(uuid.getMostSignificantBits());
-        byteBuffer.putLong(uuid.getLeastSignificantBits());
-        return byteBuffer.array();
-    }
-
-    public static UUID fromBytes(byte[] array)
-    {
-        if (array.length != 16)
-        {
-            throw new IllegalArgumentException("Illegal byte array length: " + array.length);
-        }
-        ByteBuffer byteBuffer = ByteBuffer.wrap(array);
-        long mostSignificant = byteBuffer.getLong();
-        long leastSignificant = byteBuffer.getLong();
-        return new UUID(mostSignificant, leastSignificant);
-    }
-
-    public static UUID getUUIDOf(String name) throws Exception
-    {
-        UUID result = lookupCache.get(name);
-        if (result == null)
-        {
-            //throw up our hands and report the problem in the logs
-            //this player will lose his land claim blocks, but claims will stay in place as admin claims
-            throw new IllegalArgumentException(name);
-        }
-
-        return result;
     }
 }
