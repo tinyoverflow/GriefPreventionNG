@@ -16,14 +16,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.tinyoverflow.griefprevention;
+package me.tinyoverflow.griefprevention.logger;
 
-public enum CustomLogEntryTypes
+public enum LogType
 {
-    SocialActivity,
-    SuspiciousActivity,
-    AdminActivity,
-    Debug,
-    Exception,
-    MutedChat
+    ADMIN,
+    DEBUG,
+    EXCEPTION,
+    SOCIAL,
+    SUSPICIOUS,
 }

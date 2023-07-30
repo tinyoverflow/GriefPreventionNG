@@ -20,8 +20,8 @@ package me.tinyoverflow.griefprevention.tasks;
 
 import me.tinyoverflow.griefprevention.Claim;
 import me.tinyoverflow.griefprevention.ClaimsMode;
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
 import me.tinyoverflow.griefprevention.GriefPrevention;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Boat;
@@ -63,8 +63,8 @@ public class EntityCleanupTask implements Runnable
             List<Entity> entities = world.getEntities();
 
             //starting and stopping point.  each execution of the task scans 10% of the server's (loaded) entities
-            int j = (int) (entities.size() * this.percentageStart);
-            int k = (int) (entities.size() * (this.percentageStart + .1));
+            int j = (int) (entities.size() * percentageStart);
+            int k = (int) (entities.size() * (percentageStart + .1));
             Claim cachedClaim = null;
             for (; j < entities.size() && j < k; j++)
             {
@@ -112,7 +112,7 @@ public class EntityCleanupTask implements Runnable
 
                 if (remove)
                 {
-                    GriefPrevention.AddLogEntry("Removing entity " + entity.getType().name() + " @ " + entity.getLocation(), CustomLogEntryTypes.Debug, true);
+                    GriefPrevention.AddLogEntry("Removing entity " + entity.getType().name() + " @ " + entity.getLocation(), LogType.DEBUG, true);
                     entity.remove();
                 }
             }
@@ -120,8 +120,8 @@ public class EntityCleanupTask implements Runnable
 
         //starting and stopping point.  each execution of the task scans 5% of the server's claims
         List<Claim> claims = GriefPrevention.instance.dataStore.claims;
-        int j = (int) (claims.size() * this.percentageStart);
-        int k = (int) (claims.size() * (this.percentageStart + .05));
+        int j = (int) (claims.size() * percentageStart);
+        int k = (int) (claims.size() * (percentageStart + .05));
         for (; j < claims.size() && j < k; j++)
         {
             Claim claim = claims.get(j);
@@ -135,7 +135,7 @@ public class EntityCleanupTask implements Runnable
         }
 
         //schedule the next run of this task, in 3 minutes (20L is approximately 1 second)
-        double nextRunPercentageStart = this.percentageStart + .05;
+        double nextRunPercentageStart = percentageStart + .05;
         if (nextRunPercentageStart > .99)
         {
             nextRunPercentageStart = 0;

@@ -19,9 +19,9 @@
 package me.tinyoverflow.griefprevention.tasks;
 
 import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.PlayerData;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
@@ -36,7 +36,7 @@ class CleanupUnusedClaimPreTask implements Runnable
 
     CleanupUnusedClaimPreTask(UUID uuid)
     {
-        this.ownerID = uuid;
+        ownerID = uuid;
     }
 
     @Override
@@ -46,18 +46,18 @@ class CleanupUnusedClaimPreTask implements Runnable
         PlayerData ownerData = GriefPrevention.instance.dataStore.getPlayerDataFromStorage(ownerID);
         OfflinePlayer ownerInfo = Bukkit.getServer().getOfflinePlayer(ownerID);
 
-        GriefPrevention.AddLogEntry("Looking for expired claims.  Checking data for " + ownerID.toString(), CustomLogEntryTypes.Debug, true);
+        GriefPrevention.AddLogEntry("Looking for expired claims.  Checking data for " + ownerID.toString(), LogType.DEBUG, true);
 
         //expiration code uses last logout timestamp to decide whether to expire claims
         //don't expire claims for online players
         if (ownerInfo.isOnline())
         {
-            GriefPrevention.AddLogEntry("Player is online. Ignoring.", CustomLogEntryTypes.Debug, true);
+            GriefPrevention.AddLogEntry("Player is online. Ignoring.", LogType.DEBUG, true);
             return;
         }
         if (ownerInfo.getLastPlayed() <= 0)
         {
-            GriefPrevention.AddLogEntry("Player is new or not in the server's cached userdata. Ignoring. getLastPlayed = " + ownerInfo.getLastPlayed(), CustomLogEntryTypes.Debug, true);
+            GriefPrevention.AddLogEntry("Player is new or not in the server's cached userdata. Ignoring. getLastPlayed = " + ownerInfo.getLastPlayed(), LogType.DEBUG, true);
             return;
         }
 
@@ -66,7 +66,7 @@ class CleanupUnusedClaimPreTask implements Runnable
         if (bonusBlocks >= GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpirationConfiguration().exceptions.bonusBlocks ||
                 bonusBlocks + ownerData.getAccruedClaimBlocks() >= GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpirationConfiguration().exceptions.claimBlocks)
         {
-            GriefPrevention.AddLogEntry("Player exempt from claim expiration based on claim block counts vs. config file settings.", CustomLogEntryTypes.Debug, true);
+            GriefPrevention.AddLogEntry("Player exempt from claim expiration based on claim block counts vs. config file settings.", LogType.DEBUG, true);
             return;
         }
 
@@ -83,7 +83,7 @@ class CleanupUnusedClaimPreTask implements Runnable
 
         if (claimToExpire == null)
         {
-            GriefPrevention.AddLogEntry("Unable to find a claim to expire for " + ownerID.toString(), CustomLogEntryTypes.Debug, false);
+            GriefPrevention.AddLogEntry("Unable to find a claim to expire for " + ownerID.toString(), LogType.DEBUG, false);
             return;
         }
 

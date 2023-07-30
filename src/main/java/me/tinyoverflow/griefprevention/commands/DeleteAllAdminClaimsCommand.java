@@ -4,10 +4,10 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.Messages;
 import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.entity.Player;
 
 public class DeleteAllAdminClaimsCommand extends BaseCommand implements PlayerCommandExecutor
@@ -20,7 +20,7 @@ public class DeleteAllAdminClaimsCommand extends BaseCommand implements PlayerCo
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.deletealladminclaims")
                 .executesPlayer(this);
     }
@@ -35,9 +35,9 @@ public class DeleteAllAdminClaimsCommand extends BaseCommand implements PlayerCo
         }
 
         //delete all admin claims
-        this.getPlugin().getDataStore().deleteClaimsForPlayer(null, true);  //null for owner id indicates an administrative claim
+        getPlugin().getDataStore().deleteClaimsForPlayer(null, true);  //null for owner id indicates an administrative claim
         GriefPrevention.sendMessage(player, TextMode.Success, Messages.AllAdminDeleted);
-        GriefPrevention.AddLogEntry(player.getName() + " deleted all administrative claims.", CustomLogEntryTypes.AdminActivity);
-        this.getPlugin().getDataStore().getPlayerData(player.getUniqueId()).setVisibleBoundaries(null);
+        GriefPrevention.AddLogEntry(player.getName() + " deleted all administrative claims.", LogType.ADMIN);
+        getPlugin().getDataStore().getPlayerData(player.getUniqueId()).setVisibleBoundaries(null);
     }
 }

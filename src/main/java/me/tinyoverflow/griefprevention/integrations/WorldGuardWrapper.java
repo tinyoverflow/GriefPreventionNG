@@ -11,8 +11,8 @@ import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
 import me.tinyoverflow.griefprevention.GriefPrevention;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,7 +23,7 @@ public class WorldGuardWrapper
 
     public WorldGuardWrapper() throws IllegalArgumentException, IllegalStateException, ClassCastException
     {
-        this.worldGuard = JavaPlugin.getPlugin(WorldGuardPlugin.class);
+        worldGuard = JavaPlugin.getPlugin(WorldGuardPlugin.class);
     }
 
     public boolean canBuild(Location lesserCorner, Location greaterCorner, Player creatingPlayer)
@@ -35,7 +35,7 @@ public class WorldGuardWrapper
                 return true;
             }
 
-            LocalPlayer localPlayer = this.worldGuard.wrapPlayer(creatingPlayer);
+            LocalPlayer localPlayer = worldGuard.wrapPlayer(creatingPlayer);
             WorldGuardPlatform platform = WorldGuard.getInstance().getPlatform();
             World world = BukkitAdapter.adapt(lesserCorner.getWorld());
 
@@ -63,7 +63,7 @@ public class WorldGuardWrapper
                     "using an outdated version or WorldEdit broke their API... again." +
                     "Consider updating/downgrading/removing WorldGuard or disable WorldGuard integration in GP's config " +
                     "(CreationRequiresWorldGuardBuildPermission). If you're going to report this please be kind because " +
-                    "WorldEdit's API hasn't been :c", CustomLogEntryTypes.Debug, false);
+                    "WorldEdit's API hasn't been :c", LogType.DEBUG, false);
         }
 
         return true;

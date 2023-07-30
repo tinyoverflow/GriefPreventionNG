@@ -18,21 +18,24 @@
 
 package me.tinyoverflow.griefprevention.handlers;
 
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
 import me.tinyoverflow.griefprevention.GriefPrevention;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.event.Listener;
 
-public class PlayerEventHandler implements Listener {
+public class PlayerEventHandler implements Listener
+{
     static int longestNameLength = 10;
 
-    public static void makeSocialLogEntry(String name, String message) {
+    public static void makeSocialLogEntry(String name, String message)
+    {
         StringBuilder entryBuilder = new StringBuilder(name);
-        for (int i = name.length(); i < longestNameLength; i++) {
+        for (int i = name.length(); i < longestNameLength; i++)
+        {
             entryBuilder.append(' ');
         }
         entryBuilder.append(": ").append(message);
 
         longestNameLength = Math.max(longestNameLength, name.length());
-        GriefPrevention.AddLogEntry(entryBuilder.toString(), CustomLogEntryTypes.SocialActivity, true);
+        GriefPrevention.AddLogEntry(entryBuilder.toString(), LogType.SOCIAL, true);
     }
 }

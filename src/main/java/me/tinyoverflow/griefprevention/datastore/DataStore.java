@@ -24,6 +24,7 @@ import com.griefprevention.visualization.VisualizationType;
 import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.events.*;
 import me.tinyoverflow.griefprevention.integrations.WorldGuardWrapper;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import me.tinyoverflow.griefprevention.tasks.SecureClaimTask;
 import me.tinyoverflow.griefprevention.tasks.SiegeCheckupTask;
 import org.bukkit.*;
@@ -124,35 +125,35 @@ public abstract class DataStore
 
     protected int getSchemaVersion()
     {
-        if (this.currentSchemaVersion >= 0)
+        if (currentSchemaVersion >= 0)
         {
-            return this.currentSchemaVersion;
+            return currentSchemaVersion;
         } else
         {
-            this.currentSchemaVersion = this.getSchemaVersionFromStorage();
-            return this.currentSchemaVersion;
+            currentSchemaVersion = getSchemaVersionFromStorage();
+            return currentSchemaVersion;
         }
     }
 
     protected void setSchemaVersion(int versionToSet)
     {
-        this.currentSchemaVersion = versionToSet;
-        this.updateSchemaVersionInStorage(versionToSet);
+        currentSchemaVersion = versionToSet;
+        updateSchemaVersionInStorage(versionToSet);
     }
 
     //initialization!
     void initialize() throws Exception
     {
-        GriefPrevention.AddLogEntry(this.claims.size() + " total claims loaded.");
+        GriefPrevention.AddLogEntry(claims.size() + " total claims loaded.");
 
         //RoboMWM: ensure the nextClaimID is greater than any other claim ID. If not, data corruption occurred (out of storage space, usually).
-        for (Claim claim : this.claims)
+        for (Claim claim : claims)
         {
             if (claim.id >= nextClaimID)
             {
                 GriefPrevention.instance.getLogger().severe("nextClaimID was lesser or equal to an already-existing claim ID!\n" +
                         "This usually happens if you ran out of storage space.");
-                GriefPrevention.AddLogEntry("Changing nextClaimID from " + nextClaimID + " to " + claim.id, CustomLogEntryTypes.Debug, false);
+                GriefPrevention.AddLogEntry("Changing nextClaimID from " + nextClaimID + " to " + claim.id, LogType.DEBUG, false);
                 nextClaimID = claim.id + 1;
             }
         }
@@ -165,21 +166,21 @@ public abstract class DataStore
         }
 
         //load up all the messages from messages.yml
-        this.loadMessages();
+        loadMessages();
         GriefPrevention.AddLogEntry("Customizable messages loaded.");
 
         //if converting up from an earlier schema version, write all claims back to storage using the latest format
-        if (this.getSchemaVersion() < latestSchemaVersion)
+        if (getSchemaVersion() < latestSchemaVersion)
         {
             GriefPrevention.AddLogEntry("Please wait.  Updating data format.");
 
-            for (Claim claim : this.claims)
+            for (Claim claim : claims)
             {
-                this.saveClaim(claim);
+                saveClaim(claim);
 
                 for (Claim subClaim : claim.children)
                 {
-                    this.saveClaim(subClaim);
+                    saveClaim(subClaim);
                 }
             }
 
@@ -194,12 +195,12 @@ public abstract class DataStore
         }
 
         //make a note of the data store schema version
-        this.setSchemaVersion(latestSchemaVersion);
+        setSchemaVersion(latestSchemaVersion);
 
         //try to hook into world guard
         try
         {
-            this.worldGuard = new WorldGuardWrapper();
+            worldGuard = new WorldGuardWrapper();
             GriefPrevention.AddLogEntry("Successfully hooked into WorldGuard.");
         }
         //if failed, world guard compat features will just be disabled.
@@ -211,7 +212,7 @@ public abstract class DataStore
     //removes cached player data from memory
     public synchronized void clearCachedPlayerData(UUID playerID)
     {
-        this.playerNameToPlayerDataMap.remove(playerID);
+        playerNameToPlayerDataMap.remove(playerID);
     }
 
     //gets the number of bonus blocks a player has from his permissions
@@ -225,7 +226,7 @@ public abstract class DataStore
 
         int bonusBlocks = 0;
 
-        for (Map.Entry<String, Integer> groupEntry : this.permissionToBonusBlocksMap.entrySet())
+        for (Map.Entry<String, Integer> groupEntry : permissionToBonusBlocksMap.entrySet())
         {
             if (player.hasPermission(groupEntry.getKey()))
             {
@@ -239,14 +240,14 @@ public abstract class DataStore
     //grants a group (players with a specific permission) bonus claim blocks as long as they're still members of the group
     synchronized public int adjustGroupBonusBlocks(String groupName, int amount)
     {
-        Integer currentValue = this.permissionToBonusBlocksMap.get(groupName);
+        Integer currentValue = permissionToBonusBlocksMap.get(groupName);
         if (currentValue == null) currentValue = 0;
 
         currentValue += amount;
-        this.permissionToBonusBlocksMap.put(groupName, currentValue);
+        permissionToBonusBlocksMap.put(groupName, currentValue);
 
         //write changes to storage to ensure they don't get lost
-        this.saveGroupBonusBlocks(groupName, currentValue);
+        saveGroupBonusBlocks(groupName, currentValue);
 
         return currentValue;
     }
@@ -267,7 +268,7 @@ public abstract class DataStore
         PlayerData ownerData = null;
         if (!claim.isAdminClaim())
         {
-            ownerData = this.getPlayerData(claim.ownerID);
+            ownerData = getPlayerData(claim.ownerID);
         }
 
         //call event
@@ -282,12 +283,12 @@ public abstract class DataStore
 
         if (event.getNewOwner() != null)
         {
-            newOwnerData = this.getPlayerData(event.getNewOwner());
+            newOwnerData = getPlayerData(event.getNewOwner());
         }
 
         //transfer
         claim.ownerID = event.getNewOwner();
-        this.saveClaim(claim);
+        saveClaim(claim);
 
         //adjust blocks and other records
         if (ownerData != null)
@@ -314,13 +315,13 @@ public abstract class DataStore
             newClaim.inDataStore = true;
             if (writeToStorage)
             {
-                this.saveClaim(newClaim);
+                saveClaim(newClaim);
             }
             return;
         }
 
         //add it and mark it as added
-        this.claims.add(newClaim);
+        claims.add(newClaim);
         addToChunkClaimMap(newClaim);
 
         newClaim.inDataStore = true;
@@ -328,14 +329,14 @@ public abstract class DataStore
         //except for administrative claims (which have no owner), update the owner's playerData with the new claim
         if (!newClaim.isAdminClaim() && writeToStorage)
         {
-            PlayerData ownerData = this.getPlayerData(newClaim.ownerID);
+            PlayerData ownerData = getPlayerData(newClaim.ownerID);
             ownerData.getClaims().add(newClaim);
         }
 
         //make sure the claim is saved to disk
         if (writeToStorage)
         {
-            this.saveClaim(newClaim);
+            saveClaim(newClaim);
         }
     }
 
@@ -347,10 +348,10 @@ public abstract class DataStore
         ArrayList<Long> chunkHashes = claim.getChunkHashes();
         for (Long chunkHash : chunkHashes)
         {
-            ArrayList<Claim> claimsInChunk = this.chunksToClaimsMap.get(chunkHash);
+            ArrayList<Claim> claimsInChunk = chunksToClaimsMap.get(chunkHash);
             if (claimsInChunk == null)
             {
-                this.chunksToClaimsMap.put(chunkHash, claimsInChunk = new ArrayList<>());
+                chunksToClaimsMap.put(chunkHash, claimsInChunk = new ArrayList<>());
             }
 
             claimsInChunk.add(claim);
@@ -362,7 +363,7 @@ public abstract class DataStore
         ArrayList<Long> chunkHashes = claim.getChunkHashes();
         for (Long chunkHash : chunkHashes)
         {
-            ArrayList<Claim> claimsInChunk = this.chunksToClaimsMap.get(chunkHash);
+            ArrayList<Claim> claimsInChunk = chunksToClaimsMap.get(chunkHash);
             if (claimsInChunk != null)
             {
                 for (Iterator<Claim> it = claimsInChunk.iterator(); it.hasNext(); )
@@ -376,7 +377,7 @@ public abstract class DataStore
                 }
                 if (claimsInChunk.isEmpty())
                 { // if nothing's left, remove this chunk's cache
-                    this.chunksToClaimsMap.remove(chunkHash);
+                    chunksToClaimsMap.remove(chunkHash);
                 }
             }
         }
@@ -438,7 +439,7 @@ public abstract class DataStore
     {
         assignClaimID(claim);
 
-        this.writeClaimToStorage(claim);
+        writeClaimToStorage(claim);
     }
 
     private void assignClaimID(Claim claim)
@@ -446,8 +447,8 @@ public abstract class DataStore
         //ensure a unique identifier for the claim which will be used to name the file on disk
         if (claim.id == null || claim.id == -1)
         {
-            claim.id = this.nextClaimID;
-            this.incrementNextClaimID();
+            claim.id = nextClaimID;
+            incrementNextClaimID();
         }
     }
 
@@ -461,7 +462,7 @@ public abstract class DataStore
     synchronized public PlayerData getPlayerData(UUID playerID)
     {
         //first, look in memory
-        PlayerData playerData = this.playerNameToPlayerDataMap.get(playerID);
+        PlayerData playerData = playerNameToPlayerDataMap.get(playerID);
 
         //if not there, build a fresh instance with some blanks for what may be in secondary storage
         if (playerData == null)
@@ -470,7 +471,7 @@ public abstract class DataStore
             playerData.playerID = playerID;
 
             //shove that new player data into the hash map cache
-            this.playerNameToPlayerDataMap.put(playerID, playerData);
+            playerNameToPlayerDataMap.put(playerID, playerData);
         }
 
         return playerData;
@@ -481,13 +482,13 @@ public abstract class DataStore
     //deletes a claim or subdivision
     synchronized public void deleteClaim(Claim claim)
     {
-        this.deleteClaim(claim, true, false);
+        deleteClaim(claim, true, false);
     }
 
     //deletes a claim or subdivision
     synchronized public void deleteClaim(Claim claim, boolean releasePets)
     {
-        this.deleteClaim(claim, true, releasePets);
+        deleteClaim(claim, true, releasePets);
     }
 
     public synchronized void deleteClaim(Claim claim, boolean fireEvent, boolean releasePets)
@@ -495,7 +496,7 @@ public abstract class DataStore
         //delete any children
         for (int j = 1; (j - 1) < claim.children.size(); j++)
         {
-            this.deleteClaim(claim.children.get(j - 1), true);
+            deleteClaim(claim.children.get(j - 1), true);
         }
 
         //subdivisions must also be removed from the parent claim child list
@@ -509,11 +510,11 @@ public abstract class DataStore
         claim.inDataStore = false;
 
         //remove from memory
-        for (int i = 0; i < this.claims.size(); i++)
+        for (int i = 0; i < claims.size(); i++)
         {
             if (claims.get(i).id.equals(claim.id))
             {
-                this.claims.remove(i);
+                claims.remove(i);
                 break;
             }
         }
@@ -521,12 +522,12 @@ public abstract class DataStore
         removeFromChunkClaimMap(claim);
 
         //remove from secondary storage
-        this.deleteClaimFromSecondaryStorage(claim);
+        deleteClaimFromSecondaryStorage(claim);
 
         //update player data
         if (claim.ownerID != null)
         {
-            PlayerData ownerData = this.getPlayerData(claim.ownerID);
+            PlayerData ownerData = getPlayerData(claim.ownerID);
             for (int i = 0; i < ownerData.getClaims().size(); i++)
             {
                 if (ownerData.getClaims().get(i).id.equals(claim.id))
@@ -535,7 +536,7 @@ public abstract class DataStore
                     break;
                 }
             }
-            this.savePlayerData(claim.ownerID, ownerData);
+            savePlayerData(claim.ownerID, ownerData);
         }
 
         if (fireEvent)
@@ -607,7 +608,7 @@ public abstract class DataStore
 
         //find a top level claim
         Long chunkID = getChunkHash(location);
-        ArrayList<Claim> claimsInChunk = this.chunksToClaimsMap.get(chunkID);
+        ArrayList<Claim> claimsInChunk = chunksToClaimsMap.get(chunkID);
         if (claimsInChunk == null) return null;
 
         for (Claim claim : claimsInChunk)
@@ -637,7 +638,7 @@ public abstract class DataStore
     //finds a claim by ID
     public synchronized Claim getClaim(long id)
     {
-        for (Claim claim : this.claims)
+        for (Claim claim : claims)
         {
             if (claim.inDataStore)
             {
@@ -659,12 +660,12 @@ public abstract class DataStore
     //this will ensure primary memory (RAM) and secondary memory (disk, database) stay in sync
     public Collection<Claim> getClaims()
     {
-        return Collections.unmodifiableCollection(this.claims);
+        return Collections.unmodifiableCollection(claims);
     }
 
     public Collection<Claim> getClaims(int chunkx, int chunkz)
     {
-        ArrayList<Claim> chunkClaims = this.chunksToClaimsMap.get(getChunkHash(chunkx, chunkz));
+        ArrayList<Claim> chunkClaims = chunksToClaimsMap.get(getChunkHash(chunkx, chunkz));
         if (chunkClaims != null)
         {
             return Collections.unmodifiableCollection(chunkClaims);
@@ -773,7 +774,7 @@ public abstract class DataStore
             claimsToCheck = newClaim.parent.children;
         } else
         {
-            claimsToCheck = this.claims;
+            claimsToCheck = claims;
         }
 
         for (Claim otherClaim : claimsToCheck)
@@ -789,9 +790,9 @@ public abstract class DataStore
         }
 
         //if worldguard is installed, also prevent claims from overlapping any worldguard regions
-        if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().requireWorldGuard && this.worldGuard != null && creatingPlayer != null)
+        if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().requireWorldGuard && worldGuard != null && creatingPlayer != null)
         {
-            if (!this.worldGuard.canBuild(newClaim.lesserBoundaryCorner, newClaim.greaterBoundaryCorner, creatingPlayer))
+            if (!worldGuard.canBuild(newClaim.lesserBoundaryCorner, newClaim.greaterBoundaryCorner, creatingPlayer))
             {
                 result.succeeded = false;
                 result.claim = null;
@@ -816,7 +817,7 @@ public abstract class DataStore
 
         }
         //otherwise add this new claim to the data store to make it effective
-        this.addClaim(newClaim, true);
+        addClaim(newClaim, true);
 
         //then return success along with reference to new claim
         result.succeeded = true;
@@ -831,7 +832,7 @@ public abstract class DataStore
         playerData.getAccruedClaimBlocks();
         playerData.getClaims();
 
-        this.asyncSavePlayerData(playerID, playerData);
+        asyncSavePlayerData(playerID, playerData);
     }
 
     //saves changes to player data to secondary storage.  MUST be called after you're done making changes, otherwise a reload will lose them
@@ -843,7 +844,7 @@ public abstract class DataStore
     public void asyncSavePlayerData(UUID playerID, PlayerData playerData)
     {
         //save everything except the ignore list
-        this.overrideSavePlayerData(playerID, playerData);
+        overrideSavePlayerData(playerID, playerData);
 
         //save the ignore list
         if (playerData.ignoreListChanged)
@@ -943,7 +944,7 @@ public abstract class DataStore
         {
             localClaim.lesserBoundaryCorner.setY(depth);
             localClaim.greaterBoundaryCorner.setY(Math.max(localClaim.greaterBoundaryCorner.getBlockY(), depth));
-            this.saveClaim(localClaim);
+            saveClaim(localClaim);
         });
     }
 
@@ -953,8 +954,8 @@ public abstract class DataStore
     {
         //fill-in the necessary SiegeData instance
         SiegeData siegeData = new SiegeData(attacker, defender, defenderClaim);
-        PlayerData attackerData = this.getPlayerData(attacker.getUniqueId());
-        PlayerData defenderData = this.getPlayerData(defender.getUniqueId());
+        PlayerData attackerData = getPlayerData(attacker.getUniqueId());
+        PlayerData defenderData = getPlayerData(defender.getUniqueId());
         attackerData.siegeData = siegeData;
         defenderData.siegeData = siegeData;
         defenderClaim.siegeData = siegeData;
@@ -999,24 +1000,24 @@ public abstract class DataStore
             grantAccess = true;
         }
 
-        PlayerData attackerData = this.getPlayerData(siegeData.attacker.getUniqueId());
+        PlayerData attackerData = getPlayerData(siegeData.attacker.getUniqueId());
         attackerData.siegeData = null;
 
-        PlayerData defenderData = this.getPlayerData(siegeData.defender.getUniqueId());
+        PlayerData defenderData = getPlayerData(siegeData.defender.getUniqueId());
         defenderData.siegeData = null;
         defenderData.lastSiegeEndTimeStamp = System.currentTimeMillis();
 
         //start a cooldown for this attacker/defender pair
         long now = Calendar.getInstance().getTimeInMillis();
         long cooldownEnd = now + 1000L * 60 * GriefPrevention.instance.getPluginConfig().getSiegeConfiguration().getCooldownEnd();  //one hour from now
-        this.siegeCooldownRemaining.put(siegeData.attacker.getName() + "_" + siegeData.defender.getName(), cooldownEnd);
+        siegeCooldownRemaining.put(siegeData.attacker.getName() + "_" + siegeData.defender.getName(), cooldownEnd);
 
         //start cooldowns for every attacker/involved claim pair
         for (int i = 0; i < siegeData.claims.size(); i++)
         {
             Claim claim = siegeData.claims.get(i);
             claim.siegeData = null;
-            this.siegeCooldownRemaining.put(siegeData.attacker.getName() + "_" + claim.getOwnerName(), cooldownEnd);
+            siegeCooldownRemaining.put(siegeData.attacker.getName() + "_" + claim.getOwnerName(), cooldownEnd);
 
             //if doors should be opened for looting, do that now
             if (grantAccess)
@@ -1087,9 +1088,9 @@ public abstract class DataStore
         Long cooldownEnd = null;
 
         //look for an attacker/defender cooldown
-        if (this.siegeCooldownRemaining.get(attacker.getName() + "_" + defender.getName()) != null)
+        if (siegeCooldownRemaining.get(attacker.getName() + "_" + defender.getName()) != null)
         {
-            cooldownEnd = this.siegeCooldownRemaining.get(attacker.getName() + "_" + defender.getName());
+            cooldownEnd = siegeCooldownRemaining.get(attacker.getName() + "_" + defender.getName());
 
             if (Calendar.getInstance().getTimeInMillis() < cooldownEnd)
             {
@@ -1097,11 +1098,11 @@ public abstract class DataStore
             }
 
             //if found but expired, remove it
-            this.siegeCooldownRemaining.remove(attacker.getName() + "_" + defender.getName());
+            siegeCooldownRemaining.remove(attacker.getName() + "_" + defender.getName());
         }
 
         //look for genderal defender cooldown
-        PlayerData defenderData = this.getPlayerData(defender.getUniqueId());
+        PlayerData defenderData = getPlayerData(defender.getUniqueId());
         if (defenderData.lastSiegeEndTimeStamp > 0)
         {
             long now = System.currentTimeMillis();
@@ -1112,9 +1113,9 @@ public abstract class DataStore
         }
 
         //look for an attacker/claim cooldown
-        if (cooldownEnd == null && this.siegeCooldownRemaining.get(attacker.getName() + "_" + defenderClaim.getOwnerName()) != null)
+        if (cooldownEnd == null && siegeCooldownRemaining.get(attacker.getName() + "_" + defenderClaim.getOwnerName()) != null)
         {
-            cooldownEnd = this.siegeCooldownRemaining.get(attacker.getName() + "_" + defenderClaim.getOwnerName());
+            cooldownEnd = siegeCooldownRemaining.get(attacker.getName() + "_" + defenderClaim.getOwnerName());
 
             if (Calendar.getInstance().getTimeInMillis() < cooldownEnd)
             {
@@ -1122,7 +1123,7 @@ public abstract class DataStore
             }
 
             //if found but expired, remove it
-            this.siegeCooldownRemaining.remove(attacker.getName() + "_" + defenderClaim.getOwnerName());
+            siegeCooldownRemaining.remove(attacker.getName() + "_" + defenderClaim.getOwnerName());
         }
 
         return false;
@@ -1131,7 +1132,7 @@ public abstract class DataStore
     //extend a siege, if it's possible to do so
     public synchronized void tryExtendSiege(Player player, Claim claim)
     {
-        PlayerData playerData = this.getPlayerData(player.getUniqueId());
+        PlayerData playerData = getPlayerData(player.getUniqueId());
 
         //player must be sieged
         if (playerData.siegeData == null) return;
@@ -1160,7 +1161,7 @@ public abstract class DataStore
     {
         //make a list of the player's claims
         ArrayList<Claim> claimsToDelete = new ArrayList<>();
-        for (Claim claim : this.claims)
+        for (Claim claim : claims)
         {
             if ((Objects.equals(playerID, claim.ownerID)))
                 claimsToDelete.add(claim);
@@ -1171,7 +1172,7 @@ public abstract class DataStore
         {
             claim.removeSurfaceFluids(null);
 
-            this.deleteClaim(claim, releasePets);
+            deleteClaim(claim, releasePets);
 
             //if in a creative mode world, delete the claim
             if (GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()))
@@ -1186,7 +1187,7 @@ public abstract class DataStore
     synchronized public CreateClaimResult resizeClaim(Claim claim, int newx1, int newx2, int newy1, int newy2, int newz1, int newz2, Player resizingPlayer)
     {
         //try to create this new claim, ignoring the original when checking for overlap
-        CreateClaimResult result = this.createClaim(claim.getLesserBoundaryCorner().getWorld(), newx1, newx2, newy1, newy2, newz1, newz2, claim.ownerID, claim.parent, claim.id, resizingPlayer, true);
+        CreateClaimResult result = createClaim(claim.getLesserBoundaryCorner().getWorld(), newx1, newx2, newy1, newy2, newz1, newz2, claim.ownerID, claim.parent, claim.id, resizingPlayer, true);
 
         //if succeeded
         if (result.succeeded)
@@ -1240,7 +1241,7 @@ public abstract class DataStore
                 if (blocksRemainingAfter < 0)
                 {
                     GriefPrevention.sendMessage(player, TextMode.Err, Messages.ResizeNeedMoreBlocks, String.valueOf(Math.abs(blocksRemainingAfter)));
-                    this.tryAdvertiseAdminAlternatives(player);
+                    tryAdvertiseAdminAlternatives(player);
                     return;
                 }
             }
@@ -1301,12 +1302,12 @@ public abstract class DataStore
                     claimBlocksRemaining = playerData.getRemainingClaimBlocks();
                 } else
                 {
-                    PlayerData ownerData = this.getPlayerData(ownerID);
+                    PlayerData ownerData = getPlayerData(ownerID);
                     claimBlocksRemaining = ownerData.getRemainingClaimBlocks();
                     OfflinePlayer owner = GriefPrevention.instance.getServer().getOfflinePlayer(ownerID);
                     if (!owner.isOnline())
                     {
-                        this.clearCachedPlayerData(ownerID);
+                        clearCachedPlayerData(ownerID);
                     }
                 }
             }
@@ -1373,236 +1374,236 @@ public abstract class DataStore
     public void loadMessages()
     {
         Messages[] messageIDs = Messages.values();
-        this.messages = new String[Messages.values().length];
+        messages = new String[Messages.values().length];
 
         HashMap<String, CustomizableMessage> defaults = new HashMap<>();
 
         //initialize defaults
-        this.addDefault(defaults, Messages.RespectingClaims, "Now respecting claims.", null);
-        this.addDefault(defaults, Messages.IgnoringClaims, "Now ignoring claims.", null);
-        this.addDefault(defaults, Messages.NoCreativeUnClaim, "You can't unclaim this land.  You can only make this claim larger or create additional claims.", null);
-        this.addDefault(defaults, Messages.SuccessfulAbandon, "Claims abandoned.  You now have {0} available claim blocks.", "0: remaining blocks");
-        this.addDefault(defaults, Messages.RestoreNatureActivate, "Ready to restore some nature!  Right click to restore nature, and use /BasicClaims to stop.", null);
-        this.addDefault(defaults, Messages.RestoreNatureAggressiveActivate, "Aggressive mode activated.  Do NOT use this underneath anything you want to keep!  Right click to aggressively restore nature, and use /BasicClaims to stop.", null);
-        this.addDefault(defaults, Messages.FillModeActive, "Fill mode activated with radius {0}.  Right click an area to fill.", "0: fill radius");
-        this.addDefault(defaults, Messages.TransferClaimPermission, "That command requires the administrative claims permission.", null);
-        this.addDefault(defaults, Messages.TransferClaimMissing, "There's no claim here.  Stand in the administrative claim you want to transfer.", null);
-        this.addDefault(defaults, Messages.TransferClaimAdminOnly, "Only administrative claims may be transferred to a player.", null);
-        this.addDefault(defaults, Messages.PlayerNotFound2, "No player by that name has logged in recently.", null);
-        this.addDefault(defaults, Messages.TransferTopLevel, "Only top level claims (not subdivisions) may be transferred.  Stand outside of the subdivision and try again.", null);
-        this.addDefault(defaults, Messages.TransferSuccess, "Claim transferred.", null);
-        this.addDefault(defaults, Messages.TrustListNoClaim, "Stand inside the claim you're curious about.", null);
-        this.addDefault(defaults, Messages.ClearPermsOwnerOnly, "Only the claim owner can clear all permissions.", null);
-        this.addDefault(defaults, Messages.UntrustIndividualAllClaims, "Revoked {0}'s access to ALL your claims.  To set permissions for a single claim, stand inside it.", "0: untrusted player");
-        this.addDefault(defaults, Messages.UntrustEveryoneAllClaims, "Cleared permissions in ALL your claims.  To set permissions for a single claim, stand inside it.", null);
-        this.addDefault(defaults, Messages.NoPermissionTrust, "You don't have {0}'s permission to manage permissions here.", "0: claim owner's name");
-        this.addDefault(defaults, Messages.ClearPermissionsOneClaim, "Cleared permissions in this claim.  To set permission for ALL your claims, stand outside them.", null);
-        this.addDefault(defaults, Messages.UntrustIndividualSingleClaim, "Revoked {0}'s access to this claim.  To set permissions for a ALL your claims, stand outside them.", "0: untrusted player");
-        this.addDefault(defaults, Messages.OnlySellBlocks, "Claim blocks may only be sold, not purchased.", null);
-        this.addDefault(defaults, Messages.BlockPurchaseCost, "Each claim block costs {0}.  Your balance is {1}.", "0: cost of one block; 1: player's account balance");
-        this.addDefault(defaults, Messages.ClaimBlockLimit, "You've reached your claim block limit.  You can't purchase more.", null);
-        this.addDefault(defaults, Messages.InsufficientFunds, "You don't have enough money.  You need {0}, but you only have {1}.", "0: total cost; 1: player's account balance");
-        this.addDefault(defaults, Messages.MaxBonusReached, "Can't purchase {0} more claim blocks. The server has a limit of {1} bonus claim blocks.", "0: block count; 1: bonus claims limit");
-        this.addDefault(defaults, Messages.PurchaseConfirmation, "Withdrew {0} from your account.  You now have {1} available claim blocks.", "0: total cost; 1: remaining blocks");
-        this.addDefault(defaults, Messages.OnlyPurchaseBlocks, "Claim blocks may only be purchased, not sold.", null);
-        this.addDefault(defaults, Messages.BlockSaleValue, "Each claim block is worth {0}.  You have {1} available for sale.", "0: block value; 1: available blocks");
-        this.addDefault(defaults, Messages.NotEnoughBlocksForSale, "You don't have that many claim blocks available for sale.", null);
-        this.addDefault(defaults, Messages.BlockSaleConfirmation, "Deposited {0} in your account.  You now have {1} available claim blocks.", "0: amount deposited; 1: remaining blocks");
-        this.addDefault(defaults, Messages.AdminClaimsMode, "Administrative claims mode active.  Any claims created will be free and editable by other administrators.", null);
-        this.addDefault(defaults, Messages.BasicClaimsMode, "Returned to basic claim creation mode.", null);
-        this.addDefault(defaults, Messages.SubdivisionMode, "Subdivision mode.  Use your shovel to create subdivisions in your existing claims.  Use /basicclaims to exit.", null);
-        this.addDefault(defaults, Messages.SubdivisionVideo2, "Click for Subdivision Help: {0}", "0:video URL");
-        this.addDefault(defaults, Messages.DeleteClaimMissing, "There's no claim here.", null);
-        this.addDefault(defaults, Messages.DeletionSubdivisionWarning, "This claim includes subdivisions.  If you're sure you want to delete it, use /DeleteClaim again.", null);
-        this.addDefault(defaults, Messages.DeleteSuccess, "Claim deleted.", null);
-        this.addDefault(defaults, Messages.CantDeleteAdminClaim, "You don't have permission to delete administrative claims.", null);
-        this.addDefault(defaults, Messages.DeleteAllSuccess, "Deleted all of {0}'s claims.", "0: owner's name");
-        this.addDefault(defaults, Messages.NoDeletePermission, "You don't have permission to delete claims.", null);
-        this.addDefault(defaults, Messages.AllAdminDeleted, "Deleted all administrative claims.", null);
-        this.addDefault(defaults, Messages.AdjustBlocksSuccess, "Adjusted {0}'s bonus claim blocks by {1}.  New total bonus blocks: {2}.", "0: player; 1: adjustment; 2: new total");
-        this.addDefault(defaults, Messages.AdjustLimitSuccess, "Adjusted {0}'s max accrued claim block limit to {1}.", "0: player; 1: new total");
-        this.addDefault(defaults, Messages.AdjustBlocksAllSuccess, "Adjusted all online players' bonus claim blocks by {0}.", "0: adjustment amount");
-        this.addDefault(defaults, Messages.NotTrappedHere, "You can build here.  Save yourself.", null);
-        this.addDefault(defaults, Messages.RescuePending, "If you stay put for 10 seconds, you'll be teleported out.  Please wait.", null);
-        this.addDefault(defaults, Messages.NonSiegeWorld, "Siege is disabled here.", null);
-        this.addDefault(defaults, Messages.AlreadySieging, "You're already involved in a siege.", null);
-        this.addDefault(defaults, Messages.AlreadyUnderSiegePlayer, "{0} is already under siege.  Join the party!", "0: defending player");
-        this.addDefault(defaults, Messages.NotSiegableThere, "{0} isn't protected there.", "0: defending player");
-        this.addDefault(defaults, Messages.SiegeTooFarAway, "You're too far away to siege.", null);
-        this.addDefault(defaults, Messages.NoSiegeYourself, "You cannot siege yourself, don't be silly", null);
-        this.addDefault(defaults, Messages.NoSiegeDefenseless, "That player is defenseless.  Go pick on somebody else.", null);
-        this.addDefault(defaults, Messages.AlreadyUnderSiegeArea, "That area is already under siege.  Join the party!", null);
-        this.addDefault(defaults, Messages.NoSiegeAdminClaim, "Siege is disabled in this area.", null);
-        this.addDefault(defaults, Messages.SiegeOnCooldown, "You're still on siege cooldown for this defender or claim.  Find another victim.", null);
-        this.addDefault(defaults, Messages.SiegeAlert, "You're under siege!  If you log out now, you will die.  You must defeat {0}, wait for him to give up, or escape.", "0: attacker name");
-        this.addDefault(defaults, Messages.SiegeConfirmed, "The siege has begun!  If you log out now, you will die.  You must defeat {0}, chase him away, or admit defeat and walk away.", "0: defender name");
-        this.addDefault(defaults, Messages.AbandonClaimMissing, "Stand in the claim you want to delete, or consider /AbandonAllClaims.", null);
-        this.addDefault(defaults, Messages.NotYourClaim, "This isn't your claim.", null);
-        this.addDefault(defaults, Messages.DeleteTopLevelClaim, "To delete a subdivision, stand inside it.  Otherwise, use /AbandonTopLevelClaim to delete this claim and all subdivisions.", null);
-        this.addDefault(defaults, Messages.AbandonSuccess, "Claim abandoned.  You now have {0} available claim blocks.", "0: remaining claim blocks");
-        this.addDefault(defaults, Messages.ConfirmAbandonAllClaims, "Are you sure you want to abandon ALL of your claims?  Please confirm with /AbandonAllClaims confirm", null);
-        this.addDefault(defaults, Messages.CantGrantThatPermission, "You can't grant a permission you don't have yourself.", null);
-        this.addDefault(defaults, Messages.GrantPermissionNoClaim, "Stand inside the claim where you want to grant permission.", null);
-        this.addDefault(defaults, Messages.GrantPermissionConfirmation, "Granted {0} permission to {1} {2}.", "0: target player; 1: permission description; 2: scope (changed claims)");
-        this.addDefault(defaults, Messages.ManageUniversalPermissionsInstruction, "To manage permissions for ALL your claims, stand outside them.", null);
-        this.addDefault(defaults, Messages.ManageOneClaimPermissionsInstruction, "To manage permissions for a specific claim, stand inside it.", null);
-        this.addDefault(defaults, Messages.CollectivePublic, "the public", "as in 'granted the public permission to...'");
-        this.addDefault(defaults, Messages.BuildPermission, "build", null);
-        this.addDefault(defaults, Messages.ContainersPermission, "access containers and animals", null);
-        this.addDefault(defaults, Messages.AccessPermission, "use buttons and levers", null);
-        this.addDefault(defaults, Messages.PermissionsPermission, "manage permissions", null);
-        this.addDefault(defaults, Messages.LocationCurrentClaim, "in this claim", null);
-        this.addDefault(defaults, Messages.LocationAllClaims, "in all your claims", null);
-        this.addDefault(defaults, Messages.PvPImmunityStart, "You're protected from attack by other players as long as your inventory is empty.", null);
-        this.addDefault(defaults, Messages.SiegeNoDrop, "You can't give away items while involved in a siege.", null);
-        this.addDefault(defaults, Messages.DonateItemsInstruction, "To give away the item(s) in your hand, left-click the chest again.", null);
-        this.addDefault(defaults, Messages.ChestFull, "This chest is full.", null);
-        this.addDefault(defaults, Messages.DonationSuccess, "Item(s) transferred to chest!", null);
-        this.addDefault(defaults, Messages.PlayerTooCloseForFire2, "You can't start a fire this close to another player.", null);
-        this.addDefault(defaults, Messages.TooDeepToClaim, "This chest can't be protected because it's too deep underground.  Consider moving it.", null);
-        this.addDefault(defaults, Messages.ChestClaimConfirmation, "This chest is protected.", null);
-        this.addDefault(defaults, Messages.AutomaticClaimNotification, "This chest and nearby blocks are protected from breakage and theft.", null);
-        this.addDefault(defaults, Messages.AutomaticClaimOtherClaimTooClose, "Cannot create a claim for your chest, there is another claim too close!", null);
-        this.addDefault(defaults, Messages.UnprotectedChestWarning, "This chest is NOT protected.  Consider using a golden shovel to expand an existing claim or to create a new one.", null);
-        this.addDefault(defaults, Messages.ThatPlayerPvPImmune, "You can't injure defenseless players.", null);
-        this.addDefault(defaults, Messages.CantFightWhileImmune, "You can't fight someone while you're protected from PvP.", null);
-        this.addDefault(defaults, Messages.NoDamageClaimedEntity, "That belongs to {0}.", "0: owner name");
-        this.addDefault(defaults, Messages.ShovelBasicClaimMode, "Shovel returned to basic claims mode.", null);
-        this.addDefault(defaults, Messages.RemainingBlocks, "You may claim up to {0} more blocks.", "0: remaining blocks");
-        this.addDefault(defaults, Messages.CreativeBasicsVideo2, "Click for Land Claim Help: {0}", "{0}: video URL");
-        this.addDefault(defaults, Messages.SurvivalBasicsVideo2, "Click for Land Claim Help: {0}", "{0}: video URL");
-        this.addDefault(defaults, Messages.TrappedChatKeyword, "trapped;stuck", "When mentioned in chat, players get information about the /trapped command (multiple words can be separated with semi-colons)");
-        this.addDefault(defaults, Messages.TrappedInstructions, "Are you trapped in someone's land claim?  Try the /trapped command.", null);
-        this.addDefault(defaults, Messages.PvPNoDrop, "You can't drop items while in PvP combat.", null);
-        this.addDefault(defaults, Messages.SiegeNoTeleport, "You can't teleport out of a besieged area.", null);
-        this.addDefault(defaults, Messages.BesiegedNoTeleport, "You can't teleport into a besieged area.", null);
-        this.addDefault(defaults, Messages.SiegeNoContainers, "You can't access containers while involved in a siege.", null);
-        this.addDefault(defaults, Messages.PvPNoContainers, "You can't access containers during PvP combat.", null);
-        this.addDefault(defaults, Messages.PvPImmunityEnd, "Now you can fight with other players.", null);
-        this.addDefault(defaults, Messages.NoBedPermission, "{0} hasn't given you permission to sleep here.", "0: claim owner");
-        this.addDefault(defaults, Messages.NoWildernessBuckets, "You may only dump buckets inside your claim(s) or underground.", null);
-        this.addDefault(defaults, Messages.NoLavaNearOtherPlayer, "You can't place lava this close to {0}.", "0: nearby player");
-        this.addDefault(defaults, Messages.TooFarAway, "That's too far away.", null);
-        this.addDefault(defaults, Messages.BlockNotClaimed, "No one has claimed this block.", null);
-        this.addDefault(defaults, Messages.BlockClaimed, "That block has been claimed by {0}.", "0: claim owner");
-        this.addDefault(defaults, Messages.SiegeNoShovel, "You can't use your shovel tool while involved in a siege.", null);
-        this.addDefault(defaults, Messages.RestoreNaturePlayerInChunk, "Unable to restore.  {0} is in that chunk.", "0: nearby player");
-        this.addDefault(defaults, Messages.NoCreateClaimPermission, "You don't have permission to claim land.", null);
-        this.addDefault(defaults, Messages.ResizeClaimTooNarrow, "This new size would be too small.  Claims must be at least {0} blocks wide.", "0: minimum claim width");
-        this.addDefault(defaults, Messages.ResizeNeedMoreBlocks, "You don't have enough blocks for this size.  You need {0} more.", "0: how many needed");
-        this.addDefault(defaults, Messages.ClaimResizeSuccess, "Claim resized.  {0} available claim blocks remaining.", "0: remaining blocks");
-        this.addDefault(defaults, Messages.ResizeFailOverlap, "Can't resize here because it would overlap another nearby claim.", null);
-        this.addDefault(defaults, Messages.ResizeStart, "Resizing claim.  Use your shovel again at the new location for this corner.", null);
-        this.addDefault(defaults, Messages.ResizeFailOverlapSubdivision, "You can't create a subdivision here because it would overlap another subdivision.  Consider /abandonclaim to delete it, or use your shovel at a corner to resize it.", null);
-        this.addDefault(defaults, Messages.SubdivisionStart, "Subdivision corner set!  Use your shovel at the location for the opposite corner of this new subdivision.", null);
-        this.addDefault(defaults, Messages.CreateSubdivisionOverlap, "Your selected area overlaps another subdivision.", null);
-        this.addDefault(defaults, Messages.SubdivisionSuccess, "Subdivision created!  Use /trust to share it with friends.", null);
-        this.addDefault(defaults, Messages.CreateClaimFailOverlap, "You can't create a claim here because it would overlap your other claim.  Use /abandonclaim to delete it, or use your shovel at a corner to resize it.", null);
-        this.addDefault(defaults, Messages.CreateClaimFailOverlapOtherPlayer, "You can't create a claim here because it would overlap {0}'s claim.", "0: other claim owner");
-        this.addDefault(defaults, Messages.ClaimsDisabledWorld, "Land claims are disabled in this world.", null);
-        this.addDefault(defaults, Messages.ClaimStart, "Claim corner set!  Use the shovel again at the opposite corner to claim a rectangle of land.  To cancel, put your shovel away.", null);
-        this.addDefault(defaults, Messages.NewClaimTooNarrow, "This claim would be too small.  Any claim must be at least {0} blocks wide.", "0: minimum claim width");
-        this.addDefault(defaults, Messages.ResizeClaimInsufficientArea, "This claim would be too small.  Any claim must use at least {0} total claim blocks.", "0: minimum claim area");
-        this.addDefault(defaults, Messages.CreateClaimInsufficientBlocks, "You don't have enough blocks to claim that entire area.  You need {0} more blocks.", "0: additional blocks needed");
-        this.addDefault(defaults, Messages.AbandonClaimAdvertisement, "To delete another claim and free up some blocks, use /AbandonClaim.", null);
-        this.addDefault(defaults, Messages.CreateClaimFailOverlapShort, "Your selected area overlaps an existing claim.", null);
-        this.addDefault(defaults, Messages.CreateClaimSuccess, "Claim created!  Use /trust to share it with friends.", null);
-        this.addDefault(defaults, Messages.SiegeWinDoorsOpen, "Congratulations!  Buttons and levers are temporarily unlocked.", null);
-        this.addDefault(defaults, Messages.RescueAbortedMoved, "You moved!  Rescue cancelled.", null);
-        this.addDefault(defaults, Messages.SiegeDoorsLockedEjection, "Looting time is up!  Ejected from the claim.", null);
-        this.addDefault(defaults, Messages.NoModifyDuringSiege, "Claims can't be modified while under siege.", null);
-        this.addDefault(defaults, Messages.OnlyOwnersModifyClaims, "Only {0} can modify this claim.", "0: owner name");
-        this.addDefault(defaults, Messages.NoBuildUnderSiege, "This claim is under siege by {0}.  No one can build here.", "0: attacker name");
-        this.addDefault(defaults, Messages.NoBuildPvP, "You can't build in claims during PvP combat.", null);
-        this.addDefault(defaults, Messages.NoBuildPermission, "You don't have {0}'s permission to build here.", "0: owner name");
-        this.addDefault(defaults, Messages.NonSiegeMaterial, "That material is too tough to break.", null);
-        this.addDefault(defaults, Messages.NoOwnerBuildUnderSiege, "You can't make changes while under siege.", null);
-        this.addDefault(defaults, Messages.NoAccessPermission, "You don't have {0}'s permission to use that.", "0: owner name.  access permission controls buttons, levers, and beds");
-        this.addDefault(defaults, Messages.NoContainersSiege, "This claim is under siege by {0}.  No one can access containers here right now.", "0: attacker name");
-        this.addDefault(defaults, Messages.NoContainersPermission, "You don't have {0}'s permission to use that.", "0: owner's name.  containers also include crafting blocks");
-        this.addDefault(defaults, Messages.OwnerNameForAdminClaims, "an administrator", "as in 'You don't have an administrator's permission to build here.'");
-        this.addDefault(defaults, Messages.ClaimTooSmallForEntities, "This claim isn't big enough for that.  Try enlarging it.", null);
-        this.addDefault(defaults, Messages.TooManyEntitiesInClaim, "This claim has too many entities already.  Try enlarging the claim or removing some animals, monsters, paintings, or minecarts.", null);
-        this.addDefault(defaults, Messages.YouHaveNoClaims, "You don't have any land claims.", null);
-        this.addDefault(defaults, Messages.ConfirmFluidRemoval, "Abandoning this claim will remove lava inside the claim.  If you're sure, use /AbandonClaim again.", null);
-        this.addDefault(defaults, Messages.AdjustGroupBlocksSuccess, "Adjusted bonus claim blocks for players with the {0} permission by {1}.  New total: {2}.", "0: permission; 1: adjustment amount; 2: new total bonus");
-        this.addDefault(defaults, Messages.InvalidPermissionID, "Please specify a player name, or a permission in [brackets].", null);
-        this.addDefault(defaults, Messages.HowToClaimRegex, "(^|.*\\W)how\\W.*\\W(claim|protect|lock)(\\W.*|$)", "This is a Java Regular Expression.  Look it up before editing!  It's used to tell players about the demo video when they ask how to claim land.");
-        this.addDefault(defaults, Messages.NoBuildOutsideClaims, "You can't build here unless you claim some land first.", null);
-        this.addDefault(defaults, Messages.PlayerOfflineTime, "  Last login: {0} days ago.", "0: number of full days since last login");
-        this.addDefault(defaults, Messages.BuildingOutsideClaims, "Other players can build here, too.  Consider creating a land claim to protect your work!", null);
-        this.addDefault(defaults, Messages.TrappedWontWorkHere, "Sorry, unable to find a safe location to teleport you to.  Contact an admin.", null);
-        this.addDefault(defaults, Messages.CommandBannedInPvP, "You can't use that command while in PvP combat.", null);
-        this.addDefault(defaults, Messages.UnclaimCleanupWarning, "The land you've unclaimed may be changed by other players or cleaned up by administrators.  If you've built something there you want to keep, you should reclaim it.", null);
-        this.addDefault(defaults, Messages.BuySellNotConfigured, "Sorry, buying and selling claim blocks is disabled.", null);
-        this.addDefault(defaults, Messages.NoTeleportPvPCombat, "You can't teleport while fighting another player.", null);
-        this.addDefault(defaults, Messages.NoTNTDamageAboveSeaLevel, "Warning: TNT will not destroy blocks above sea level.", null);
-        this.addDefault(defaults, Messages.NoTNTDamageClaims, "Warning: TNT will not destroy claimed blocks.", null);
-        this.addDefault(defaults, Messages.IgnoreClaimsAdvertisement, "To override, use /IgnoreClaims.", null);
-        this.addDefault(defaults, Messages.NoPermissionForCommand, "You don't have permission to do that.", null);
-        this.addDefault(defaults, Messages.ClaimsListNoPermission, "You don't have permission to get information about another player's land claims.", null);
-        this.addDefault(defaults, Messages.ExplosivesDisabled, "This claim is now protected from explosions.  Use /ClaimExplosions again to disable.", null);
-        this.addDefault(defaults, Messages.ExplosivesEnabled, "This claim is now vulnerable to explosions.  Use /ClaimExplosions again to re-enable protections.", null);
-        this.addDefault(defaults, Messages.ClaimExplosivesAdvertisement, "To allow explosives to destroy blocks in this land claim, use /ClaimExplosions.", null);
-        this.addDefault(defaults, Messages.PlayerInPvPSafeZone, "That player is in a PvP safe zone.", null);
-        this.addDefault(defaults, Messages.NoPistonsOutsideClaims, "Warning: Pistons won't move blocks outside land claims.", null);
-        this.addDefault(defaults, Messages.DropUnlockAdvertisement, "Other players can't pick up your dropped items unless you /UnlockDrops first.", null);
-        this.addDefault(defaults, Messages.PickupBlockedExplanation, "You can't pick this up unless {0} uses /UnlockDrops.", "0: The item stack's owner.");
-        this.addDefault(defaults, Messages.DropUnlockConfirmation, "Unlocked your drops.  Other players may now pick them up (until you die again).", null);
-        this.addDefault(defaults, Messages.DropUnlockOthersConfirmation, "Unlocked {0}'s drops.", "0: The owner of the unlocked drops.");
-        this.addDefault(defaults, Messages.AdvertiseACandACB, "You may use /ACB to give yourself more claim blocks, or /AdminClaims to create a free administrative claim.", null);
-        this.addDefault(defaults, Messages.AdvertiseAdminClaims, "You could create an administrative land claim instead using /AdminClaims, which you'd share with other administrators.", null);
-        this.addDefault(defaults, Messages.AdvertiseACB, "You may use /ACB to give yourself more claim blocks.", null);
-        this.addDefault(defaults, Messages.NotYourPet, "That belongs to {0} until it's given to you with /GivePet.", "0: owner name");
-        this.addDefault(defaults, Messages.PetGiveawayConfirmation, "Pet transferred.", null);
-        this.addDefault(defaults, Messages.PetTransferCancellation, "Pet giveaway cancelled.", null);
-        this.addDefault(defaults, Messages.ReadyToTransferPet, "Ready to transfer!  Right-click the pet you'd like to give away, or cancel with /GivePet cancel.", null);
-        this.addDefault(defaults, Messages.AvoidGriefClaimLand, "Prevent grief!  If you claim your land, you will be grief-proof.", null);
-        this.addDefault(defaults, Messages.BecomeMayor, "Subdivide your land claim and become a mayor!", null);
-        this.addDefault(defaults, Messages.ClaimCreationFailedOverClaimCountLimit, "You've reached your limit on land claims.  Use /AbandonClaim to remove one before creating another.", null);
-        this.addDefault(defaults, Messages.CreateClaimFailOverlapRegion, "You can't claim all of this because you're not allowed to build here.", null);
-        this.addDefault(defaults, Messages.ResizeFailOverlapRegion, "You don't have permission to build there, so you can't claim that area.", null);
-        this.addDefault(defaults, Messages.ShowNearbyClaims, "Found {0} land claims.", "0: Number of claims found.");
-        this.addDefault(defaults, Messages.SiegeImmune, "That player is immune to /siege.", null);
-        this.addDefault(defaults, Messages.SetClaimBlocksSuccess, "Updated accrued claim blocks.", null);
-        this.addDefault(defaults, Messages.TrustListHeader, "Explicit permissions here:", "0: The claim's owner");
-        this.addDefault(defaults, Messages.Manage, "Manage", null);
-        this.addDefault(defaults, Messages.Build, "Build", null);
-        this.addDefault(defaults, Messages.Containers, "Containers", null);
-        this.addDefault(defaults, Messages.Access, "Access", null);
-        this.addDefault(defaults, Messages.HasSubclaimRestriction, "This subclaim does not inherit permissions from the parent", null);
-        this.addDefault(defaults, Messages.StartBlockMath, "{0} blocks from play + {1} bonus = {2} total.", null);
-        this.addDefault(defaults, Messages.ClaimsListHeader, "Claims:", null);
-        this.addDefault(defaults, Messages.ContinueBlockMath, " (-{0} blocks)", null);
-        this.addDefault(defaults, Messages.EndBlockMath, " = {0} blocks left to spend", null);
-        this.addDefault(defaults, Messages.NoClaimDuringPvP, "You can't claim lands during PvP combat.", null);
-        this.addDefault(defaults, Messages.UntrustAllOwnerOnly, "Only the claim owner can clear all its permissions.", null);
-        this.addDefault(defaults, Messages.ManagersDontUntrustManagers, "Only the claim owner can demote a manager.", null);
-        this.addDefault(defaults, Messages.NoEnoughBlocksForChestClaim, "Because you don't have any claim blocks available, no automatic land claim was created for you.  You can use /ClaimsList to monitor your available claim block total.", null);
-        this.addDefault(defaults, Messages.MustHoldModificationToolForThat, "You must be holding a golden shovel to do that.", null);
-        this.addDefault(defaults, Messages.StandInClaimToResize, "Stand inside the land claim you want to resize.", null);
-        this.addDefault(defaults, Messages.ClaimsExtendToSky, "Land claims always extend to max build height.", null);
-        this.addDefault(defaults, Messages.ClaimsAutoExtendDownward, "Land claims auto-extend deeper into the ground when you place blocks under them.", null);
-        this.addDefault(defaults, Messages.MinimumRadius, "Minimum radius is {0}.", "0: minimum radius");
-        this.addDefault(defaults, Messages.RadiusRequiresGoldenShovel, "You must be holding a golden shovel when specifying a radius.", null);
-        this.addDefault(defaults, Messages.ClaimTooSmallForActiveBlocks, "This claim isn't big enough to support any active block types (hoppers, spawners, beacons...).  Make the claim bigger first.", null);
-        this.addDefault(defaults, Messages.TooManyActiveBlocksInClaim, "This claim is at its limit for active block types (hoppers, spawners, beacons...).  Either make it bigger, or remove other active blocks first.", null);
+        addDefault(defaults, Messages.RespectingClaims, "Now respecting claims.", null);
+        addDefault(defaults, Messages.IgnoringClaims, "Now ignoring claims.", null);
+        addDefault(defaults, Messages.NoCreativeUnClaim, "You can't unclaim this land.  You can only make this claim larger or create additional claims.", null);
+        addDefault(defaults, Messages.SuccessfulAbandon, "Claims abandoned.  You now have {0} available claim blocks.", "0: remaining blocks");
+        addDefault(defaults, Messages.RestoreNatureActivate, "Ready to restore some nature!  Right click to restore nature, and use /BasicClaims to stop.", null);
+        addDefault(defaults, Messages.RestoreNatureAggressiveActivate, "Aggressive mode activated.  Do NOT use this underneath anything you want to keep!  Right click to aggressively restore nature, and use /BasicClaims to stop.", null);
+        addDefault(defaults, Messages.FillModeActive, "Fill mode activated with radius {0}.  Right click an area to fill.", "0: fill radius");
+        addDefault(defaults, Messages.TransferClaimPermission, "That command requires the administrative claims permission.", null);
+        addDefault(defaults, Messages.TransferClaimMissing, "There's no claim here.  Stand in the administrative claim you want to transfer.", null);
+        addDefault(defaults, Messages.TransferClaimAdminOnly, "Only administrative claims may be transferred to a player.", null);
+        addDefault(defaults, Messages.PlayerNotFound2, "No player by that name has logged in recently.", null);
+        addDefault(defaults, Messages.TransferTopLevel, "Only top level claims (not subdivisions) may be transferred.  Stand outside of the subdivision and try again.", null);
+        addDefault(defaults, Messages.TransferSuccess, "Claim transferred.", null);
+        addDefault(defaults, Messages.TrustListNoClaim, "Stand inside the claim you're curious about.", null);
+        addDefault(defaults, Messages.ClearPermsOwnerOnly, "Only the claim owner can clear all permissions.", null);
+        addDefault(defaults, Messages.UntrustIndividualAllClaims, "Revoked {0}'s access to ALL your claims.  To set permissions for a single claim, stand inside it.", "0: untrusted player");
+        addDefault(defaults, Messages.UntrustEveryoneAllClaims, "Cleared permissions in ALL your claims.  To set permissions for a single claim, stand inside it.", null);
+        addDefault(defaults, Messages.NoPermissionTrust, "You don't have {0}'s permission to manage permissions here.", "0: claim owner's name");
+        addDefault(defaults, Messages.ClearPermissionsOneClaim, "Cleared permissions in this claim.  To set permission for ALL your claims, stand outside them.", null);
+        addDefault(defaults, Messages.UntrustIndividualSingleClaim, "Revoked {0}'s access to this claim.  To set permissions for a ALL your claims, stand outside them.", "0: untrusted player");
+        addDefault(defaults, Messages.OnlySellBlocks, "Claim blocks may only be sold, not purchased.", null);
+        addDefault(defaults, Messages.BlockPurchaseCost, "Each claim block costs {0}.  Your balance is {1}.", "0: cost of one block; 1: player's account balance");
+        addDefault(defaults, Messages.ClaimBlockLimit, "You've reached your claim block limit.  You can't purchase more.", null);
+        addDefault(defaults, Messages.InsufficientFunds, "You don't have enough money.  You need {0}, but you only have {1}.", "0: total cost; 1: player's account balance");
+        addDefault(defaults, Messages.MaxBonusReached, "Can't purchase {0} more claim blocks. The server has a limit of {1} bonus claim blocks.", "0: block count; 1: bonus claims limit");
+        addDefault(defaults, Messages.PurchaseConfirmation, "Withdrew {0} from your account.  You now have {1} available claim blocks.", "0: total cost; 1: remaining blocks");
+        addDefault(defaults, Messages.OnlyPurchaseBlocks, "Claim blocks may only be purchased, not sold.", null);
+        addDefault(defaults, Messages.BlockSaleValue, "Each claim block is worth {0}.  You have {1} available for sale.", "0: block value; 1: available blocks");
+        addDefault(defaults, Messages.NotEnoughBlocksForSale, "You don't have that many claim blocks available for sale.", null);
+        addDefault(defaults, Messages.BlockSaleConfirmation, "Deposited {0} in your account.  You now have {1} available claim blocks.", "0: amount deposited; 1: remaining blocks");
+        addDefault(defaults, Messages.AdminClaimsMode, "Administrative claims mode active.  Any claims created will be free and editable by other administrators.", null);
+        addDefault(defaults, Messages.BasicClaimsMode, "Returned to basic claim creation mode.", null);
+        addDefault(defaults, Messages.SubdivisionMode, "Subdivision mode.  Use your shovel to create subdivisions in your existing claims.  Use /basicclaims to exit.", null);
+        addDefault(defaults, Messages.SubdivisionVideo2, "Click for Subdivision Help: {0}", "0:video URL");
+        addDefault(defaults, Messages.DeleteClaimMissing, "There's no claim here.", null);
+        addDefault(defaults, Messages.DeletionSubdivisionWarning, "This claim includes subdivisions.  If you're sure you want to delete it, use /DeleteClaim again.", null);
+        addDefault(defaults, Messages.DeleteSuccess, "Claim deleted.", null);
+        addDefault(defaults, Messages.CantDeleteAdminClaim, "You don't have permission to delete administrative claims.", null);
+        addDefault(defaults, Messages.DeleteAllSuccess, "Deleted all of {0}'s claims.", "0: owner's name");
+        addDefault(defaults, Messages.NoDeletePermission, "You don't have permission to delete claims.", null);
+        addDefault(defaults, Messages.AllAdminDeleted, "Deleted all administrative claims.", null);
+        addDefault(defaults, Messages.AdjustBlocksSuccess, "Adjusted {0}'s bonus claim blocks by {1}.  New total bonus blocks: {2}.", "0: player; 1: adjustment; 2: new total");
+        addDefault(defaults, Messages.AdjustLimitSuccess, "Adjusted {0}'s max accrued claim block limit to {1}.", "0: player; 1: new total");
+        addDefault(defaults, Messages.AdjustBlocksAllSuccess, "Adjusted all online players' bonus claim blocks by {0}.", "0: adjustment amount");
+        addDefault(defaults, Messages.NotTrappedHere, "You can build here.  Save yourself.", null);
+        addDefault(defaults, Messages.RescuePending, "If you stay put for 10 seconds, you'll be teleported out.  Please wait.", null);
+        addDefault(defaults, Messages.NonSiegeWorld, "Siege is disabled here.", null);
+        addDefault(defaults, Messages.AlreadySieging, "You're already involved in a siege.", null);
+        addDefault(defaults, Messages.AlreadyUnderSiegePlayer, "{0} is already under siege.  Join the party!", "0: defending player");
+        addDefault(defaults, Messages.NotSiegableThere, "{0} isn't protected there.", "0: defending player");
+        addDefault(defaults, Messages.SiegeTooFarAway, "You're too far away to siege.", null);
+        addDefault(defaults, Messages.NoSiegeYourself, "You cannot siege yourself, don't be silly", null);
+        addDefault(defaults, Messages.NoSiegeDefenseless, "That player is defenseless.  Go pick on somebody else.", null);
+        addDefault(defaults, Messages.AlreadyUnderSiegeArea, "That area is already under siege.  Join the party!", null);
+        addDefault(defaults, Messages.NoSiegeAdminClaim, "Siege is disabled in this area.", null);
+        addDefault(defaults, Messages.SiegeOnCooldown, "You're still on siege cooldown for this defender or claim.  Find another victim.", null);
+        addDefault(defaults, Messages.SiegeAlert, "You're under siege!  If you log out now, you will die.  You must defeat {0}, wait for him to give up, or escape.", "0: attacker name");
+        addDefault(defaults, Messages.SiegeConfirmed, "The siege has begun!  If you log out now, you will die.  You must defeat {0}, chase him away, or admit defeat and walk away.", "0: defender name");
+        addDefault(defaults, Messages.AbandonClaimMissing, "Stand in the claim you want to delete, or consider /AbandonAllClaims.", null);
+        addDefault(defaults, Messages.NotYourClaim, "This isn't your claim.", null);
+        addDefault(defaults, Messages.DeleteTopLevelClaim, "To delete a subdivision, stand inside it.  Otherwise, use /AbandonTopLevelClaim to delete this claim and all subdivisions.", null);
+        addDefault(defaults, Messages.AbandonSuccess, "Claim abandoned.  You now have {0} available claim blocks.", "0: remaining claim blocks");
+        addDefault(defaults, Messages.ConfirmAbandonAllClaims, "Are you sure you want to abandon ALL of your claims?  Please confirm with /AbandonAllClaims confirm", null);
+        addDefault(defaults, Messages.CantGrantThatPermission, "You can't grant a permission you don't have yourself.", null);
+        addDefault(defaults, Messages.GrantPermissionNoClaim, "Stand inside the claim where you want to grant permission.", null);
+        addDefault(defaults, Messages.GrantPermissionConfirmation, "Granted {0} permission to {1} {2}.", "0: target player; 1: permission description; 2: scope (changed claims)");
+        addDefault(defaults, Messages.ManageUniversalPermissionsInstruction, "To manage permissions for ALL your claims, stand outside them.", null);
+        addDefault(defaults, Messages.ManageOneClaimPermissionsInstruction, "To manage permissions for a specific claim, stand inside it.", null);
+        addDefault(defaults, Messages.CollectivePublic, "the public", "as in 'granted the public permission to...'");
+        addDefault(defaults, Messages.BuildPermission, "build", null);
+        addDefault(defaults, Messages.ContainersPermission, "access containers and animals", null);
+        addDefault(defaults, Messages.AccessPermission, "use buttons and levers", null);
+        addDefault(defaults, Messages.PermissionsPermission, "manage permissions", null);
+        addDefault(defaults, Messages.LocationCurrentClaim, "in this claim", null);
+        addDefault(defaults, Messages.LocationAllClaims, "in all your claims", null);
+        addDefault(defaults, Messages.PvPImmunityStart, "You're protected from attack by other players as long as your inventory is empty.", null);
+        addDefault(defaults, Messages.SiegeNoDrop, "You can't give away items while involved in a siege.", null);
+        addDefault(defaults, Messages.DonateItemsInstruction, "To give away the item(s) in your hand, left-click the chest again.", null);
+        addDefault(defaults, Messages.ChestFull, "This chest is full.", null);
+        addDefault(defaults, Messages.DonationSuccess, "Item(s) transferred to chest!", null);
+        addDefault(defaults, Messages.PlayerTooCloseForFire2, "You can't start a fire this close to another player.", null);
+        addDefault(defaults, Messages.TooDeepToClaim, "This chest can't be protected because it's too deep underground.  Consider moving it.", null);
+        addDefault(defaults, Messages.ChestClaimConfirmation, "This chest is protected.", null);
+        addDefault(defaults, Messages.AutomaticClaimNotification, "This chest and nearby blocks are protected from breakage and theft.", null);
+        addDefault(defaults, Messages.AutomaticClaimOtherClaimTooClose, "Cannot create a claim for your chest, there is another claim too close!", null);
+        addDefault(defaults, Messages.UnprotectedChestWarning, "This chest is NOT protected.  Consider using a golden shovel to expand an existing claim or to create a new one.", null);
+        addDefault(defaults, Messages.ThatPlayerPvPImmune, "You can't injure defenseless players.", null);
+        addDefault(defaults, Messages.CantFightWhileImmune, "You can't fight someone while you're protected from PvP.", null);
+        addDefault(defaults, Messages.NoDamageClaimedEntity, "That belongs to {0}.", "0: owner name");
+        addDefault(defaults, Messages.ShovelBasicClaimMode, "Shovel returned to basic claims mode.", null);
+        addDefault(defaults, Messages.RemainingBlocks, "You may claim up to {0} more blocks.", "0: remaining blocks");
+        addDefault(defaults, Messages.CreativeBasicsVideo2, "Click for Land Claim Help: {0}", "{0}: video URL");
+        addDefault(defaults, Messages.SurvivalBasicsVideo2, "Click for Land Claim Help: {0}", "{0}: video URL");
+        addDefault(defaults, Messages.TrappedChatKeyword, "trapped;stuck", "When mentioned in chat, players get information about the /trapped command (multiple words can be separated with semi-colons)");
+        addDefault(defaults, Messages.TrappedInstructions, "Are you trapped in someone's land claim?  Try the /trapped command.", null);
+        addDefault(defaults, Messages.PvPNoDrop, "You can't drop items while in PvP combat.", null);
+        addDefault(defaults, Messages.SiegeNoTeleport, "You can't teleport out of a besieged area.", null);
+        addDefault(defaults, Messages.BesiegedNoTeleport, "You can't teleport into a besieged area.", null);
+        addDefault(defaults, Messages.SiegeNoContainers, "You can't access containers while involved in a siege.", null);
+        addDefault(defaults, Messages.PvPNoContainers, "You can't access containers during PvP combat.", null);
+        addDefault(defaults, Messages.PvPImmunityEnd, "Now you can fight with other players.", null);
+        addDefault(defaults, Messages.NoBedPermission, "{0} hasn't given you permission to sleep here.", "0: claim owner");
+        addDefault(defaults, Messages.NoWildernessBuckets, "You may only dump buckets inside your claim(s) or underground.", null);
+        addDefault(defaults, Messages.NoLavaNearOtherPlayer, "You can't place lava this close to {0}.", "0: nearby player");
+        addDefault(defaults, Messages.TooFarAway, "That's too far away.", null);
+        addDefault(defaults, Messages.BlockNotClaimed, "No one has claimed this block.", null);
+        addDefault(defaults, Messages.BlockClaimed, "That block has been claimed by {0}.", "0: claim owner");
+        addDefault(defaults, Messages.SiegeNoShovel, "You can't use your shovel tool while involved in a siege.", null);
+        addDefault(defaults, Messages.RestoreNaturePlayerInChunk, "Unable to restore.  {0} is in that chunk.", "0: nearby player");
+        addDefault(defaults, Messages.NoCreateClaimPermission, "You don't have permission to claim land.", null);
+        addDefault(defaults, Messages.ResizeClaimTooNarrow, "This new size would be too small.  Claims must be at least {0} blocks wide.", "0: minimum claim width");
+        addDefault(defaults, Messages.ResizeNeedMoreBlocks, "You don't have enough blocks for this size.  You need {0} more.", "0: how many needed");
+        addDefault(defaults, Messages.ClaimResizeSuccess, "Claim resized.  {0} available claim blocks remaining.", "0: remaining blocks");
+        addDefault(defaults, Messages.ResizeFailOverlap, "Can't resize here because it would overlap another nearby claim.", null);
+        addDefault(defaults, Messages.ResizeStart, "Resizing claim.  Use your shovel again at the new location for this corner.", null);
+        addDefault(defaults, Messages.ResizeFailOverlapSubdivision, "You can't create a subdivision here because it would overlap another subdivision.  Consider /abandonclaim to delete it, or use your shovel at a corner to resize it.", null);
+        addDefault(defaults, Messages.SubdivisionStart, "Subdivision corner set!  Use your shovel at the location for the opposite corner of this new subdivision.", null);
+        addDefault(defaults, Messages.CreateSubdivisionOverlap, "Your selected area overlaps another subdivision.", null);
+        addDefault(defaults, Messages.SubdivisionSuccess, "Subdivision created!  Use /trust to share it with friends.", null);
+        addDefault(defaults, Messages.CreateClaimFailOverlap, "You can't create a claim here because it would overlap your other claim.  Use /abandonclaim to delete it, or use your shovel at a corner to resize it.", null);
+        addDefault(defaults, Messages.CreateClaimFailOverlapOtherPlayer, "You can't create a claim here because it would overlap {0}'s claim.", "0: other claim owner");
+        addDefault(defaults, Messages.ClaimsDisabledWorld, "Land claims are disabled in this world.", null);
+        addDefault(defaults, Messages.ClaimStart, "Claim corner set!  Use the shovel again at the opposite corner to claim a rectangle of land.  To cancel, put your shovel away.", null);
+        addDefault(defaults, Messages.NewClaimTooNarrow, "This claim would be too small.  Any claim must be at least {0} blocks wide.", "0: minimum claim width");
+        addDefault(defaults, Messages.ResizeClaimInsufficientArea, "This claim would be too small.  Any claim must use at least {0} total claim blocks.", "0: minimum claim area");
+        addDefault(defaults, Messages.CreateClaimInsufficientBlocks, "You don't have enough blocks to claim that entire area.  You need {0} more blocks.", "0: additional blocks needed");
+        addDefault(defaults, Messages.AbandonClaimAdvertisement, "To delete another claim and free up some blocks, use /AbandonClaim.", null);
+        addDefault(defaults, Messages.CreateClaimFailOverlapShort, "Your selected area overlaps an existing claim.", null);
+        addDefault(defaults, Messages.CreateClaimSuccess, "Claim created!  Use /trust to share it with friends.", null);
+        addDefault(defaults, Messages.SiegeWinDoorsOpen, "Congratulations!  Buttons and levers are temporarily unlocked.", null);
+        addDefault(defaults, Messages.RescueAbortedMoved, "You moved!  Rescue cancelled.", null);
+        addDefault(defaults, Messages.SiegeDoorsLockedEjection, "Looting time is up!  Ejected from the claim.", null);
+        addDefault(defaults, Messages.NoModifyDuringSiege, "Claims can't be modified while under siege.", null);
+        addDefault(defaults, Messages.OnlyOwnersModifyClaims, "Only {0} can modify this claim.", "0: owner name");
+        addDefault(defaults, Messages.NoBuildUnderSiege, "This claim is under siege by {0}.  No one can build here.", "0: attacker name");
+        addDefault(defaults, Messages.NoBuildPvP, "You can't build in claims during PvP combat.", null);
+        addDefault(defaults, Messages.NoBuildPermission, "You don't have {0}'s permission to build here.", "0: owner name");
+        addDefault(defaults, Messages.NonSiegeMaterial, "That material is too tough to break.", null);
+        addDefault(defaults, Messages.NoOwnerBuildUnderSiege, "You can't make changes while under siege.", null);
+        addDefault(defaults, Messages.NoAccessPermission, "You don't have {0}'s permission to use that.", "0: owner name.  access permission controls buttons, levers, and beds");
+        addDefault(defaults, Messages.NoContainersSiege, "This claim is under siege by {0}.  No one can access containers here right now.", "0: attacker name");
+        addDefault(defaults, Messages.NoContainersPermission, "You don't have {0}'s permission to use that.", "0: owner's name.  containers also include crafting blocks");
+        addDefault(defaults, Messages.OwnerNameForAdminClaims, "an administrator", "as in 'You don't have an administrator's permission to build here.'");
+        addDefault(defaults, Messages.ClaimTooSmallForEntities, "This claim isn't big enough for that.  Try enlarging it.", null);
+        addDefault(defaults, Messages.TooManyEntitiesInClaim, "This claim has too many entities already.  Try enlarging the claim or removing some animals, monsters, paintings, or minecarts.", null);
+        addDefault(defaults, Messages.YouHaveNoClaims, "You don't have any land claims.", null);
+        addDefault(defaults, Messages.ConfirmFluidRemoval, "Abandoning this claim will remove lava inside the claim.  If you're sure, use /AbandonClaim again.", null);
+        addDefault(defaults, Messages.AdjustGroupBlocksSuccess, "Adjusted bonus claim blocks for players with the {0} permission by {1}.  New total: {2}.", "0: permission; 1: adjustment amount; 2: new total bonus");
+        addDefault(defaults, Messages.InvalidPermissionID, "Please specify a player name, or a permission in [brackets].", null);
+        addDefault(defaults, Messages.HowToClaimRegex, "(^|.*\\W)how\\W.*\\W(claim|protect|lock)(\\W.*|$)", "This is a Java Regular Expression.  Look it up before editing!  It's used to tell players about the demo video when they ask how to claim land.");
+        addDefault(defaults, Messages.NoBuildOutsideClaims, "You can't build here unless you claim some land first.", null);
+        addDefault(defaults, Messages.PlayerOfflineTime, "  Last login: {0} days ago.", "0: number of full days since last login");
+        addDefault(defaults, Messages.BuildingOutsideClaims, "Other players can build here, too.  Consider creating a land claim to protect your work!", null);
+        addDefault(defaults, Messages.TrappedWontWorkHere, "Sorry, unable to find a safe location to teleport you to.  Contact an admin.", null);
+        addDefault(defaults, Messages.CommandBannedInPvP, "You can't use that command while in PvP combat.", null);
+        addDefault(defaults, Messages.UnclaimCleanupWarning, "The land you've unclaimed may be changed by other players or cleaned up by administrators.  If you've built something there you want to keep, you should reclaim it.", null);
+        addDefault(defaults, Messages.BuySellNotConfigured, "Sorry, buying and selling claim blocks is disabled.", null);
+        addDefault(defaults, Messages.NoTeleportPvPCombat, "You can't teleport while fighting another player.", null);
+        addDefault(defaults, Messages.NoTNTDamageAboveSeaLevel, "Warning: TNT will not destroy blocks above sea level.", null);
+        addDefault(defaults, Messages.NoTNTDamageClaims, "Warning: TNT will not destroy claimed blocks.", null);
+        addDefault(defaults, Messages.IgnoreClaimsAdvertisement, "To override, use /IgnoreClaims.", null);
+        addDefault(defaults, Messages.NoPermissionForCommand, "You don't have permission to do that.", null);
+        addDefault(defaults, Messages.ClaimsListNoPermission, "You don't have permission to get information about another player's land claims.", null);
+        addDefault(defaults, Messages.ExplosivesDisabled, "This claim is now protected from explosions.  Use /ClaimExplosions again to disable.", null);
+        addDefault(defaults, Messages.ExplosivesEnabled, "This claim is now vulnerable to explosions.  Use /ClaimExplosions again to re-enable protections.", null);
+        addDefault(defaults, Messages.ClaimExplosivesAdvertisement, "To allow explosives to destroy blocks in this land claim, use /ClaimExplosions.", null);
+        addDefault(defaults, Messages.PlayerInPvPSafeZone, "That player is in a PvP safe zone.", null);
+        addDefault(defaults, Messages.NoPistonsOutsideClaims, "Warning: Pistons won't move blocks outside land claims.", null);
+        addDefault(defaults, Messages.DropUnlockAdvertisement, "Other players can't pick up your dropped items unless you /UnlockDrops first.", null);
+        addDefault(defaults, Messages.PickupBlockedExplanation, "You can't pick this up unless {0} uses /UnlockDrops.", "0: The item stack's owner.");
+        addDefault(defaults, Messages.DropUnlockConfirmation, "Unlocked your drops.  Other players may now pick them up (until you die again).", null);
+        addDefault(defaults, Messages.DropUnlockOthersConfirmation, "Unlocked {0}'s drops.", "0: The owner of the unlocked drops.");
+        addDefault(defaults, Messages.AdvertiseACandACB, "You may use /ACB to give yourself more claim blocks, or /AdminClaims to create a free administrative claim.", null);
+        addDefault(defaults, Messages.AdvertiseAdminClaims, "You could create an administrative land claim instead using /AdminClaims, which you'd share with other administrators.", null);
+        addDefault(defaults, Messages.AdvertiseACB, "You may use /ACB to give yourself more claim blocks.", null);
+        addDefault(defaults, Messages.NotYourPet, "That belongs to {0} until it's given to you with /GivePet.", "0: owner name");
+        addDefault(defaults, Messages.PetGiveawayConfirmation, "Pet transferred.", null);
+        addDefault(defaults, Messages.PetTransferCancellation, "Pet giveaway cancelled.", null);
+        addDefault(defaults, Messages.ReadyToTransferPet, "Ready to transfer!  Right-click the pet you'd like to give away, or cancel with /GivePet cancel.", null);
+        addDefault(defaults, Messages.AvoidGriefClaimLand, "Prevent grief!  If you claim your land, you will be grief-proof.", null);
+        addDefault(defaults, Messages.BecomeMayor, "Subdivide your land claim and become a mayor!", null);
+        addDefault(defaults, Messages.ClaimCreationFailedOverClaimCountLimit, "You've reached your limit on land claims.  Use /AbandonClaim to remove one before creating another.", null);
+        addDefault(defaults, Messages.CreateClaimFailOverlapRegion, "You can't claim all of this because you're not allowed to build here.", null);
+        addDefault(defaults, Messages.ResizeFailOverlapRegion, "You don't have permission to build there, so you can't claim that area.", null);
+        addDefault(defaults, Messages.ShowNearbyClaims, "Found {0} land claims.", "0: Number of claims found.");
+        addDefault(defaults, Messages.SiegeImmune, "That player is immune to /siege.", null);
+        addDefault(defaults, Messages.SetClaimBlocksSuccess, "Updated accrued claim blocks.", null);
+        addDefault(defaults, Messages.TrustListHeader, "Explicit permissions here:", "0: The claim's owner");
+        addDefault(defaults, Messages.Manage, "Manage", null);
+        addDefault(defaults, Messages.Build, "Build", null);
+        addDefault(defaults, Messages.Containers, "Containers", null);
+        addDefault(defaults, Messages.Access, "Access", null);
+        addDefault(defaults, Messages.HasSubclaimRestriction, "This subclaim does not inherit permissions from the parent", null);
+        addDefault(defaults, Messages.StartBlockMath, "{0} blocks from play + {1} bonus = {2} total.", null);
+        addDefault(defaults, Messages.ClaimsListHeader, "Claims:", null);
+        addDefault(defaults, Messages.ContinueBlockMath, " (-{0} blocks)", null);
+        addDefault(defaults, Messages.EndBlockMath, " = {0} blocks left to spend", null);
+        addDefault(defaults, Messages.NoClaimDuringPvP, "You can't claim lands during PvP combat.", null);
+        addDefault(defaults, Messages.UntrustAllOwnerOnly, "Only the claim owner can clear all its permissions.", null);
+        addDefault(defaults, Messages.ManagersDontUntrustManagers, "Only the claim owner can demote a manager.", null);
+        addDefault(defaults, Messages.NoEnoughBlocksForChestClaim, "Because you don't have any claim blocks available, no automatic land claim was created for you.  You can use /ClaimsList to monitor your available claim block total.", null);
+        addDefault(defaults, Messages.MustHoldModificationToolForThat, "You must be holding a golden shovel to do that.", null);
+        addDefault(defaults, Messages.StandInClaimToResize, "Stand inside the land claim you want to resize.", null);
+        addDefault(defaults, Messages.ClaimsExtendToSky, "Land claims always extend to max build height.", null);
+        addDefault(defaults, Messages.ClaimsAutoExtendDownward, "Land claims auto-extend deeper into the ground when you place blocks under them.", null);
+        addDefault(defaults, Messages.MinimumRadius, "Minimum radius is {0}.", "0: minimum radius");
+        addDefault(defaults, Messages.RadiusRequiresGoldenShovel, "You must be holding a golden shovel when specifying a radius.", null);
+        addDefault(defaults, Messages.ClaimTooSmallForActiveBlocks, "This claim isn't big enough to support any active block types (hoppers, spawners, beacons...).  Make the claim bigger first.", null);
+        addDefault(defaults, Messages.TooManyActiveBlocksInClaim, "This claim is at its limit for active block types (hoppers, spawners, beacons...).  Either make it bigger, or remove other active blocks first.", null);
 
-        this.addDefault(defaults, Messages.BookAuthor, "BigScary", null);
-        this.addDefault(defaults, Messages.BookTitle, "How to Claim Land", null);
-        this.addDefault(defaults, Messages.BookLink, "Click: {0}", "{0}: video URL");
-        this.addDefault(defaults, Messages.BookIntro, "Claim land to protect your stuff!  Click the link above to learn land claims in 3 minutes or less.  :)", null);
-        this.addDefault(defaults, Messages.BookTools, "Our claim tools are {0} and {1}.", "0: claim modification tool name; 1:claim information tool name");
-        this.addDefault(defaults, Messages.BookDisabledChestClaims, "  On this server, placing a chest will NOT claim land for you.", null);
-        this.addDefault(defaults, Messages.BookUsefulCommands, "Useful Commands:", null);
-        this.addDefault(defaults, Messages.ConsoleOnlyCommand, "That command may only be executed from the server console.", null);
-        this.addDefault(defaults, Messages.WorldNotFound, "World not found.", null);
+        addDefault(defaults, Messages.BookAuthor, "BigScary", null);
+        addDefault(defaults, Messages.BookTitle, "How to Claim Land", null);
+        addDefault(defaults, Messages.BookLink, "Click: {0}", "{0}: video URL");
+        addDefault(defaults, Messages.BookIntro, "Claim land to protect your stuff!  Click the link above to learn land claims in 3 minutes or less.  :)", null);
+        addDefault(defaults, Messages.BookTools, "Our claim tools are {0} and {1}.", "0: claim modification tool name; 1:claim information tool name");
+        addDefault(defaults, Messages.BookDisabledChestClaims, "  On this server, placing a chest will NOT claim land for you.", null);
+        addDefault(defaults, Messages.BookUsefulCommands, "Useful Commands:", null);
+        addDefault(defaults, Messages.ConsoleOnlyCommand, "That command may only be executed from the server console.", null);
+        addDefault(defaults, Messages.WorldNotFound, "World not found.", null);
 
-        this.addDefault(defaults, Messages.StandInSubclaim, "You need to be standing in a subclaim to restrict it", null);
-        this.addDefault(defaults, Messages.SubclaimRestricted, "This subclaim's permissions will no longer inherit from the parent claim", null);
-        this.addDefault(defaults, Messages.SubclaimUnrestricted, "This subclaim's permissions will now inherit from the parent claim", null);
+        addDefault(defaults, Messages.StandInSubclaim, "You need to be standing in a subclaim to restrict it", null);
+        addDefault(defaults, Messages.SubclaimRestricted, "This subclaim's permissions will no longer inherit from the parent claim", null);
+        addDefault(defaults, Messages.SubclaimUnrestricted, "This subclaim's permissions will now inherit from the parent claim", null);
 
-        this.addDefault(defaults, Messages.NetherPortalTrapDetectionMessage, "It seems you might be stuck inside a nether portal. We will rescue you in a few seconds if that is the case!", "Sent to player on join, if they left while inside a nether portal.");
+        addDefault(defaults, Messages.NetherPortalTrapDetectionMessage, "It seems you might be stuck inside a nether portal. We will rescue you in a few seconds if that is the case!", "Sent to player on join, if they left while inside a nether portal.");
 
         //load the config file
         FileConfiguration config = YamlConfiguration.loadConfiguration(new File(messagesFilePath));
@@ -1621,13 +1622,13 @@ public abstract class DataStore
             }
 
             //read the message from the file, use default if necessary
-            this.messages[messageID.ordinal()] = config.getString("Messages." + messageID.name() + ".Text", messageData.text);
-            config.set("Messages." + messageID.name() + ".Text", this.messages[messageID.ordinal()]);
+            messages[messageID.ordinal()] = config.getString("Messages." + messageID.name() + ".Text", messageData.text);
+            config.set("Messages." + messageID.name() + ".Text", messages[messageID.ordinal()]);
 
             //support color codes
             if (messageID != Messages.HowToClaimRegex)
             {
-                this.messages[messageID.ordinal()] = this.messages[messageID.ordinal()].replace('$', (char) 0x00A7);
+                messages[messageID.ordinal()] = messages[messageID.ordinal()].replace('$', (char) 0x00A7);
             }
 
             if (messageData.notes != null)
@@ -1642,7 +1643,8 @@ public abstract class DataStore
         {
             config.options().header("Use a YAML editor like NotepadPlusPlus to edit this file.  \nAfter editing, back up your changes before reloading the server in case you made a syntax error.  \nUse dollar signs ($) for formatting codes, which are documented here: https://minecraft.gamepedia.com/Formatting_codes");
             config.save(DataStore.messagesFilePath);
-        } catch (IOException exception)
+        }
+        catch (IOException exception)
         {
             GriefPrevention.AddLogEntry("Unable to write to the configuration file at \"" + DataStore.messagesFilePath + "\"");
         }
@@ -1676,7 +1678,7 @@ public abstract class DataStore
     protected List<String> convertNameListToUUIDList(List<String> names)
     {
         //doesn't apply after schema has been updated to version 1
-        if (this.getSchemaVersion() >= 1) return names;
+        if (getSchemaVersion() >= 1) return names;
 
         //list to build results
         List<String> resultNames = new ArrayList<>();
@@ -1695,7 +1697,8 @@ public abstract class DataStore
             try
             {
                 playerID = UUIDFetcher.getUUIDOf(name);
-            } catch (Exception ignored)
+            }
+            catch (Exception ignored)
             {
             }
 
@@ -1725,7 +1728,7 @@ public abstract class DataStore
             {
                 Chunk chunk = location.getWorld().getChunkAt(chunk_x, chunk_z);
                 Long chunkID = getChunkHash(chunk.getBlock(0, 0, 0).getLocation());
-                ArrayList<Claim> claimsInChunk = this.chunksToClaimsMap.get(chunkID);
+                ArrayList<Claim> claimsInChunk = chunksToClaimsMap.get(chunkID);
                 if (claimsInChunk != null)
                 {
                     for (Claim claim : claimsInChunk)
@@ -1751,7 +1754,7 @@ public abstract class DataStore
             if (claim.getLesserBoundaryCorner().getWorld().equals(world))
             {
                 if (!deleteAdminClaims && claim.isAdminClaim()) continue;
-                this.deleteClaim(claim, false, false);
+                deleteClaim(claim, false, false);
                 i--;
             }
         }
@@ -1783,7 +1786,7 @@ public abstract class DataStore
             //ensure player data is already read from file before trying to save
             playerData.getAccruedClaimBlocks();
             playerData.getClaims();
-            asyncSavePlayerData(this.playerID, this.playerData);
+            asyncSavePlayerData(playerID, playerData);
         }
     }
 }

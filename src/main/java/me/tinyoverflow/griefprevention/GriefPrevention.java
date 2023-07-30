@@ -37,6 +37,8 @@ import me.tinyoverflow.griefprevention.listeners.inventory.InventoryPickupItemLi
 import me.tinyoverflow.griefprevention.listeners.player.*;
 import me.tinyoverflow.griefprevention.listeners.world.PortalCreateListener;
 import me.tinyoverflow.griefprevention.listeners.world.StructureGrowListener;
+import me.tinyoverflow.griefprevention.logger.GriefPreventionLogger;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import me.tinyoverflow.griefprevention.tasks.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -79,44 +81,75 @@ public class GriefPrevention extends JavaPlugin
     //this tracks item stacks expected to drop which will need protection
     public ArrayList<PendingItemProtection> pendingItemWatchList = new ArrayList<>();
     //claim mode for each world
-    public boolean config_lockDeathDropsInPvpWorlds;                //whether players' dropped on death items are protected in pvp worlds
-    public boolean config_lockDeathDropsInNonPvpWorlds;             //whether players' dropped on death items are protected in non-pvp worlds
-    public int config_economy_claimBlocksMaxBonus;                  //max "bonus" blocks a player can buy.  set to zero for no limit.
-    public double config_economy_claimBlocksPurchaseCost;            //cost to purchase a claim block.  set to zero to disable purchase.
-    public double config_economy_claimBlocksSellValue;                //return on a sold claim block.  set to zero to disable sale.
-    public boolean config_blockClaimExplosions;                     //whether explosions may destroy claimed blocks
-    public boolean config_blockSurfaceCreeperExplosions;            //whether creeper explosions near or above the surface destroy blocks
-    public boolean config_blockSurfaceOtherExplosions;                //whether non-creeper explosions near or above the surface destroy blocks
-    public boolean config_blockSkyTrees;                            //whether players can build trees on platforms in the sky
-    public boolean config_fireSpreads;                                //whether fire spreads outside of claims
-    public boolean config_fireDestroys;                                //whether fire destroys blocks outside of claims
-    public boolean config_whisperNotifications;                    //whether whispered messages will broadcast to administrators in game
-    public boolean config_signNotifications;                        //whether sign content will broadcast to administrators in game
+    @Deprecated(forRemoval = true)
+    public boolean config_lockDeathDropsInPvpWorlds;                 // whether players' dropped on death items are protected in pvp worlds
+    @Deprecated(forRemoval = true)
+    public boolean config_lockDeathDropsInNonPvpWorlds;              // whether players' dropped on death items are protected in non-pvp worlds
+    @Deprecated(forRemoval = true)
+    public int config_economy_claimBlocksMaxBonus;                   // max "bonus" blocks a player can buy.  set to zero for no limit.
+    @Deprecated(forRemoval = true)
+    public double config_economy_claimBlocksPurchaseCost;            // cost to purchase a claim block.  set to zero to disable purchase.
+    @Deprecated(forRemoval = true)
+    public double config_economy_claimBlocksSellValue;               // return on a sold claim block.  set to zero to disable sale.
+    @Deprecated(forRemoval = true)
+    public boolean config_blockClaimExplosions;                      // whether explosions may destroy claimed blocks
+    @Deprecated(forRemoval = true)
+    public boolean config_blockSurfaceCreeperExplosions;             // whether creeper explosions near or above the surface destroy blocks
+    @Deprecated(forRemoval = true)
+    public boolean config_blockSurfaceOtherExplosions;               // whether non-creeper explosions near or above the surface destroy blocks
+    @Deprecated(forRemoval = true)
+    public boolean config_blockSkyTrees;                             // whether players can build trees on platforms in the sky
+    @Deprecated(forRemoval = true)
+    public boolean config_fireSpreads;                               // whether fire spreads outside of claims
+    @Deprecated(forRemoval = true)
+    public boolean config_fireDestroys;                              // whether fire destroys blocks outside of claims
+    @Deprecated(forRemoval = true)
+    public boolean config_whisperNotifications;                      // whether whispered messages will broadcast to administrators in game
+    @Deprecated(forRemoval = true)
+    public boolean config_signNotifications;                         // whether sign content will broadcast to administrators in game
+    @Deprecated(forRemoval = true)
     public boolean config_visualizationAntiCheatCompat;              // whether to engage compatibility mode for anti-cheat plugins
-    public boolean config_endermenMoveBlocks;                        //whether endermen may move blocks around
-    public boolean config_claims_ravagersBreakBlocks;                //whether ravagers may break blocks in claims
-    public boolean config_silverfishBreakBlocks;                    //whether silverfish may break blocks
-    public boolean config_creaturesTrampleCrops;                    //whether non-player entities may trample crops
-    public boolean config_rabbitsEatCrops;                          //whether rabbits may eat crops
-    public boolean config_zombiesBreakDoors;                        //whether hard-mode zombies may break down wooden doors
-    public HashMap<String, Integer> config_seaLevelOverride;        //override for sea level, because bukkit doesn't report the right value for all situations
-    public boolean config_limitTreeGrowth;                          //whether trees should be prevented from growing into a claim from outside
-    public PistonMode config_pistonMovement;                            //Setting for piston check options
-    public boolean config_pistonExplosionSound;                     //whether pistons make an explosion sound when they get removed
-    public boolean config_advanced_fixNegativeClaimblockAmounts;    //whether to attempt to fix negative claim block amounts (some addons cause/assume players can go into negative amounts)
-    public int config_advanced_claim_expiration_check_rate;            //How often GP should check for expired claims, amount in seconds
-    public int config_advanced_offlineplayer_cache_days;            //Cache players who have logged in within the last x number of days
+    @Deprecated(forRemoval = true)
+    public boolean config_endermenMoveBlocks;                        // whether endermen may move blocks around
+    @Deprecated(forRemoval = true)
+    public boolean config_silverfishBreakBlocks;                     // whether silverfish may break blocks
+    @Deprecated(forRemoval = true)
+    public boolean config_creaturesTrampleCrops;                     // whether non-player entities may trample crops
+    @Deprecated(forRemoval = true)
+    public boolean config_rabbitsEatCrops;                           // whether rabbits may eat crops
+    @Deprecated(forRemoval = true)
+    public boolean config_zombiesBreakDoors;                         // whether hard-mode zombies may break down wooden doors
+    @Deprecated(forRemoval = true)
+    public HashMap<String, Integer> config_seaLevelOverride;         // override for sea level, because bukkit doesn't report the right value for all situations
+    @Deprecated(forRemoval = true)
+    public boolean config_limitTreeGrowth;                           // whether trees should be prevented from growing into a claim from outside
+    @Deprecated(forRemoval = true)
+    public PistonMode config_pistonMovement;                         // Setting for piston check options
+    @Deprecated(forRemoval = true)
+    public boolean config_pistonExplosionSound;                      // whether pistons make an explosion sound when they get removed
+    @Deprecated(forRemoval = true)
+    public boolean config_advanced_fixNegativeClaimblockAmounts;     // whether to attempt to fix negative claim block amounts (some addons cause/assume players can go into negative amounts)
+    @Deprecated(forRemoval = true)
+    public int config_advanced_claim_expiration_check_rate;          // How often GP should check for expired claims, amount in seconds
+    @Deprecated(forRemoval = true)
+    public int config_advanced_offlineplayer_cache_days;             // Cache players who have logged in within the last x number of days
     //custom log settings
+    @Deprecated(forRemoval = true)
     public int config_logs_daysToKeep;
+    @Deprecated(forRemoval = true)
     public boolean config_logs_socialEnabled;
+    @Deprecated(forRemoval = true)
     public boolean config_logs_suspiciousEnabled;
+    @Deprecated(forRemoval = true)
     public boolean config_logs_adminEnabled;
+    @Deprecated(forRemoval = true)
     public boolean config_logs_debugEnabled;
+    @Deprecated(forRemoval = true)
     public boolean config_logs_mutedChatEnabled;
     //Track scheduled "rescues" so we can cancel them if the player happens to teleport elsewhere, so we can cancel it.
     public ConcurrentHashMap<UUID, BukkitTask> portalReturnTaskMap = new ConcurrentHashMap<>();
     //log entry manager for GP's custom log files
-    CustomLogger customLogger;
+    GriefPreventionLogger customLogger;
     // Player event handler
     @Deprecated(forRemoval = true)
     HashMap<World, Boolean> config_pvp_specifiedWorlds;                //list of worlds where pvp anti-grief rules apply, according to the config file
@@ -139,23 +172,23 @@ public class GriefPrevention extends JavaPlugin
     }
 
     //adds a server log entry
-    public static synchronized void AddLogEntry(String entry, CustomLogEntryTypes customLogType, boolean excludeFromServerLogs)
+    public static synchronized void AddLogEntry(String entry, LogType customLogType, boolean excludeFromServerLogs)
     {
         if (customLogType != null && GriefPrevention.instance.customLogger != null)
         {
-            GriefPrevention.instance.customLogger.AddEntry(entry, customLogType);
+            GriefPrevention.instance.customLogger.log(customLogType, entry);
         }
         if (!excludeFromServerLogs) log.info(entry);
     }
 
-    public static synchronized void AddLogEntry(String entry, CustomLogEntryTypes customLogType)
+    public static synchronized void AddLogEntry(String entry, LogType customLogType)
     {
         AddLogEntry(entry, customLogType, false);
     }
 
     public static synchronized void AddLogEntry(String entry)
     {
-        AddLogEntry(entry, CustomLogEntryTypes.Debug);
+        AddLogEntry(entry, LogType.DEBUG);
     }
 
     public static String getFriendlyLocationString(Location location)
@@ -308,7 +341,13 @@ public class GriefPrevention extends JavaPlugin
 
         registerCommands();
 
-        customLogger = new CustomLogger();
+        // Initialize custom logger and register the scheduled tasks.
+        customLogger = new GriefPreventionLogger(
+                getLogger(),
+                new File(getDataFolder(), "logs"),
+                getPluginConfig().getLoggerConfiguration()
+        );
+        customLogger.registerTasks(this, getServer().getScheduler());
 
         AddLogEntry("Finished loading configuration.");
 
@@ -334,7 +373,8 @@ public class GriefPrevention extends JavaPlugin
                 }
 
                 dataStore = databaseStore;
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 GriefPrevention.AddLogEntry(
                         "Because there was a problem with the database, GriefPrevention will not function properly.  Either update the database config settings resolve the issue, or delete those lines from your config.yml so that GriefPrevention can use the file system to store data.");
@@ -365,7 +405,8 @@ public class GriefPrevention extends JavaPlugin
             try
             {
                 dataStore = new FlatFileDataStore(getDataFolder());
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 GriefPrevention.AddLogEntry("Unable to initialize the file system data store.  Details:");
                 GriefPrevention.AddLogEntry(e.getMessage());
@@ -553,7 +594,8 @@ public class GriefPrevention extends JavaPlugin
         {
             configurationNode.set(configuration);
             configurationLoader.save(configurationNode);
-        } catch (ConfigurateException e)
+        }
+        catch (ConfigurateException e)
         {
             throw new RuntimeException(e);
         }
@@ -578,7 +620,8 @@ public class GriefPrevention extends JavaPlugin
             // Always saving the file on load to make sure that it exists
             // and is always up-to-date.
             savePluginConfig();
-        } catch (ConfigurateException e)
+        }
+        catch (ConfigurateException e)
         {
             throw new RuntimeException(e);
         }
@@ -704,29 +747,6 @@ public class GriefPrevention extends JavaPlugin
                 90
         );
 
-        //custom logger settings
-        config_logs_daysToKeep = config.getInt("GriefPrevention.Abridged Logs.Days To Keep", 7);
-        config_logs_socialEnabled = config.getBoolean(
-                "GriefPrevention.Abridged Logs.Included Entry Types.Social Activity",
-                true
-        );
-        config_logs_suspiciousEnabled = config.getBoolean(
-                "GriefPrevention.Abridged Logs.Included Entry Types.Suspicious Activity",
-                true
-        );
-        config_logs_adminEnabled = config.getBoolean(
-                "GriefPrevention.Abridged Logs.Included Entry Types.Administrative Activity",
-                false
-        );
-        config_logs_debugEnabled = config.getBoolean(
-                "GriefPrevention.Abridged Logs.Included Entry Types.Debug",
-                false
-        );
-        config_logs_mutedChatEnabled = config.getBoolean(
-                "GriefPrevention.Abridged Logs.Included Entry Types.Muted Chat Messages",
-                false
-        );
-
         for (World world : worlds)
         {
             outConfig.set("GriefPrevention.PvP.RulesEnabledInWorld." + world.getName(), pvpRulesApply(world));
@@ -783,25 +803,6 @@ public class GriefPrevention extends JavaPlugin
                 config_advanced_offlineplayer_cache_days
         );
 
-        //custom logger settings
-        outConfig.set("GriefPrevention.Abridged Logs.Days To Keep", config_logs_daysToKeep);
-        outConfig.set(
-                "GriefPrevention.Abridged Logs.Included Entry Types.Social Activity",
-                config_logs_socialEnabled
-        );
-        outConfig.set(
-                "GriefPrevention.Abridged Logs.Included Entry Types.Suspicious Activity",
-                config_logs_suspiciousEnabled
-        );
-        outConfig.set(
-                "GriefPrevention.Abridged Logs.Included Entry Types.Administrative Activity",
-                config_logs_adminEnabled
-        );
-        outConfig.set("GriefPrevention.Abridged Logs.Included Entry Types.Debug", config_logs_debugEnabled);
-        outConfig.set(
-                "GriefPrevention.Abridged Logs.Included Entry Types.Muted Chat Messages",
-                config_logs_mutedChatEnabled
-        );
         outConfig.set("GriefPrevention.ConfigVersion", 1);
     }
 
@@ -820,7 +821,7 @@ public class GriefPrevention extends JavaPlugin
         dataStore.close();
 
         //dump any remaining unwritten log entries
-        customLogger.WriteEntries();
+        customLogger.flush();
 
         AddLogEntry("GriefPrevention disabled.");
     }
@@ -1281,7 +1282,8 @@ public class GriefPrevention extends JavaPlugin
                         playerNameToIDMap.put(playerName, playerID);
                         playerNameToIDMap.put(playerName.toLowerCase(), playerID);
                     }
-                } catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     e.printStackTrace();
                 }

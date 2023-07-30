@@ -18,6 +18,10 @@ public class GriefPreventionConfiguration
     private final SiegeConfiguration siegeConfiguration = new SiegeConfiguration();
 
     @Setting("pvp")
-    @Comment("Restrict some things player can do while PvPing.")
+    @Comment("Restrict some things players can do while PvPing.")
     private final PvpConfiguration pvpConfiguration = new PvpConfiguration();
+
+    @Setting("logs")
+    @Comment("Configure the logger for actions.")
+    private final LoggerConfiguration loggerConfiguration = new LoggerConfiguration();
 }

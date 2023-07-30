@@ -18,14 +18,10 @@
 
 package me.tinyoverflow.griefprevention.tasks;
 
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
 import me.tinyoverflow.griefprevention.GriefPrevention;
+import me.tinyoverflow.griefprevention.logger.LogType;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 //FEATURE: automatically remove claims owned by inactive players which:
@@ -72,10 +68,10 @@ public class FindUnusedClaimsTask implements Runnable
             Collections.shuffle(claimOwnerUUIDs);
         }
 
-        GriefPrevention.AddLogEntry("The following UUIDs own a claim and will be checked for inactivity in the following order:", CustomLogEntryTypes.Debug, true);
+        GriefPrevention.AddLogEntry("The following UUIDs own a claim and will be checked for inactivity in the following order:", LogType.DEBUG, true);
 
         for (UUID uuid : claimOwnerUUIDs)
-            GriefPrevention.AddLogEntry(uuid.toString(), CustomLogEntryTypes.Debug, true);
+            GriefPrevention.AddLogEntry(uuid.toString(), LogType.DEBUG, true);
 
         claimOwnerIterator = claimOwnerUUIDs.iterator();
     }

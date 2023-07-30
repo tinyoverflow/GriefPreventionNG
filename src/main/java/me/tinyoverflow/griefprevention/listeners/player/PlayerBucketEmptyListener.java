@@ -2,6 +2,7 @@ package me.tinyoverflow.griefprevention.listeners.player;
 
 import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -125,7 +126,7 @@ public class PlayerBucketEmptyListener implements Listener
             if (makeLogEntry)
             {
                 GriefPrevention.AddLogEntry(player.getName() + " placed suspicious " + bucketEvent.getBucket().name() + " @ " + GriefPrevention.getFriendlyLocationString(
-                        block.getLocation()), CustomLogEntryTypes.SuspiciousActivity, true);
+                        block.getLocation()), LogType.SUSPICIOUS, true);
             }
         }
     }

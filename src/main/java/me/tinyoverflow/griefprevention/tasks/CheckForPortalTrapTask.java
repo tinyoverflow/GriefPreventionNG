@@ -18,8 +18,8 @@
 
 package me.tinyoverflow.griefprevention.tasks;
 
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
 import me.tinyoverflow.griefprevention.GriefPrevention;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -30,18 +30,17 @@ import org.bukkit.scheduler.BukkitRunnable;
 //if that happens, we detect the problem and send them back through the portal.
 public class CheckForPortalTrapTask extends BukkitRunnable
 {
-    GriefPrevention instance;
     //player who recently teleported via nether portal
     private final Player player;
-
     //where to send the player back to if he hasn't left the portal frame
     private final Location returnLocation;
+    GriefPrevention instance;
 
     public CheckForPortalTrapTask(Player player, GriefPrevention plugin, Location locationToReturn)
     {
         this.player = player;
-        this.instance = plugin;
-        this.returnLocation = locationToReturn;
+        instance = plugin;
+        returnLocation = locationToReturn;
         player.setMetadata("GP_PORTALRESCUE", new FixedMetadataValue(instance, locationToReturn));
     }
 
@@ -50,7 +49,7 @@ public class CheckForPortalTrapTask extends BukkitRunnable
     {
         if (player.isOnline() && player.getPortalCooldown() >= 10 && player.hasMetadata("GP_PORTALRESCUE"))
         {
-            GriefPrevention.AddLogEntry("Rescued " + player.getName() + " from a nether portal.\nTeleported from " + player.getLocation().toString() + " to " + returnLocation.toString(), CustomLogEntryTypes.Debug);
+            GriefPrevention.AddLogEntry("Rescued " + player.getName() + " from a nether portal.\nTeleported from " + player.getLocation() + " to " + returnLocation.toString(), LogType.DEBUG);
             player.teleport(returnLocation);
             player.removeMetadata("GP_PORTALRESCUE", instance);
         }

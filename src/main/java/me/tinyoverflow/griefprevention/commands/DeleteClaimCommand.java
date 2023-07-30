@@ -5,6 +5,7 @@ import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
 import me.tinyoverflow.griefprevention.*;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.entity.Player;
 
 public class DeleteClaimCommand extends BaseCommand implements PlayerCommandExecutor
@@ -17,7 +18,7 @@ public class DeleteClaimCommand extends BaseCommand implements PlayerCommandExec
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.deleteclaim")
                 .executesPlayer(this);
     }
@@ -26,27 +27,25 @@ public class DeleteClaimCommand extends BaseCommand implements PlayerCommandExec
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
         //determine which claim the player is standing in
-        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
+        Claim claim = getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
 
         if (claim == null)
         {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.DeleteClaimMissing);
-        }
-        else
+        } else
         {
             //deleting an admin claim additionally requires the adminclaims permission
             if (!claim.isAdminClaim() || player.hasPermission("griefprevention.adminclaims"))
             {
-                PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+                PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
                 if (claim.children.size() > 0 && !playerData.warnedAboutMajorDeletion)
                 {
                     GriefPrevention.sendMessage(player, TextMode.Warn, Messages.DeletionSubdivisionWarning);
                     playerData.warnedAboutMajorDeletion = true;
-                }
-                else
+                } else
                 {
                     claim.removeSurfaceFluids(null);
-                    this.getPlugin().getDataStore().deleteClaim(claim, true, true);
+                    getPlugin().getDataStore().deleteClaim(claim, true, true);
 
                     //if in a creative mode world, /restorenature the claim
                     if (getPlugin().creativeRulesApply(claim.getLesserBoundaryCorner()) || getPlugin().getPluginConfig().getClaimConfiguration().getRestorationConfiguration().isEnabled())
@@ -55,15 +54,14 @@ public class DeleteClaimCommand extends BaseCommand implements PlayerCommandExec
                     }
 
                     GriefPrevention.sendMessage(player, TextMode.Success, Messages.DeleteSuccess);
-                    GriefPrevention.AddLogEntry(player.getName() + " deleted " + claim.getOwnerName() + "'s claim at " + GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()), CustomLogEntryTypes.AdminActivity);
+                    GriefPrevention.AddLogEntry(player.getName() + " deleted " + claim.getOwnerName() + "'s claim at " + GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()), LogType.ADMIN);
 
                     //revert any current visualization
                     playerData.setVisibleBoundaries(null);
 
                     playerData.warnedAboutMajorDeletion = false;
                 }
-            }
-            else
+            } else
             {
                 GriefPrevention.sendMessage(player, TextMode.Err, Messages.CantDeleteAdminClaim);
             }

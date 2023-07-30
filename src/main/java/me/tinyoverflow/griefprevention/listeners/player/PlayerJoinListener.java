@@ -2,6 +2,7 @@ package me.tinyoverflow.griefprevention.listeners.player;
 
 import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import me.tinyoverflow.griefprevention.tasks.WelcomeTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -68,7 +69,7 @@ public class PlayerJoinListener implements Listener
                 {
                     if (player.getPortalCooldown() > 8 && player.hasMetadata("GP_PORTALRESCUE"))
                     {
-                        GriefPrevention.AddLogEntry("Rescued " + player.getName() + " from a nether portal.\nTeleported from " + player.getLocation() + " to " + player.getMetadata("GP_PORTALRESCUE").get(0).value().toString(), CustomLogEntryTypes.Debug);
+                        GriefPrevention.AddLogEntry("Rescued " + player.getName() + " from a nether portal.\nTeleported from " + player.getLocation() + " to " + player.getMetadata("GP_PORTALRESCUE").get(0).value().toString(), LogType.DEBUG);
                         player.teleport((Location) player.getMetadata("GP_PORTALRESCUE").get(0).value());
                         player.removeMetadata("GP_PORTALRESCUE", plugin);
                     }

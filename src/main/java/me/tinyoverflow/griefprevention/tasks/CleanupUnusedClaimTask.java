@@ -19,10 +19,10 @@
 package me.tinyoverflow.griefprevention.tasks;
 
 import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.events.ClaimExpirationEvent;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
@@ -74,7 +74,7 @@ class CleanupUnusedClaimTask implements Runnable
                     GriefPrevention.instance.restoreClaim(claim, 0);
                 }
 
-                GriefPrevention.AddLogEntry(" " + claim.getOwnerName() + "'s new player claim expired.", CustomLogEntryTypes.AdminActivity);
+                GriefPrevention.AddLogEntry(" " + claim.getOwnerName() + "'s new player claim expired.", LogType.ADMIN);
             }
         }
 
@@ -93,9 +93,9 @@ class CleanupUnusedClaimTask implements Runnable
 
                 //delete them
                 GriefPrevention.instance.dataStore.deleteClaimsForPlayer(claim.ownerID, true);
-                GriefPrevention.AddLogEntry(" All of " + claim.getOwnerName() + "'s claims have expired.", CustomLogEntryTypes.AdminActivity);
-                GriefPrevention.AddLogEntry("earliestPermissibleLastLogin#getTime: " + earliestPermissibleLastLogin.getTime(), CustomLogEntryTypes.Debug, true);
-                GriefPrevention.AddLogEntry("ownerInfo#getLastPlayed: " + ownerInfo.getLastPlayed(), CustomLogEntryTypes.Debug, true);
+                GriefPrevention.AddLogEntry(" All of " + claim.getOwnerName() + "'s claims have expired.", LogType.ADMIN);
+                GriefPrevention.AddLogEntry("earliestPermissibleLastLogin#getTime: " + earliestPermissibleLastLogin.getTime(), LogType.DEBUG, true);
+                GriefPrevention.AddLogEntry("ownerInfo#getLastPlayed: " + ownerInfo.getLastPlayed(), LogType.DEBUG, true);
 
                 for (Claim claim : claims)
                 {
@@ -106,8 +106,7 @@ class CleanupUnusedClaimTask implements Runnable
                     }
                 }
             }
-        }
-        else if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpirationConfiguration().unusedClaimDays > 0 && GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()))
+        } else if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpirationConfiguration().unusedClaimDays > 0 && GriefPrevention.instance.creativeRulesApply(claim.getLesserBoundaryCorner()))
         {
             //avoid scanning large claims and administrative claims
             if (claim.isAdminClaim() || claim.getWidth() > 25 || claim.getHeight() > 25) return;
@@ -128,7 +127,7 @@ class CleanupUnusedClaimTask implements Runnable
                     if (expireEventCanceled())
                         return;
                     GriefPrevention.instance.dataStore.deleteClaim(claim, true, true);
-                    GriefPrevention.AddLogEntry("Removed " + claim.getOwnerName() + "'s unused claim @ " + GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()), CustomLogEntryTypes.AdminActivity);
+                    GriefPrevention.AddLogEntry("Removed " + claim.getOwnerName() + "'s unused claim @ " + GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()), LogType.ADMIN);
 
                     //restore the claim area to natural state
                     GriefPrevention.instance.restoreClaim(claim, 0);
@@ -140,7 +139,7 @@ class CleanupUnusedClaimTask implements Runnable
     public boolean expireEventCanceled()
     {
         //see if any other plugins don't want this claim deleted
-        ClaimExpirationEvent event = new ClaimExpirationEvent(this.claim);
+        ClaimExpirationEvent event = new ClaimExpirationEvent(claim);
         Bukkit.getPluginManager().callEvent(event);
         return event.isCancelled();
     }

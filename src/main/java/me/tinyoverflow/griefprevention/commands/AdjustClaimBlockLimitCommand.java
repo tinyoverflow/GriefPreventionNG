@@ -6,11 +6,11 @@ import dev.jorel.commandapi.arguments.OfflinePlayerArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.Messages;
 import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -24,7 +24,7 @@ public class AdjustClaimBlockLimitCommand extends BaseCommand implements PlayerC
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.adjustclaimblocklimit")
                 .withArguments(new OfflinePlayerArgument("target"))
                 .withArguments(new IntegerArgument("limit", 0))
@@ -36,18 +36,19 @@ public class AdjustClaimBlockLimitCommand extends BaseCommand implements PlayerC
     {
         int limit = (int) commandArguments.get("limit");
         OfflinePlayer targetPlayer = (OfflinePlayer) commandArguments.get("target");
-        if (targetPlayer == null) {
+        if (targetPlayer == null)
+        {
             GriefPrevention.sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
             return;
         }
 
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(targetPlayer.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(targetPlayer.getUniqueId());
         playerData.setAccruedClaimBlocksLimit(limit);
-        this.getPlugin().getDataStore().savePlayerData(targetPlayer.getUniqueId(), playerData);
+        getPlugin().getDataStore().savePlayerData(targetPlayer.getUniqueId(), playerData);
 
         GriefPrevention.sendMessage(player, TextMode.Success, Messages.AdjustLimitSuccess, targetPlayer.getName(), String.valueOf(limit));
         if (player != null)
-            GriefPrevention.AddLogEntry(player.getName() + " adjusted " + targetPlayer.getName() + "'s max accrued claim block limit to " + limit + ".", CustomLogEntryTypes.AdminActivity);
+            GriefPrevention.AddLogEntry(player.getName() + " adjusted " + targetPlayer.getName() + "'s max accrued claim block limit to " + limit + ".", LogType.ADMIN);
 
     }
 }

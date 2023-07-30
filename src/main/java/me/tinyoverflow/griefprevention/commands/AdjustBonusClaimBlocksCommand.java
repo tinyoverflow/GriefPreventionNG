@@ -6,7 +6,11 @@ import dev.jorel.commandapi.arguments.OfflinePlayerArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.*;
+import me.tinyoverflow.griefprevention.GriefPrevention;
+import me.tinyoverflow.griefprevention.Messages;
+import me.tinyoverflow.griefprevention.PlayerData;
+import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -20,7 +24,7 @@ public class AdjustBonusClaimBlocksCommand extends BaseCommand implements Player
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.adjustbonusclaimblocks")
                 .withArguments(new OfflinePlayerArgument("target"))
                 .withArguments(new IntegerArgument("limit", 0))
@@ -40,12 +44,12 @@ public class AdjustBonusClaimBlocksCommand extends BaseCommand implements Player
         }
 
         //give blocks to player
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(targetPlayer.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(targetPlayer.getUniqueId());
         playerData.setBonusClaimBlocks(playerData.getBonusClaimBlocks() + adjustment);
-        this.getPlugin().getDataStore().savePlayerData(targetPlayer.getUniqueId(), playerData);
+        getPlugin().getDataStore().savePlayerData(targetPlayer.getUniqueId(), playerData);
 
         GriefPrevention.sendMessage(player, TextMode.Success, Messages.AdjustBlocksSuccess, targetPlayer.getName(), String.valueOf(adjustment), String.valueOf(playerData.getBonusClaimBlocks()));
         if (player != null)
-            GriefPrevention.AddLogEntry(player.getName() + " adjusted " + targetPlayer.getName() + "'s bonus claim blocks by " + adjustment + ".", CustomLogEntryTypes.AdminActivity);
+            GriefPrevention.AddLogEntry(player.getName() + " adjusted " + targetPlayer.getName() + "'s bonus claim blocks by " + adjustment + ".", LogType.ADMIN);
     }
 }

@@ -18,11 +18,11 @@
 
 package me.tinyoverflow.griefprevention.tasks;
 
-import me.tinyoverflow.griefprevention.CustomLogEntryTypes;
-import me.tinyoverflow.griefprevention.datastore.DataStore;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.PlayerData;
+import me.tinyoverflow.griefprevention.datastore.DataStore;
 import me.tinyoverflow.griefprevention.events.AccrueClaimBlocksEvent;
+import me.tinyoverflow.griefprevention.logger.LogType;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
@@ -42,14 +42,14 @@ public class DeliverClaimBlocksTask implements Runnable
         this.instance = instance;
 
         int idleThreshold = instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().accrued.idleDistanceThreshold;
-        this.idleThresholdSquared = idleThreshold * idleThreshold;
+        idleThresholdSquared = idleThreshold * idleThreshold;
     }
 
     @Override
     public void run()
     {
         //if no player specified, this task will create a player-specific task for each online player, scheduled one tick apart
-        if (this.player == null)
+        if (player == null)
         {
             @SuppressWarnings("unchecked")
             Collection<Player> players = (Collection<Player>) GriefPrevention.instance.getServer().getOnlinePlayers();
@@ -65,7 +65,7 @@ public class DeliverClaimBlocksTask implements Runnable
         }
 
         //deliver claim blocks to the specified player
-        if (!this.player.isOnline())
+        if (!player.isOnline())
         {
             return; //player is not online to receive claim blocks
         }
@@ -99,7 +99,7 @@ public class DeliverClaimBlocksTask implements Runnable
             {
                 if (instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().accrued.idleRatio <= 0)
                 {
-                    GriefPrevention.AddLogEntry(player.getName() + " wasn't active enough to accrue claim blocks this round.", CustomLogEntryTypes.Debug, true);
+                    GriefPrevention.AddLogEntry(player.getName() + " wasn't active enough to accrue claim blocks this round.", LogType.DEBUG, true);
                     return; //idle accrual percentage is disabled
                 }
 
@@ -111,7 +111,7 @@ public class DeliverClaimBlocksTask implements Runnable
             instance.getServer().getPluginManager().callEvent(event);
             if (event.isCancelled())
             {
-                GriefPrevention.AddLogEntry(player.getName() + " claim block delivery was canceled by another plugin.", CustomLogEntryTypes.Debug, true);
+                GriefPrevention.AddLogEntry(player.getName() + " claim block delivery was canceled by another plugin.", LogType.DEBUG, true);
                 return; //event was cancelled
             }
 
@@ -119,7 +119,7 @@ public class DeliverClaimBlocksTask implements Runnable
             accrualRate = event.getBlocksToAccrue();
             if (accrualRate < 0) accrualRate = 0;
             playerData.accrueBlocks(accrualRate);
-            GriefPrevention.AddLogEntry("Delivering " + event.getBlocksToAccrue() + " blocks to " + player.getName(), CustomLogEntryTypes.Debug, true);
+            GriefPrevention.AddLogEntry("Delivering " + event.getBlocksToAccrue() + " blocks to " + player.getName(), LogType.DEBUG, true);
 
             //intentionally NOT saving data here to reduce overall secondary storage access frequency
             //many other operations will cause this player's data to save, including his eventual logout
