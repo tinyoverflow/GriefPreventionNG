@@ -5,7 +5,7 @@ import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
 import me.tinyoverflow.griefprevention.*;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.entity.Player;
 
 public class DeleteClaimCommand extends BaseCommand implements PlayerCommandExecutor
@@ -31,8 +31,9 @@ public class DeleteClaimCommand extends BaseCommand implements PlayerCommandExec
 
         if (claim == null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.DeleteClaimMissing);
-        } else
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.DeleteClaimMissing);
+        }
+        else
         {
             //deleting an admin claim additionally requires the adminclaims permission
             if (!claim.isAdminClaim() || player.hasPermission("griefprevention.adminclaims"))
@@ -40,30 +41,37 @@ public class DeleteClaimCommand extends BaseCommand implements PlayerCommandExec
                 PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
                 if (claim.children.size() > 0 && !playerData.warnedAboutMajorDeletion)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Warn, Messages.DeletionSubdivisionWarning);
+                    GriefPrevention.sendMessage(player, TextMode.WARNING, Messages.DeletionSubdivisionWarning);
                     playerData.warnedAboutMajorDeletion = true;
-                } else
+                }
+                else
                 {
                     claim.removeSurfaceFluids(null);
                     getPlugin().getDataStore().deleteClaim(claim, true, true);
 
                     //if in a creative mode world, /restorenature the claim
-                    if (getPlugin().creativeRulesApply(claim.getLesserBoundaryCorner()) || getPlugin().getPluginConfig().getClaimConfiguration().getRestorationConfiguration().isEnabled())
+                    if (getPlugin().creativeRulesApply(claim.getLesserBoundaryCorner()) ||
+                        getPlugin().getPluginConfig().getClaimConfiguration().getRestorationConfiguration().isEnabled())
                     {
                         getPlugin().restoreClaim(claim, 0);
                     }
 
-                    GriefPrevention.sendMessage(player, TextMode.Success, Messages.DeleteSuccess);
-                    GriefPrevention.AddLogEntry(player.getName() + " deleted " + claim.getOwnerName() + "'s claim at " + GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()), LogType.ADMIN);
+                    GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.DeleteSuccess);
+                    GriefPrevention.AddLogEntry(
+                            player.getName() + " deleted " + claim.getOwnerName() + "'s claim at " +
+                            GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()),
+                            ActivityType.ADMIN
+                    );
 
                     //revert any current visualization
                     playerData.setVisibleBoundaries(null);
 
                     playerData.warnedAboutMajorDeletion = false;
                 }
-            } else
+            }
+            else
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.CantDeleteAdminClaim);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.CantDeleteAdminClaim);
             }
         }
     }

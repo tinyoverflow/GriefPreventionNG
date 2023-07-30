@@ -5,12 +5,7 @@ import dev.jorel.commandapi.arguments.OfflinePlayerArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.ClaimPermission;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.events.TrustChangedEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -26,7 +21,7 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.untrust")
                 .withArguments(new OfflinePlayerArgument("target"))
                 .executesPlayer(this);
@@ -36,7 +31,7 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
     public void run(Player player, CommandArguments arguments) throws WrapperCommandSyntaxException
     {
         //determine which claim the player is standing in
-        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
+        Claim claim = getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
 
         //determine whether a single player or clearing permissions entirely
         boolean clearPermissions = false;
@@ -57,7 +52,7 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
         //if no claim here, apply changes to all his claims
         if (claim == null)
         {
-            PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+            PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
 
             String idToDrop = otherPlayer.getUniqueId().toString();
 
@@ -71,7 +66,8 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
             }
 
             //dropping permissions
-            for (Claim targetClaim : event.getClaims()) {
+            for (Claim targetClaim : event.getClaims())
+            {
                 claim = targetClaim;
 
                 //if untrusting "all" drop all permissions
@@ -88,7 +84,7 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
                 }
 
                 //save changes
-                this.getPlugin().getDataStore().saveClaim(claim);
+                getPlugin().getDataStore().saveClaim(claim);
             }
 
             //beautify for output
@@ -100,19 +96,23 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
             //confirmation message
             if (!clearPermissions)
             {
-                GriefPrevention.sendMessage(player, TextMode.Success, Messages.UntrustIndividualAllClaims, otherPlayer.getName());
+                GriefPrevention.sendMessage(
+                        player,
+                        TextMode.SUCCESS,
+                        Messages.UntrustIndividualAllClaims,
+                        otherPlayer.getName()
+                );
             }
             else
             {
-                GriefPrevention.sendMessage(player, TextMode.Success, Messages.UntrustEveryoneAllClaims);
+                GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.UntrustEveryoneAllClaims);
             }
         }
 
         //otherwise, apply changes to only this claim
         else if (claim.checkPermission(player, ClaimPermission.Manage, null) != null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.NoPermissionTrust, claim.getOwnerName());
-            return;
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.NoPermissionTrust, claim.getOwnerName());
         }
         else
         {
@@ -122,7 +122,7 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
                 //requires owner
                 if (claim.checkPermission(player, ClaimPermission.Edit, null) != null)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.UntrustAllOwnerOnly);
+                    GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.UntrustAllOwnerOnly);
                     return;
                 }
 
@@ -136,7 +136,7 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
                 }
 
                 event.getClaims().forEach(Claim::clearPermissions);
-                GriefPrevention.sendMessage(player, TextMode.Success, Messages.ClearPermissionsOneClaim);
+                GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.ClearPermissionsOneClaim);
             }
 
             //otherwise individual permission drop
@@ -145,9 +145,15 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
                 String idToDrop = otherPlayer.getUniqueId().toString();
 
                 boolean targetIsManager = claim.managers.contains(idToDrop);
-                if (targetIsManager && claim.checkPermission(player, ClaimPermission.Edit, null) != null)  //only claim owners can untrust managers
+                if (targetIsManager && claim.checkPermission(player, ClaimPermission.Edit, null) !=
+                                       null)  //only claim owners can untrust managers
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.ManagersDontUntrustManagers, claim.getOwnerName());
+                    GriefPrevention.sendMessage(
+                            player,
+                            TextMode.ERROR,
+                            Messages.ManagersDontUntrustManagers,
+                            claim.getOwnerName()
+                    );
                     return;
                 }
                 else
@@ -169,12 +175,17 @@ public class UntrustCommand extends BaseCommand implements PlayerCommandExecutor
                         args[0] = "the public";
                     }*/
 
-                    GriefPrevention.sendMessage(player, TextMode.Success, Messages.UntrustIndividualSingleClaim, otherPlayer.getName());
+                    GriefPrevention.sendMessage(
+                            player,
+                            TextMode.SUCCESS,
+                            Messages.UntrustIndividualSingleClaim,
+                            otherPlayer.getName()
+                    );
                 }
             }
 
             //save changes
-            this.getPlugin().getDataStore().saveClaim(claim);
+            getPlugin().getDataStore().saveClaim(claim);
         }
     }
 }

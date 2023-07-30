@@ -2,7 +2,7 @@ package me.tinyoverflow.griefprevention.listeners.player;
 
 import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import me.tinyoverflow.griefprevention.tasks.WelcomeTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -47,10 +47,16 @@ public class PlayerJoinListener implements Listener
             plugin.checkPvpProtectionNeeded(player);
 
             //if in survival claims mode, send a message about the claim basics video (except for admins - assumed experts)
-            if (plugin.getPluginConfig().getClaimConfiguration().getWorldMode(player.getWorld()) == ClaimsMode.Survival && !player.hasPermission("griefprevention.adminclaims") && dataStore.claims.size() > 10)
+            if (plugin.getPluginConfig().getClaimConfiguration().getWorldMode(player.getWorld()) ==
+                ClaimsMode.Survival && !player.hasPermission("griefprevention.adminclaims") &&
+                dataStore.claims.size() > 10)
             {
                 WelcomeTask task = new WelcomeTask(player);
-                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, task, plugin.getPluginConfig().getClaimConfiguration().getManualConfiguration().delay * 20L);
+                Bukkit.getScheduler().scheduleSyncDelayedTask(
+                        plugin,
+                        task,
+                        plugin.getPluginConfig().getClaimConfiguration().getManualConfiguration().delay * 20L
+                );
             }
         }
 
@@ -61,7 +67,7 @@ public class PlayerJoinListener implements Listener
         if (player.hasMetadata("GP_PORTALRESCUE"))
         {
             //If so, let him know and rescue him in 10 seconds. If he is in fact not trapped, hopefully chunks will have loaded by this time so he can walk out.
-            GriefPrevention.sendMessage(player, TextMode.Info, Messages.NetherPortalTrapDetectionMessage, 20L);
+            GriefPrevention.sendMessage(player, TextMode.INFO, Messages.NetherPortalTrapDetectionMessage, 20L);
             new BukkitRunnable()
             {
                 @Override
@@ -69,7 +75,12 @@ public class PlayerJoinListener implements Listener
                 {
                     if (player.getPortalCooldown() > 8 && player.hasMetadata("GP_PORTALRESCUE"))
                     {
-                        GriefPrevention.AddLogEntry("Rescued " + player.getName() + " from a nether portal.\nTeleported from " + player.getLocation() + " to " + player.getMetadata("GP_PORTALRESCUE").get(0).value().toString(), LogType.DEBUG);
+                        GriefPrevention.AddLogEntry(
+                                "Rescued " + player.getName() + " from a nether portal.\nTeleported from " +
+                                player.getLocation() + " to " +
+                                player.getMetadata("GP_PORTALRESCUE").get(0).value().toString(),
+                                ActivityType.DEBUG
+                        );
                         player.teleport((Location) player.getMetadata("GP_PORTALRESCUE").get(0).value());
                         player.removeMetadata("GP_PORTALRESCUE", plugin);
                     }

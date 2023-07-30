@@ -6,7 +6,7 @@ import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.ConsoleCommandExecutor;
 import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.World;
 import org.bukkit.command.ConsoleCommandSender;
 
@@ -33,6 +33,6 @@ public class DeleteUserClaimsInWorldCommand extends BaseCommand implements Conso
 
         //delete all USER claims in that world
         getPlugin().getDataStore().deleteClaimsInWorld(world, false);
-        GriefPrevention.AddLogEntry("Deleted all user claims in world: " + world.getName() + ".", LogType.ADMIN);
+        GriefPrevention.AddLogEntry("Deleted all user claims in world: " + world.getName() + ".", ActivityType.ADMIN);
     }
 }

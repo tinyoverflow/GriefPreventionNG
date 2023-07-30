@@ -40,22 +40,22 @@ public class PlayerInteractEntityListener implements Listener
 
         //allow horse protection to be overridden to allow management from other plugins
         if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectHorses &&
-                entity instanceof AbstractHorse)
+            entity instanceof AbstractHorse)
         {
             return;
         }
         if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys &&
-                entity instanceof Donkey)
+            entity instanceof Donkey)
         {
             return;
         }
         if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys &&
-                entity instanceof Mule)
+            entity instanceof Mule)
         {
             return;
         }
         if (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectLlamas &&
-                entity instanceof Llama)
+            entity instanceof Llama)
         {
             return;
         }
@@ -79,13 +79,14 @@ public class PlayerInteractEntityListener implements Listener
                         {
                             tameable.setOwner(playerData.petGiveawayRecipient);
                             playerData.petGiveawayRecipient = null;
-                            GriefPrevention.sendMessage(player, TextMode.Success, Messages.PetGiveawayConfirmation);
+                            GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.PetGiveawayConfirmation);
                             event.setCancelled(true);
                         }
 
                         return;
                     }
-                    if (!plugin.pvpRulesApply(entity.getLocation().getWorld()) || plugin.getPluginConfig().getPvpConfiguration().isProtectPets())
+                    if (!plugin.pvpRulesApply(entity.getLocation().getWorld()) ||
+                        plugin.getPluginConfig().getPvpConfiguration().isProtectPets())
                     {
                         //otherwise disallow
                         OfflinePlayer owner = plugin.getServer().getOfflinePlayer(ownerID);
@@ -96,12 +97,13 @@ public class PlayerInteractEntityListener implements Listener
                         {
                             message += "  " + plugin.dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
                         }
-                        GriefPrevention.sendMessage(player, TextMode.Err, message);
+                        GriefPrevention.sendMessage(player, TextMode.ERROR, message);
                         event.setCancelled(true);
                         return;
                     }
                 }
-            } else  //world repair code for a now-fixed GP bug //TODO: necessary anymore?
+            }
+            else  //world repair code for a now-fixed GP bug //TODO: necessary anymore?
             {
                 //ensure this entity can be tamed by players
                 tameable.setOwner(null);
@@ -118,7 +120,7 @@ public class PlayerInteractEntityListener implements Listener
             String noBuildReason = plugin.allowBuild(player, entity.getLocation(), Material.ITEM_FRAME);
             if (noBuildReason != null)
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, noBuildReason);
                 event.setCancelled(true);
                 return;
             }
@@ -134,7 +136,7 @@ public class PlayerInteractEntityListener implements Listener
             String noEntitiesReason = claim.allowMoreEntities(false);
             if (noEntitiesReason != null)
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, noEntitiesReason);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, noEntitiesReason);
                 event.setCancelled(true);
                 return;
             }
@@ -148,14 +150,14 @@ public class PlayerInteractEntityListener implements Listener
         {
             if (playerData.siegeData != null)
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.SiegeNoContainers);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.SiegeNoContainers);
                 event.setCancelled(true);
                 return;
             }
 
             if (playerData.inPvpCombat())
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.PvPNoContainers);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.PvPNoContainers);
                 event.setCancelled(true);
                 return;
             }
@@ -163,7 +165,7 @@ public class PlayerInteractEntityListener implements Listener
 
         //if the entity is a vehicle and we're preventing theft in claims
         if (plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() &&
-                entity instanceof Vehicle)
+            entity instanceof Vehicle)
         {
             //if the entity is in a claim
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, null);
@@ -179,7 +181,7 @@ public class PlayerInteractEntityListener implements Listener
                     );
                     if (noContainersReason != null)
                     {
-                        GriefPrevention.sendMessage(player, TextMode.Err, noContainersReason.get());
+                        GriefPrevention.sendMessage(player, TextMode.ERROR, noContainersReason.get());
                         event.setCancelled(true);
                         return;
                     }
@@ -189,8 +191,8 @@ public class PlayerInteractEntityListener implements Listener
 
         //if the entity is an animal, apply container rules
         if ((plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() &&
-                (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER &&
-                plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventVillagerTradesEnabled()))
+             (entity instanceof Animals || entity instanceof Fish)) || (entity.getType() == EntityType.VILLAGER &&
+                                                                        plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventVillagerTradesEnabled()))
         {
             //if the entity is in a claim
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, null);
@@ -214,7 +216,7 @@ public class PlayerInteractEntityListener implements Listener
                 );
                 if (noContainersReason != null)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, noContainersReason.get());
+                    GriefPrevention.sendMessage(player, TextMode.ERROR, noContainersReason.get());
                     event.setCancelled(true);
                     return;
                 }
@@ -225,7 +227,7 @@ public class PlayerInteractEntityListener implements Listener
 
         //if preventing theft, prevent leashing claimed creatures
         if (plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isLockContainersEnabled() &&
-                entity instanceof Creature && itemInHand.getType() == Material.LEAD)
+            entity instanceof Creature && itemInHand.getType() == Material.LEAD)
         {
             Claim claim = dataStore.getClaimAt(entity.getLocation(), false, playerData.lastClaim);
             if (claim != null)
@@ -234,7 +236,7 @@ public class PlayerInteractEntityListener implements Listener
                 if (failureReason != null)
                 {
                     event.setCancelled(true);
-                    GriefPrevention.sendMessage(player, TextMode.Err, failureReason.get());
+                    GriefPrevention.sendMessage(player, TextMode.ERROR, failureReason.get());
                     return;
                 }
             }

@@ -6,11 +6,7 @@ import dev.jorel.commandapi.arguments.StringArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import org.bukkit.entity.Player;
 
 public class AbandonAllClaimsCommand extends BaseCommand implements PlayerCommandExecutor
@@ -25,7 +21,8 @@ public class AbandonAllClaimsCommand extends BaseCommand implements PlayerComman
     {
         return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.abandonallclaims")
-                .withOptionalArguments(new StringArgument("confirm").replaceSuggestions(ArgumentSuggestions.strings("confirm")))
+                .withOptionalArguments(new StringArgument("confirm").replaceSuggestions(ArgumentSuggestions.strings(
+                        "confirm")))
                 .executesPlayer(this);
     }
 
@@ -34,7 +31,7 @@ public class AbandonAllClaimsCommand extends BaseCommand implements PlayerComman
     {
         if (commandArguments.getOptional("confirm").isEmpty())
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.ConfirmAbandonAllClaims);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.ConfirmAbandonAllClaims);
             return;
         }
 
@@ -45,7 +42,7 @@ public class AbandonAllClaimsCommand extends BaseCommand implements PlayerComman
         //check count
         if (originalClaimCount == 0)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.YouHaveNoClaims);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.YouHaveNoClaims);
             return;
         }
 
@@ -55,17 +52,22 @@ public class AbandonAllClaimsCommand extends BaseCommand implements PlayerComman
             //adjust claim blocks
             for (Claim claim : playerData.getClaims())
             {
-                playerData.setAccruedClaimBlocks(playerData.getAccruedClaimBlocks() - (int) Math.ceil((claim.getArea() * (1 - abandonReturnRatio))));
+                playerData.setAccruedClaimBlocks(playerData.getAccruedClaimBlocks() -
+                                                 (int) Math.ceil((claim.getArea() * (1 - abandonReturnRatio))));
             }
         }
-
 
         //delete them
         getPlugin().getDataStore().deleteClaimsForPlayer(player.getUniqueId(), false);
 
         //inform the player
         int remainingBlocks = playerData.getRemainingClaimBlocks();
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.SuccessfulAbandon, String.valueOf(remainingBlocks));
+        GriefPrevention.sendMessage(
+                player,
+                TextMode.SUCCESS,
+                Messages.SuccessfulAbandon,
+                String.valueOf(remainingBlocks)
+        );
 
         //revert any current visualization
         playerData.setVisibleBoundaries(null);

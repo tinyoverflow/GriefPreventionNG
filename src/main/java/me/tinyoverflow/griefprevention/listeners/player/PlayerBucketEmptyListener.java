@@ -2,7 +2,7 @@ package me.tinyoverflow.griefprevention.listeners.player;
 
 import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -43,7 +43,8 @@ public class PlayerBucketEmptyListener implements Listener
         // Fixes #1155:
         // Prevents waterlogging blocks placed on a claim's edge.
         // Waterlogging a block affects the clicked block, and NOT the adjacent location relative to it.
-        if (bucketEvent.getBucket() == Material.WATER_BUCKET && bucketEvent.getBlockClicked().getBlockData() instanceof Waterlogged)
+        if (bucketEvent.getBucket() == Material.WATER_BUCKET &&
+            bucketEvent.getBlockClicked().getBlockData() instanceof Waterlogged)
         {
             block = bucketEvent.getBlockClicked();
         }
@@ -52,7 +53,7 @@ public class PlayerBucketEmptyListener implements Listener
         String noBuildReason = plugin.allowBuild(player, block.getLocation(), Material.WATER);
         if (noBuildReason != null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, noBuildReason);
             bucketEvent.setCancelled(true);
             return;
         }
@@ -68,11 +69,12 @@ public class PlayerBucketEmptyListener implements Listener
         //otherwise no wilderness dumping in creative mode worlds
         else if (plugin.creativeRulesApply(block.getLocation()))
         {
-            if (block.getY() >= plugin.getSeaLevel(block.getWorld()) - 5 && !player.hasPermission("griefprevention.lava"))
+            if (block.getY() >= plugin.getSeaLevel(block.getWorld()) - 5 &&
+                !player.hasPermission("griefprevention.lava"))
             {
                 if (bucketEvent.getBucket() == Material.LAVA_BUCKET)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.NoWildernessBuckets);
+                    GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.NoWildernessBuckets);
                     bucketEvent.setCancelled(true);
                     return;
                 }
@@ -89,10 +91,12 @@ public class PlayerBucketEmptyListener implements Listener
                 {
                     Location location = otherPlayer.getLocation();
                     if (!otherPlayer.equals(player) && otherPlayer.getGameMode() == GameMode.SURVIVAL && player.canSee(
-                            otherPlayer) && block.getY() >= location.getBlockY() - 1 && location.distanceSquared(block.getLocation()) < minLavaDistance * minLavaDistance)
+                            otherPlayer) && block.getY() >= location.getBlockY() - 1 &&
+                        location.distanceSquared(block.getLocation()) < minLavaDistance * minLavaDistance)
                     {
-                        GriefPrevention.sendMessage(player,
-                                TextMode.Err,
+                        GriefPrevention.sendMessage(
+                                player,
+                                TextMode.ERROR,
                                 Messages.NoLavaNearOtherPlayer,
                                 "another player"
                         );
@@ -104,7 +108,8 @@ public class PlayerBucketEmptyListener implements Listener
         }
 
         //log any suspicious placements (check sea level, world type, and adjacent blocks)
-        if (block.getY() >= plugin.getSeaLevel(block.getWorld()) - 5 && !player.hasPermission("griefprevention.lava") && block.getWorld().getEnvironment() != World.Environment.NETHER)
+        if (block.getY() >= plugin.getSeaLevel(block.getWorld()) - 5 && !player.hasPermission("griefprevention.lava") &&
+            block.getWorld().getEnvironment() != World.Environment.NETHER)
         {
             //if certain blocks are nearby, it's less suspicious and not worth logging
             Set<Material> exclusionAdjacentTypes = bucketEvent.getBucket() == Material.WATER_BUCKET
@@ -125,8 +130,10 @@ public class PlayerBucketEmptyListener implements Listener
 
             if (makeLogEntry)
             {
-                GriefPrevention.AddLogEntry(player.getName() + " placed suspicious " + bucketEvent.getBucket().name() + " @ " + GriefPrevention.getFriendlyLocationString(
-                        block.getLocation()), LogType.SUSPICIOUS, true);
+                GriefPrevention.AddLogEntry(
+                        player.getName() + " placed suspicious " + bucketEvent.getBucket().name() + " @ " +
+                        GriefPrevention.getFriendlyLocationString(
+                                block.getLocation()), ActivityType.SUSPICIOUS, true);
             }
         }
     }

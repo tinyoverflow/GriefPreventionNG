@@ -9,7 +9,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 
-public class BlockBreakListener implements Listener {
+public class BlockBreakListener implements Listener
+{
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onBlockBreak(BlockBreakEvent breakEvent)
     {
@@ -20,7 +21,7 @@ public class BlockBreakListener implements Listener {
         String noBuildReason = GriefPrevention.instance.allowBreak(player, block, block.getLocation(), breakEvent);
         if (noBuildReason != null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, noBuildReason);
             breakEvent.setCancelled(true);
         }
     }

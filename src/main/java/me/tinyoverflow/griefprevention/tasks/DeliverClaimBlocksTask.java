@@ -22,7 +22,7 @@ import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
 import me.tinyoverflow.griefprevention.events.AccrueClaimBlocksEvent;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
@@ -80,9 +80,9 @@ public class DeliverClaimBlocksTask implements Runnable
         try
         {
             isIdle = player.isInsideVehicle() || player.getLocation().getBlock().isLiquid() ||
-                    !(playerData.lastAfkCheckLocation == null || playerData.lastAfkCheckLocation.distanceSquared(player.getLocation()) > idleThresholdSquared);
-        }
-        catch (IllegalArgumentException ignore) //can't measure distance when to/from are different worlds
+                     !(playerData.lastAfkCheckLocation == null ||
+                       playerData.lastAfkCheckLocation.distanceSquared(player.getLocation()) > idleThresholdSquared);
+        } catch (IllegalArgumentException ignore) //can't measure distance when to/from are different worlds
         {
         }
 
@@ -97,13 +97,20 @@ public class DeliverClaimBlocksTask implements Runnable
             //determine idle accrual rate when idle
             if (isIdle)
             {
-                if (instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().accrued.idleRatio <= 0)
+                if (instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().accrued.idleRatio <=
+                    0)
                 {
-                    GriefPrevention.AddLogEntry(player.getName() + " wasn't active enough to accrue claim blocks this round.", LogType.DEBUG, true);
+                    GriefPrevention.AddLogEntry(
+                            player.getName() + " wasn't active enough to accrue claim blocks this round.",
+                            ActivityType.DEBUG,
+                            true
+                    );
                     return; //idle accrual percentage is disabled
                 }
 
-                accrualRate = (int) (accrualRate * (instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().accrued.idleRatio / 100.0D));
+                accrualRate = (int) (accrualRate *
+                                     (instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().accrued.idleRatio /
+                                      100.0D));
             }
 
             //fire event for addons
@@ -111,7 +118,11 @@ public class DeliverClaimBlocksTask implements Runnable
             instance.getServer().getPluginManager().callEvent(event);
             if (event.isCancelled())
             {
-                GriefPrevention.AddLogEntry(player.getName() + " claim block delivery was canceled by another plugin.", LogType.DEBUG, true);
+                GriefPrevention.AddLogEntry(
+                        player.getName() + " claim block delivery was canceled by another plugin.",
+                        ActivityType.DEBUG,
+                        true
+                );
                 return; //event was cancelled
             }
 
@@ -119,13 +130,16 @@ public class DeliverClaimBlocksTask implements Runnable
             accrualRate = event.getBlocksToAccrue();
             if (accrualRate < 0) accrualRate = 0;
             playerData.accrueBlocks(accrualRate);
-            GriefPrevention.AddLogEntry("Delivering " + event.getBlocksToAccrue() + " blocks to " + player.getName(), LogType.DEBUG, true);
+            GriefPrevention.AddLogEntry(
+                    "Delivering " + event.getBlocksToAccrue() + " blocks to " + player.getName(),
+                    ActivityType.DEBUG,
+                    true
+            );
 
             //intentionally NOT saving data here to reduce overall secondary storage access frequency
             //many other operations will cause this player's data to save, including his eventual logout
             //dataStore.savePlayerData(player.getUniqueIdentifier(), playerData);
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             GriefPrevention.AddLogEntry("Problem delivering claim blocks to player " + player.getName() + ":");
             e.printStackTrace();

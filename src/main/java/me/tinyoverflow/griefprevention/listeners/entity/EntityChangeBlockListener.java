@@ -35,11 +35,11 @@ public class EntityChangeBlockListener implements Listener
     public static boolean isBlockSourceInClaim(@Nullable ProjectileSource projectileSource, @Nullable Claim claim)
     {
         return projectileSource instanceof BlockProjectileSource &&
-                GriefPrevention.instance.getDataStore().getClaimAt(
-                        ((BlockProjectileSource) projectileSource).getBlock().getLocation(),
-                        false,
-                        claim
-                ) == claim;
+               GriefPrevention.instance.getDataStore().getClaimAt(
+                       ((BlockProjectileSource) projectileSource).getBlock().getLocation(),
+                       false,
+                       claim
+               ) == claim;
     }
 
     //when an entity picks up an item
@@ -64,22 +64,25 @@ public class EntityChangeBlockListener implements Listener
     public void onEntityChangeBlock(EntityChangeBlockEvent event)
     {
         if (plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventEndermenBlockMovingEnabled()
-                && event.getEntityType() == EntityType.ENDERMAN)
+            && event.getEntityType() == EntityType.ENDERMAN)
         {
             event.setCancelled(true);
-        } else if (
+        }
+        else if (
                 plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventSilverfishBlockBreakingEnabled()
-                        && event.getEntityType() == EntityType.SILVERFISH)
+                && event.getEntityType() == EntityType.SILVERFISH)
         {
             event.setCancelled(true);
-        } else if (
+        }
+        else if (
                 plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventRabbitsEatingCropsEnabled()
-                        && event.getEntityType() == EntityType.RABBIT)
+                && event.getEntityType() == EntityType.RABBIT)
         {
             event.setCancelled(true);
-        } else if (
+        }
+        else if (
                 plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventRavagerDamageEnabled()
-                        && event.getEntityType() == EntityType.RAVAGER)
+                && event.getEntityType() == EntityType.RAVAGER)
         {
             event.setCancelled(true);
         }
@@ -93,7 +96,8 @@ public class EntityChangeBlockListener implements Listener
         if (event.getEntity() instanceof Projectile)
         {
             handleProjectileChangeBlock(event, (Projectile) event.getEntity());
-        } else if (event.getEntityType() == EntityType.WITHER)
+        }
+        else if (event.getEntityType() == EntityType.WITHER)
         {
             Claim claim = dataStore.getClaimAt(event.getBlock().getLocation(), false, null);
             if (claim == null || !claim.areExplosivesAllowed || !plugin.config_blockClaimExplosions)
@@ -108,7 +112,8 @@ public class EntityChangeBlockListener implements Listener
             if (event.getEntityType() != EntityType.PLAYER)
             {
                 event.setCancelled(true);
-            } else
+            }
+            else
             {
                 Player player = (Player) event.getEntity();
                 Block block = event.getBlock();
@@ -163,10 +168,11 @@ public class EntityChangeBlockListener implements Listener
 
                 //if did not fall straight down
                 if (originalLocation.getBlockX() != newLocation.getBlockX()
-                        || originalLocation.getBlockZ() != newLocation.getBlockZ())
+                    || originalLocation.getBlockZ() != newLocation.getBlockZ())
                 {
                     //in creative mode worlds, never form the block
-                    if (plugin.getPluginConfig().getClaimConfiguration().getWorldMode(newLocation.getWorld()) == ClaimsMode.Creative)
+                    if (plugin.getPluginConfig().getClaimConfiguration().getWorldMode(newLocation.getWorld()) ==
+                        ClaimsMode.Creative)
                     {
                         event.setCancelled(true);
                         entity.remove();
@@ -207,7 +213,8 @@ public class EntityChangeBlockListener implements Listener
         {
             // No modification in the wilderness in creative mode.
             if (plugin.creativeRulesApply(block.getLocation())
-                    || plugin.getPluginConfig().getClaimConfiguration().getWorldMode(block.getWorld()) == ClaimsMode.SurvivalRequiringClaims)
+                || plugin.getPluginConfig().getClaimConfiguration().getWorldMode(block.getWorld()) ==
+                   ClaimsMode.SurvivalRequiringClaims)
             {
                 event.setCancelled(true);
                 return;
@@ -228,7 +235,7 @@ public class EntityChangeBlockListener implements Listener
             {
                 // Unlike entities where arrows rebound and may cause multiple alerts,
                 // projectiles lodged in blocks do not continuously re-trigger events.
-                GriefPrevention.sendMessage((Player) shooter, TextMode.Err, denial.get());
+                GriefPrevention.sendMessage((Player) shooter, TextMode.ERROR, denial.get());
                 event.setCancelled(true);
             }
 
@@ -249,7 +256,8 @@ public class EntityChangeBlockListener implements Listener
         if (event.getEntity() instanceof Player localPlayer)
         {
             player = localPlayer;
-        } else if (event.getEntity() instanceof Mob mob)
+        }
+        else if (event.getEntity() instanceof Mob mob)
         {
             // Handle players leading packs of zombies.
             if (mob.getTarget() instanceof Player localPlayer)
@@ -267,7 +275,8 @@ public class EntityChangeBlockListener implements Listener
             {
                 event.setCancelled(true);
             }
-        } else
+        }
+        else
         {
             // Unhandled case, i.e. skeletons on fire due to sunlight lose target to search for cover.
             // Possible to handle by tagging entities during combustion, but likely not worth it.

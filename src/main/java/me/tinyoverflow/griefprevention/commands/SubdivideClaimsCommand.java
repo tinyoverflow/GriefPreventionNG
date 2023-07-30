@@ -18,7 +18,7 @@ public class SubdivideClaimsCommand extends BaseCommand implements PlayerCommand
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.subdivideclaims")
                 .executesPlayer(this);
     }
@@ -26,10 +26,15 @@ public class SubdivideClaimsCommand extends BaseCommand implements PlayerCommand
     @Override
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
         playerData.shovelMode = ShovelMode.Subdivide;
         playerData.claimSubdividing = null;
-        GriefPrevention.sendMessage(player, TextMode.Instr, Messages.SubdivisionMode);
-        GriefPrevention.sendMessage(player, TextMode.Instr, Messages.SubdivisionVideo2, DataStore.SUBDIVISION_VIDEO_URL);
+        GriefPrevention.sendMessage(player, TextMode.INSTRUCTION, Messages.SubdivisionMode);
+        GriefPrevention.sendMessage(
+                player,
+                TextMode.INSTRUCTION,
+                Messages.SubdivisionVideo2,
+                DataStore.SUBDIVISION_VIDEO_URL
+        );
     }
 }

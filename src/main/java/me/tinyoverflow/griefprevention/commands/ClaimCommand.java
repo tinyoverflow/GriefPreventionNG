@@ -7,11 +7,7 @@ import dev.jorel.commandapi.arguments.IntegerArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.CreateClaimResult;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
 import me.tinyoverflow.griefprevention.tasks.AutoExtendClaimTask;
 import org.bukkit.GameMode;
@@ -30,7 +26,10 @@ public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
     {
         return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.claim")
-                .withOptionalArguments(new IntegerArgument("radius", getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticMinimumRadius))
+                .withOptionalArguments(new IntegerArgument(
+                        "radius",
+                        getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticMinimumRadius
+                ))
                 .executesPlayer(this);
     }
 
@@ -39,7 +38,7 @@ public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
     {
         if (!getPlugin().claimsEnabledForWorld(player.getWorld()))
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.ClaimsDisabledWorld);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.ClaimsDisabledWorld);
             return;
         }
 
@@ -47,38 +46,48 @@ public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
 
         //if he's at the claim count per player limit already and doesn't have permission to bypass, display an error message
         if (getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumClaims > 0 &&
-                !player.hasPermission("griefprevention.overrideclaimcountlimit") &&
-                playerData.getClaims().size() >= getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumClaims)
+            !player.hasPermission("griefprevention.overrideclaimcountlimit") &&
+            playerData.getClaims().size() >=
+            getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumClaims)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.ClaimCreationFailedOverClaimCountLimit);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.ClaimCreationFailedOverClaimCountLimit);
             return;
         }
 
         //default is chest claim radius, unless -1
         int radius = getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius;
-        if (radius < 0) radius = (int) Math.ceil(Math.sqrt(getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea) / 2);
+        if (radius < 0)
+        {
+            radius = (int) Math.ceil(
+                    Math.sqrt(getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea) /
+                    2);
+        }
 
         //if player has any claims, respect claim minimum size setting
         if (playerData.getClaims().size() > 0)
         {
             //if player has exactly one land claim, this requires the claim modification tool to be in hand (or creative mode player)
             if (playerData.getClaims().size() == 1 &&
-                    player.getGameMode() != GameMode.CREATIVE &&
-                    !player.getInventory().getItemInMainHand().getType().equals(getPlugin().getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool()))
+                player.getGameMode() != GameMode.CREATIVE &&
+                !player.getInventory().getItemInMainHand().getType().equals(getPlugin().getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool()))
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.MustHoldModificationToolForThat);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.MustHoldModificationToolForThat);
                 return;
             }
 
-            radius = (int) Math.ceil(Math.sqrt(getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea) / 2);
+            radius = (int) Math.ceil(
+                    Math.sqrt(getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumArea) /
+                    2);
         }
 
         //allow for specifying the radius
         if (args.getOptional("radius").isPresent())
         {
-            if (playerData.getClaims().size() < 2 && player.getGameMode() != GameMode.CREATIVE && player.getInventory().getItemInMainHand().getType() != getPlugin().getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool())
+            if (playerData.getClaims().size() < 2 && player.getGameMode() != GameMode.CREATIVE &&
+                player.getInventory().getItemInMainHand().getType() !=
+                getPlugin().getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool())
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.RadiusRequiresGoldenShovel);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.RadiusRequiresGoldenShovel);
                 return;
             }
 
@@ -86,15 +95,14 @@ public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
             try
             {
                 specifiedRadius = (int) args.getOptional("radius").get();
-            }
-            catch (NumberFormatException e)
+            } catch (NumberFormatException e)
             {
                 return;
             }
 
             if (specifiedRadius < radius)
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.MinimumRadius, String.valueOf(radius));
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.MinimumRadius, String.valueOf(radius));
                 return;
             }
             else
@@ -113,42 +121,62 @@ public class ClaimCommand extends BaseCommand implements PlayerCommandExecutor
         int remaining = playerData.getRemainingClaimBlocks();
         if (remaining < area)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.CreateClaimInsufficientBlocks, String.valueOf(area - remaining));
+            GriefPrevention.sendMessage(
+                    player,
+                    TextMode.ERROR,
+                    Messages.CreateClaimInsufficientBlocks,
+                    String.valueOf(area - remaining)
+            );
             getPlugin().dataStore.tryAdvertiseAdminAlternatives(player);
             return;
         }
 
         CreateClaimResult result = getPlugin().getDataStore().createClaim(lc.getWorld(),
                 lc.getBlockX(), gc.getBlockX(),
-                lc.getBlockY() - getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance - 1,
-                gc.getWorld().getHighestBlockYAt(gc) - getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance - 1,
+                lc.getBlockY() -
+                getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance -
+                1,
+                gc.getWorld().getHighestBlockYAt(gc) -
+                getPlugin().getPluginConfig().getClaimConfiguration().getCreationConfiguration().extendIntoGroundDistance -
+                1,
                 lc.getBlockZ(), gc.getBlockZ(),
-                player.getUniqueId(), null, null, player);
+                player.getUniqueId(), null, null, player
+        );
         if (!result.succeeded || result.claim == null)
         {
             if (result.claim != null)
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.CreateClaimFailOverlapShort);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.CreateClaimFailOverlapShort);
 
                 BoundaryVisualization.visualizeClaim(player, result.claim, VisualizationType.CONFLICT_ZONE);
             }
             else
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.CreateClaimFailOverlapRegion);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.CreateClaimFailOverlapRegion);
             }
         }
         else
         {
-            GriefPrevention.sendMessage(player, TextMode.Success, Messages.CreateClaimSuccess);
+            GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.CreateClaimSuccess);
 
             //link to a video demo of land claiming, based on world type
             if (getPlugin().creativeRulesApply(player.getLocation()))
             {
-                GriefPrevention.sendMessage(player, TextMode.Instr, Messages.CreativeBasicsVideo2, DataStore.CREATIVE_VIDEO_URL);
+                GriefPrevention.sendMessage(
+                        player,
+                        TextMode.INSTRUCTION,
+                        Messages.CreativeBasicsVideo2,
+                        DataStore.CREATIVE_VIDEO_URL
+                );
             }
             else if (getPlugin().claimsEnabledForWorld(player.getWorld()))
             {
-                GriefPrevention.sendMessage(player, TextMode.Instr, Messages.SurvivalBasicsVideo2, DataStore.SURVIVAL_VIDEO_URL);
+                GriefPrevention.sendMessage(
+                        player,
+                        TextMode.INSTRUCTION,
+                        Messages.SurvivalBasicsVideo2,
+                        DataStore.SURVIVAL_VIDEO_URL
+                );
             }
             BoundaryVisualization.visualizeClaim(player, result.claim, VisualizationType.CLAIM);
             playerData.claimResizing = null;

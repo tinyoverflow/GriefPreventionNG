@@ -21,7 +21,7 @@ package me.tinyoverflow.griefprevention.tasks;
 import me.tinyoverflow.griefprevention.Claim;
 import me.tinyoverflow.griefprevention.ClaimsMode;
 import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Boat;
@@ -52,7 +52,8 @@ public class EntityCleanupTask implements Runnable
         ArrayList<World> worlds = new ArrayList<>();
         for (World world : GriefPrevention.instance.getServer().getWorlds())
         {
-            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getWorldMode(world) == ClaimsMode.Creative)
+            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getWorldMode(world) ==
+                ClaimsMode.Creative)
             {
                 worlds.add(world);
             }
@@ -74,7 +75,8 @@ public class EntityCleanupTask implements Runnable
                 if (entity instanceof Boat boat) //boats must be occupied
                 {
                     if (boat.isEmpty()) remove = true;
-                } else if (entity instanceof Vehicle vehicle)
+                }
+                else if (entity instanceof Vehicle vehicle)
                 {
 
                     //minecarts in motion must be occupied by a player
@@ -90,7 +92,8 @@ public class EntityCleanupTask implements Runnable
                     else
                     {
                         Material material = world.getBlockAt(vehicle.getLocation()).getType();
-                        if (material != Material.RAIL && material != Material.POWERED_RAIL && material != Material.DETECTOR_RAIL)
+                        if (material != Material.RAIL && material != Material.POWERED_RAIL &&
+                            material != Material.DETECTOR_RAIL)
                         {
                             remove = true;
                         }
@@ -100,11 +103,16 @@ public class EntityCleanupTask implements Runnable
                 //all non-player entities must be in claims
                 else if (!(entity instanceof Player))
                 {
-                    Claim claim = GriefPrevention.instance.dataStore.getClaimAt(entity.getLocation(), false, cachedClaim);
+                    Claim claim = GriefPrevention.instance.dataStore.getClaimAt(
+                            entity.getLocation(),
+                            false,
+                            cachedClaim
+                    );
                     if (claim != null)
                     {
                         cachedClaim = claim;
-                    } else
+                    }
+                    else
                     {
                         remove = true;
                     }
@@ -112,7 +120,11 @@ public class EntityCleanupTask implements Runnable
 
                 if (remove)
                 {
-                    GriefPrevention.AddLogEntry("Removing entity " + entity.getType().name() + " @ " + entity.getLocation(), LogType.DEBUG, true);
+                    GriefPrevention.AddLogEntry(
+                            "Removing entity " + entity.getType().name() + " @ " + entity.getLocation(),
+                            ActivityType.DEBUG,
+                            true
+                    );
                     entity.remove();
                 }
             }
@@ -142,6 +154,10 @@ public class EntityCleanupTask implements Runnable
         }
 
         EntityCleanupTask task = new EntityCleanupTask(nextRunPercentageStart);
-        GriefPrevention.instance.getServer().getScheduler().scheduleSyncDelayedTask(GriefPrevention.instance, task, 20L * 60);
+        GriefPrevention.instance.getServer().getScheduler().scheduleSyncDelayedTask(
+                GriefPrevention.instance,
+                task,
+                20L * 60
+        );
     }
 }

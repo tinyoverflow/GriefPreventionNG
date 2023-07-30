@@ -9,7 +9,7 @@ import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.Messages;
 import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.TextMode;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
@@ -47,7 +47,15 @@ public class AdjustBonusClaimBlocksAllCommand extends BaseCommand implements Pla
             builder.append(onlinePlayer.getName()).append(' ');
         }
 
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.AdjustBlocksAllSuccess, String.valueOf(adjustment));
-        GriefPrevention.AddLogEntry("Adjusted all " + players.size() + "players' bonus claim blocks by " + adjustment + ".  " + builder, LogType.ADMIN);
+        GriefPrevention.sendMessage(
+                player,
+                TextMode.SUCCESS,
+                Messages.AdjustBlocksAllSuccess,
+                String.valueOf(adjustment)
+        );
+        GriefPrevention.AddLogEntry(
+                "Adjusted all " + players.size() + "players' bonus claim blocks by " + adjustment + ".  " + builder,
+                ActivityType.ADMIN
+        );
     }
 }

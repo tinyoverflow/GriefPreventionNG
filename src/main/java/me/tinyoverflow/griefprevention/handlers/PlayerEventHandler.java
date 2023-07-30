@@ -19,7 +19,7 @@
 package me.tinyoverflow.griefprevention.handlers;
 
 import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.event.Listener;
 
 public class PlayerEventHandler implements Listener
@@ -36,6 +36,6 @@ public class PlayerEventHandler implements Listener
         entryBuilder.append(": ").append(message);
 
         longestNameLength = Math.max(longestNameLength, name.length());
-        GriefPrevention.AddLogEntry(entryBuilder.toString(), LogType.SOCIAL, true);
+        GriefPrevention.AddLogEntry(entryBuilder.toString(), ActivityType.SOCIAL, true);
     }
 }

@@ -18,7 +18,7 @@
 
 package me.tinyoverflow.griefprevention.logger;
 
-public enum LogType
+public enum ActivityType
 {
     ADMIN,
     DEBUG,

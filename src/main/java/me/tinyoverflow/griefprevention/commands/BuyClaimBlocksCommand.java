@@ -23,7 +23,7 @@ public class BuyClaimBlocksCommand extends BaseCommand implements PlayerCommandE
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.buyclaimblocks")
                 .withOptionalArguments(new IntegerArgument("amount", 1))
                 .executesPlayer(this);
@@ -33,23 +33,23 @@ public class BuyClaimBlocksCommand extends BaseCommand implements PlayerCommandE
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
         // if economy is disabled, don't do anything
-        EconomyHandler.EconomyWrapper economyWrapper = this.getPlugin().getEconomyHandler().getWrapper();
+        EconomyHandler.EconomyWrapper economyWrapper = getPlugin().getEconomyHandler().getWrapper();
         if (economyWrapper == null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.BuySellNotConfigured);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.BuySellNotConfigured);
             return;
         }
 
         if (!player.hasPermission("griefprevention.buysellclaimblocks"))
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.NoPermissionForCommand);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.NoPermissionForCommand);
             return;
         }
 
         //if purchase disabled, send error message
         if (GriefPrevention.instance.config_economy_claimBlocksPurchaseCost == 0)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.OnlySellBlocks);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.OnlySellBlocks);
             return;
         }
 
@@ -58,11 +58,17 @@ public class BuyClaimBlocksCommand extends BaseCommand implements PlayerCommandE
         //if no parameter, just tell player cost per block and balance
         if (commandArguments.getOptional("amount").isEmpty())
         {
-            GriefPrevention.sendMessage(player, TextMode.Info, Messages.BlockPurchaseCost, String.valueOf(GriefPrevention.instance.config_economy_claimBlocksPurchaseCost), String.valueOf(economy.getBalance(player)));
+            GriefPrevention.sendMessage(
+                    player,
+                    TextMode.INFO,
+                    Messages.BlockPurchaseCost,
+                    String.valueOf(GriefPrevention.instance.config_economy_claimBlocksPurchaseCost),
+                    String.valueOf(economy.getBalance(player))
+            );
         }
         else
         {
-            PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+            PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
             int blockCount = (int) commandArguments.getOptional("amount").orElseThrow();
 
             //if the player can't afford his purchase, send error message
@@ -70,7 +76,13 @@ public class BuyClaimBlocksCommand extends BaseCommand implements PlayerCommandE
             double totalCost = blockCount * GriefPrevention.instance.config_economy_claimBlocksPurchaseCost;
             if (totalCost > balance)
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.InsufficientFunds, economy.format(totalCost), economy.format(balance));
+                GriefPrevention.sendMessage(
+                        player,
+                        TextMode.ERROR,
+                        Messages.InsufficientFunds,
+                        economy.format(totalCost),
+                        economy.format(balance)
+                );
             }
 
             //otherwise carry out transaction
@@ -82,7 +94,13 @@ public class BuyClaimBlocksCommand extends BaseCommand implements PlayerCommandE
                 int bonusBlocksLimit = GriefPrevention.instance.config_economy_claimBlocksMaxBonus;
                 if (bonusBlocksLimit != 0 && newBonusClaimBlocks > bonusBlocksLimit)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.MaxBonusReached, String.valueOf(blockCount), String.valueOf(bonusBlocksLimit));
+                    GriefPrevention.sendMessage(
+                            player,
+                            TextMode.ERROR,
+                            Messages.MaxBonusReached,
+                            String.valueOf(blockCount),
+                            String.valueOf(bonusBlocksLimit)
+                    );
                     return;
                 }
 
@@ -91,10 +109,16 @@ public class BuyClaimBlocksCommand extends BaseCommand implements PlayerCommandE
 
                 //add blocks
                 playerData.setBonusClaimBlocks(playerData.getBonusClaimBlocks() + blockCount);
-                this.getPlugin().getDataStore().savePlayerData(player.getUniqueId(), playerData);
+                getPlugin().getDataStore().savePlayerData(player.getUniqueId(), playerData);
 
                 //inform player
-                GriefPrevention.sendMessage(player, TextMode.Success, Messages.PurchaseConfirmation, economy.format(totalCost), String.valueOf(playerData.getRemainingClaimBlocks()));
+                GriefPrevention.sendMessage(
+                        player,
+                        TextMode.SUCCESS,
+                        Messages.PurchaseConfirmation,
+                        economy.format(totalCost),
+                        String.valueOf(playerData.getRemainingClaimBlocks())
+                );
             }
         }
     }

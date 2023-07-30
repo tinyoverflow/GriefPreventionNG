@@ -19,7 +19,7 @@ public class ClaimExplosionsCommand extends BaseCommand implements PlayerCommand
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.claimexplosions")
                 .executesPlayer(this);
     }
@@ -27,30 +27,30 @@ public class ClaimExplosionsCommand extends BaseCommand implements PlayerCommand
     @Override
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
-        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
+        Claim claim = getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
 
         if (claim == null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.DeleteClaimMissing);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.DeleteClaimMissing);
         }
         else
         {
             Supplier<String> noBuildReason = claim.checkPermission(player, ClaimPermission.Build, null);
             if (noBuildReason != null)
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason.get());
+                GriefPrevention.sendMessage(player, TextMode.ERROR, noBuildReason.get());
                 return;
             }
 
             if (claim.areExplosivesAllowed)
             {
                 claim.areExplosivesAllowed = false;
-                GriefPrevention.sendMessage(player, TextMode.Success, Messages.ExplosivesDisabled);
+                GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.ExplosivesDisabled);
             }
             else
             {
                 claim.areExplosivesAllowed = true;
-                GriefPrevention.sendMessage(player, TextMode.Success, Messages.ExplosivesEnabled);
+                GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.ExplosivesEnabled);
             }
         }
     }

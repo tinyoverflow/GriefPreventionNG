@@ -19,7 +19,7 @@
 package me.tinyoverflow.griefprevention.tasks;
 
 import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -49,7 +49,9 @@ public class CheckForPortalTrapTask extends BukkitRunnable
     {
         if (player.isOnline() && player.getPortalCooldown() >= 10 && player.hasMetadata("GP_PORTALRESCUE"))
         {
-            GriefPrevention.AddLogEntry("Rescued " + player.getName() + " from a nether portal.\nTeleported from " + player.getLocation() + " to " + returnLocation.toString(), LogType.DEBUG);
+            GriefPrevention.AddLogEntry(
+                    "Rescued " + player.getName() + " from a nether portal.\nTeleported from " + player.getLocation() +
+                    " to " + returnLocation.toString(), ActivityType.DEBUG);
             player.teleport(returnLocation);
             player.removeMetadata("GP_PORTALRESCUE", instance);
         }

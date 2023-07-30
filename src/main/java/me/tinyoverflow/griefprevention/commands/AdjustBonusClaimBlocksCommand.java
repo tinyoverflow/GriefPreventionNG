@@ -10,7 +10,7 @@ import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.Messages;
 import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.TextMode;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -39,7 +39,7 @@ public class AdjustBonusClaimBlocksCommand extends BaseCommand implements Player
 
         if (targetPlayer == null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.PlayerNotFound2);
             return;
         }
 
@@ -48,8 +48,21 @@ public class AdjustBonusClaimBlocksCommand extends BaseCommand implements Player
         playerData.setBonusClaimBlocks(playerData.getBonusClaimBlocks() + adjustment);
         getPlugin().getDataStore().savePlayerData(targetPlayer.getUniqueId(), playerData);
 
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.AdjustBlocksSuccess, targetPlayer.getName(), String.valueOf(adjustment), String.valueOf(playerData.getBonusClaimBlocks()));
+        GriefPrevention.sendMessage(
+                player,
+                TextMode.SUCCESS,
+                Messages.AdjustBlocksSuccess,
+                targetPlayer.getName(),
+                String.valueOf(adjustment),
+                String.valueOf(playerData.getBonusClaimBlocks())
+        );
         if (player != null)
-            GriefPrevention.AddLogEntry(player.getName() + " adjusted " + targetPlayer.getName() + "'s bonus claim blocks by " + adjustment + ".", LogType.ADMIN);
+        {
+            GriefPrevention.AddLogEntry(
+                    player.getName() + " adjusted " + targetPlayer.getName() + "'s bonus claim blocks by " +
+                    adjustment + ".",
+                    ActivityType.ADMIN
+            );
+        }
     }
 }

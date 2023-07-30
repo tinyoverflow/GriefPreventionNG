@@ -12,7 +12,7 @@ import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -53,17 +53,18 @@ public class WorldGuardWrapper
             ProtectedCuboidRegion tempRegion = new ProtectedCuboidRegion(
                     "GP_TEMP",
                     BlockVector3.at(lesserCorner.getX(), 0, lesserCorner.getZ()),
-                    BlockVector3.at(greaterCorner.getX(), world.getMaxY(), greaterCorner.getZ()));
+                    BlockVector3.at(greaterCorner.getX(), world.getMaxY(), greaterCorner.getZ())
+            );
 
-            return manager.getApplicableRegions(tempRegion).queryState(localPlayer, Flags.BUILD) == StateFlag.State.ALLOW;
-        }
-        catch (Throwable rock)
+            return manager.getApplicableRegions(tempRegion).queryState(localPlayer, Flags.BUILD) ==
+                   StateFlag.State.ALLOW;
+        } catch (Throwable rock)
         {
             GriefPrevention.AddLogEntry("WorldGuard was found but unable to hook into. It could be that you're " +
-                    "using an outdated version or WorldEdit broke their API... again." +
-                    "Consider updating/downgrading/removing WorldGuard or disable WorldGuard integration in GP's config " +
-                    "(CreationRequiresWorldGuardBuildPermission). If you're going to report this please be kind because " +
-                    "WorldEdit's API hasn't been :c", LogType.DEBUG, false);
+                                        "using an outdated version or WorldEdit broke their API... again." +
+                                        "Consider updating/downgrading/removing WorldGuard or disable WorldGuard integration in GP's config " +
+                                        "(CreationRequiresWorldGuardBuildPermission). If you're going to report this please be kind because " +
+                                        "WorldEdit's API hasn't been :c", ActivityType.DEBUG, false);
         }
 
         return true;

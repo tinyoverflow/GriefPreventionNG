@@ -4,18 +4,12 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.ClaimPermission;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import org.bukkit.ChatColor;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -30,7 +24,7 @@ public class TrustListCommand extends BaseCommand implements PlayerCommandExecut
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.trustlist")
                 .executesPlayer(this);
     }
@@ -38,12 +32,12 @@ public class TrustListCommand extends BaseCommand implements PlayerCommandExecut
     @Override
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
-        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true, null);
+        Claim claim = getPlugin().getDataStore().getClaimAt(player.getLocation(), true, null);
 
         //if no claim here, error message
         if (claim == null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.TrustListNoClaim);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.TrustListNoClaim);
             return;
         }
 
@@ -51,7 +45,7 @@ public class TrustListCommand extends BaseCommand implements PlayerCommandExecut
         Supplier<String> errorMessage = claim.checkPermission(player, ClaimPermission.Manage, null);
         if (errorMessage != null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, errorMessage.get());
+            GriefPrevention.sendMessage(player, TextMode.ERROR, errorMessage.get());
             return;
         }
 
@@ -63,7 +57,7 @@ public class TrustListCommand extends BaseCommand implements PlayerCommandExecut
         ArrayList<String> managers = new ArrayList<>();
         claim.getPermissions(builders, containers, accessors, managers);
 
-        GriefPrevention.sendMessage(player, TextMode.Info, Messages.TrustListHeader, claim.getOwnerName());
+        GriefPrevention.sendMessage(player, TextMode.INFO, Messages.TrustListHeader, claim.getOwnerName());
 
         StringBuilder permissions = new StringBuilder();
         permissions.append(ChatColor.GOLD).append('>');
@@ -71,7 +65,7 @@ public class TrustListCommand extends BaseCommand implements PlayerCommandExecut
         if (managers.size() > 0)
         {
             for (String manager : managers)
-                permissions.append(this.getPlayerName(manager)).append(' ');
+                permissions.append(getPlayerName(manager)).append(' ');
         }
 
         player.sendMessage(permissions.toString());
@@ -81,7 +75,7 @@ public class TrustListCommand extends BaseCommand implements PlayerCommandExecut
         if (builders.size() > 0)
         {
             for (String builder : builders)
-                permissions.append(this.getPlayerName(builder)).append(' ');
+                permissions.append(getPlayerName(builder)).append(' ');
         }
 
         player.sendMessage(permissions.toString());
@@ -91,7 +85,7 @@ public class TrustListCommand extends BaseCommand implements PlayerCommandExecut
         if (containers.size() > 0)
         {
             for (String container : containers)
-                permissions.append(this.getPlayerName(container)).append(' ');
+                permissions.append(getPlayerName(container)).append(' ');
         }
 
         player.sendMessage(permissions.toString());
@@ -101,20 +95,20 @@ public class TrustListCommand extends BaseCommand implements PlayerCommandExecut
         if (accessors.size() > 0)
         {
             for (String accessor : accessors)
-                permissions.append(this.getPlayerName(accessor)).append(' ');
+                permissions.append(getPlayerName(accessor)).append(' ');
         }
 
         player.sendMessage(permissions.toString());
 
         player.sendMessage(
-                ChatColor.GOLD + this.getPlugin().getDataStore().getMessage(Messages.Manage) + " " +
-                        ChatColor.YELLOW + this.getPlugin().getDataStore().getMessage(Messages.Build) + " " +
-                        ChatColor.GREEN + this.getPlugin().getDataStore().getMessage(Messages.Containers) + " " +
-                        ChatColor.BLUE + this.getPlugin().getDataStore().getMessage(Messages.Access));
+                ChatColor.GOLD + getPlugin().getDataStore().getMessage(Messages.Manage) + " " +
+                ChatColor.YELLOW + getPlugin().getDataStore().getMessage(Messages.Build) + " " +
+                ChatColor.GREEN + getPlugin().getDataStore().getMessage(Messages.Containers) + " " +
+                ChatColor.BLUE + getPlugin().getDataStore().getMessage(Messages.Access));
 
         if (claim.getSubclaimRestrictions())
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.HasSubclaimRestriction);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.HasSubclaimRestriction);
         }
     }
 
@@ -122,7 +116,7 @@ public class TrustListCommand extends BaseCommand implements PlayerCommandExecut
     private String getPlayerName(String manager)
     {
         return Optional
-                .ofNullable(this.getPlugin().getServer().getOfflinePlayer(UUID.fromString(manager)).getName())
+                .ofNullable(getPlugin().getServer().getOfflinePlayer(UUID.fromString(manager)).getName())
                 .orElse("someone");
     }
 }

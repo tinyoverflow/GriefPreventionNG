@@ -42,14 +42,14 @@ public class PlayerDropItemListener implements Listener
         //if in combat, don't let him drop it
         if (!plugin.getPluginConfig().getPvpConfiguration().isAllowCombatItemDrop() && playerData.inPvpCombat())
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.PvPNoDrop);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.PvPNoDrop);
             event.setCancelled(true);
         }
 
         //if he's under siege, don't let him drop it
         else if (playerData.siegeData != null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.SiegeNoDrop);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.SiegeNoDrop);
             event.setCancelled(true);
         }
     }

@@ -20,14 +20,8 @@ package me.tinyoverflow.griefprevention.tasks;
 
 import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationType;
-import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.ClaimPermission;
+import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.ShovelMode;
-import me.tinyoverflow.griefprevention.TextMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 
@@ -48,8 +42,11 @@ public class EquipShovelProcessingTask implements Runnable
     public void run()
     {
         //if he's not holding the golden shovel anymore, do nothing
-        if (GriefPrevention.instance.getItemInHand(player, EquipmentSlot.HAND).getType() != GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool())
+        if (GriefPrevention.instance.getItemInHand(player, EquipmentSlot.HAND).getType() !=
+            GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool())
+        {
             return;
+        }
 
         PlayerData playerData = GriefPrevention.instance.dataStore.getPlayerData(player.getUniqueId());
 
@@ -61,21 +58,36 @@ public class EquipShovelProcessingTask implements Runnable
         if (playerData.shovelMode != ShovelMode.Basic)
         {
             playerData.shovelMode = ShovelMode.Basic;
-            GriefPrevention.sendMessage(player, TextMode.Info, Messages.ShovelBasicClaimMode);
+            GriefPrevention.sendMessage(player, TextMode.INFO, Messages.ShovelBasicClaimMode);
         }
 
         //tell him how many claim blocks he has available
         int remainingBlocks = playerData.getRemainingClaimBlocks();
-        GriefPrevention.sendMessage(player, TextMode.Instr, Messages.RemainingBlocks, String.valueOf(remainingBlocks));
+        GriefPrevention.sendMessage(
+                player,
+                TextMode.INSTRUCTION,
+                Messages.RemainingBlocks,
+                String.valueOf(remainingBlocks)
+        );
 
         //link to a video demo of land claiming, based on world type
         if (GriefPrevention.instance.creativeRulesApply(player.getLocation()))
         {
-            GriefPrevention.sendMessage(player, TextMode.Instr, Messages.CreativeBasicsVideo2, DataStore.CREATIVE_VIDEO_URL);
+            GriefPrevention.sendMessage(
+                    player,
+                    TextMode.INSTRUCTION,
+                    Messages.CreativeBasicsVideo2,
+                    DataStore.CREATIVE_VIDEO_URL
+            );
         }
         else if (GriefPrevention.instance.claimsEnabledForWorld(player.getWorld()))
         {
-            GriefPrevention.sendMessage(player, TextMode.Instr, Messages.SurvivalBasicsVideo2, DataStore.SURVIVAL_VIDEO_URL);
+            GriefPrevention.sendMessage(
+                    player,
+                    TextMode.INSTRUCTION,
+                    Messages.SurvivalBasicsVideo2,
+                    DataStore.SURVIVAL_VIDEO_URL
+            );
         }
 
         //if standing in a claim owned by the player, visualize it

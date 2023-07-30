@@ -10,27 +10,32 @@ import org.bukkit.event.player.PlayerTakeLecternBookEvent;
 
 import java.util.function.Supplier;
 
-public class PlayerTakeLecternBookListener implements Listener {
+public class PlayerTakeLecternBookListener implements Listener
+{
     private final DataStore dataStore;
 
-    public PlayerTakeLecternBookListener(DataStore dataStore) {
+    public PlayerTakeLecternBookListener(DataStore dataStore)
+    {
         this.dataStore = dataStore;
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    void onTakeBook(PlayerTakeLecternBookEvent event) {
+    void onTakeBook(PlayerTakeLecternBookEvent event)
+    {
         Player player = event.getPlayer();
         PlayerData playerData = dataStore.getPlayerData(player.getUniqueId());
         Claim claim = dataStore.getClaimAt(event.getLectern().getLocation(), false, playerData.lastClaim);
 
-        if (claim != null) {
+        if (claim != null)
+        {
             playerData.lastClaim = claim;
             Supplier<String> noContainerReason = claim.checkPermission(player, ClaimPermission.Inventory, event);
 
-            if (noContainerReason != null) {
+            if (noContainerReason != null)
+            {
                 event.setCancelled(true);
                 player.closeInventory();
-                GriefPrevention.sendMessage(player, TextMode.Err, noContainerReason.get());
+                GriefPrevention.sendMessage(player, TextMode.ERROR, noContainerReason.get());
             }
         }
     }

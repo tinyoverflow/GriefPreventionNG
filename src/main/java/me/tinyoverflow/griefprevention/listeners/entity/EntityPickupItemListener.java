@@ -84,10 +84,10 @@ public class EntityPickupItemListener implements Listener
         // If the owner hasn't been instructed how to unlock, send explanatory messages.
         if (!playerData.receivedDropUnlockAdvertisement)
         {
-            GriefPrevention.sendMessage(owner.getPlayer(), TextMode.Instr, Messages.DropUnlockAdvertisement);
+            GriefPrevention.sendMessage(owner.getPlayer(), TextMode.INSTRUCTION, Messages.DropUnlockAdvertisement);
             GriefPrevention.sendMessage(
                     player,
-                    TextMode.Err,
+                    TextMode.ERROR,
                     Messages.PickupBlockedExplanation,
                     GriefPrevention.lookupPlayerName(ownerID)
             );
@@ -121,7 +121,7 @@ public class EntityPickupItemListener implements Listener
 
                 //otherwise take away his immunity. he may be armed now.  at least, he's worth killing for some loot
                 playerData.pvpImmune = false;
-                GriefPrevention.sendMessage(player, TextMode.Warn, Messages.PvPImmunityEnd);
+                GriefPrevention.sendMessage(player, TextMode.WARNING, Messages.PvPImmunityEnd);
             }
         }
     }

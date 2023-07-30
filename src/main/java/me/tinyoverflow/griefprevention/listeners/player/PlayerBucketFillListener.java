@@ -12,15 +12,18 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 
-public class PlayerBucketFillListener implements Listener {
+public class PlayerBucketFillListener implements Listener
+{
     private final GriefPrevention plugin;
 
-    public PlayerBucketFillListener(GriefPrevention plugin) {
+    public PlayerBucketFillListener(GriefPrevention plugin)
+    {
         this.plugin = plugin;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onPlayerBucketFill(PlayerBucketFillEvent bucketEvent) {
+    public void onPlayerBucketFill(PlayerBucketFillEvent bucketEvent)
+    {
         Player player = bucketEvent.getPlayer();
         Block block = bucketEvent.getBlockClicked();
 
@@ -28,16 +31,18 @@ public class PlayerBucketFillListener implements Listener {
 
         //make sure the player is allowed to build at the location
         String noBuildReason = plugin.allowBuild(player, block.getLocation(), Material.AIR);
-        if (noBuildReason != null) {
+        if (noBuildReason != null)
+        {
             //exemption for cow milking (permissions will be handled by player interact with entity event instead)
             Material blockType = block.getType();
             if (blockType == Material.AIR) return;
-            if (blockType.isSolid()) {
+            if (blockType.isSolid())
+            {
                 BlockData blockData = block.getBlockData();
                 if (!(blockData instanceof Waterlogged) || !((Waterlogged) blockData).isWaterlogged()) return;
             }
 
-            GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, noBuildReason);
             bucketEvent.setCancelled(true);
         }
     }

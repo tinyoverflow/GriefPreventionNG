@@ -21,7 +21,7 @@ package me.tinyoverflow.griefprevention.tasks;
 import me.tinyoverflow.griefprevention.Claim;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
@@ -46,27 +46,42 @@ class CleanupUnusedClaimPreTask implements Runnable
         PlayerData ownerData = GriefPrevention.instance.dataStore.getPlayerDataFromStorage(ownerID);
         OfflinePlayer ownerInfo = Bukkit.getServer().getOfflinePlayer(ownerID);
 
-        GriefPrevention.AddLogEntry("Looking for expired claims.  Checking data for " + ownerID.toString(), LogType.DEBUG, true);
+        GriefPrevention.AddLogEntry(
+                "Looking for expired claims.  Checking data for " + ownerID.toString(),
+                ActivityType.DEBUG,
+                true
+        );
 
         //expiration code uses last logout timestamp to decide whether to expire claims
         //don't expire claims for online players
         if (ownerInfo.isOnline())
         {
-            GriefPrevention.AddLogEntry("Player is online. Ignoring.", LogType.DEBUG, true);
+            GriefPrevention.AddLogEntry("Player is online. Ignoring.", ActivityType.DEBUG, true);
             return;
         }
         if (ownerInfo.getLastPlayed() <= 0)
         {
-            GriefPrevention.AddLogEntry("Player is new or not in the server's cached userdata. Ignoring. getLastPlayed = " + ownerInfo.getLastPlayed(), LogType.DEBUG, true);
+            GriefPrevention.AddLogEntry(
+                    "Player is new or not in the server's cached userdata. Ignoring. getLastPlayed = " +
+                    ownerInfo.getLastPlayed(),
+                    ActivityType.DEBUG,
+                    true
+            );
             return;
         }
 
         //skip claims belonging to exempted players based on block totals in config
         int bonusBlocks = ownerData.getBonusClaimBlocks();
-        if (bonusBlocks >= GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpirationConfiguration().exceptions.bonusBlocks ||
-                bonusBlocks + ownerData.getAccruedClaimBlocks() >= GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpirationConfiguration().exceptions.claimBlocks)
+        if (bonusBlocks >=
+            GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpirationConfiguration().exceptions.bonusBlocks ||
+            bonusBlocks + ownerData.getAccruedClaimBlocks() >=
+            GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getExpirationConfiguration().exceptions.claimBlocks)
         {
-            GriefPrevention.AddLogEntry("Player exempt from claim expiration based on claim block counts vs. config file settings.", LogType.DEBUG, true);
+            GriefPrevention.AddLogEntry(
+                    "Player exempt from claim expiration based on claim block counts vs. config file settings.",
+                    ActivityType.DEBUG,
+                    true
+            );
             return;
         }
 
@@ -83,11 +98,19 @@ class CleanupUnusedClaimPreTask implements Runnable
 
         if (claimToExpire == null)
         {
-            GriefPrevention.AddLogEntry("Unable to find a claim to expire for " + ownerID.toString(), LogType.DEBUG, false);
+            GriefPrevention.AddLogEntry(
+                    "Unable to find a claim to expire for " + ownerID.toString(),
+                    ActivityType.DEBUG,
+                    false
+            );
             return;
         }
 
         //pass it back to the main server thread, where it's safe to delete a claim if needed
-        Bukkit.getScheduler().scheduleSyncDelayedTask(GriefPrevention.instance, new CleanupUnusedClaimTask(claimToExpire, ownerData, ownerInfo), 1L);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(
+                GriefPrevention.instance,
+                new CleanupUnusedClaimTask(claimToExpire, ownerData, ownerInfo),
+                1L
+        );
     }
 }

@@ -22,7 +22,7 @@ import me.tinyoverflow.griefprevention.Claim;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.UUIDFetcher;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -84,8 +84,7 @@ public class DatabaseDataStore extends DataStore
         try
         {
             refreshDataConnection();
-        }
-        catch (Exception e2)
+        } catch (Exception e2)
         {
             GriefPrevention.AddLogEntry("ERROR: Unable to connect to database.  Check your config file settings.");
             throw e2;
@@ -95,8 +94,10 @@ public class DatabaseDataStore extends DataStore
         {
             //ensure the data tables exist
             statement.execute("CREATE TABLE IF NOT EXISTS griefprevention_nextclaimid (nextid INTEGER)");
-            statement.execute("CREATE TABLE IF NOT EXISTS griefprevention_claimdata (id INTEGER, owner VARCHAR(50), lessercorner VARCHAR(100), greatercorner VARCHAR(100), builders TEXT, containers TEXT, accessors TEXT, managers TEXT, inheritnothing BOOLEAN, parentid INTEGER)");
-            statement.execute("CREATE TABLE IF NOT EXISTS griefprevention_playerdata (name VARCHAR(50), lastlogin DATETIME, accruedblocks INTEGER, bonusblocks INTEGER)");
+            statement.execute(
+                    "CREATE TABLE IF NOT EXISTS griefprevention_claimdata (id INTEGER, owner VARCHAR(50), lessercorner VARCHAR(100), greatercorner VARCHAR(100), builders TEXT, containers TEXT, accessors TEXT, managers TEXT, inheritnothing BOOLEAN, parentid INTEGER)");
+            statement.execute(
+                    "CREATE TABLE IF NOT EXISTS griefprevention_playerdata (name VARCHAR(50), lastlogin DATETIME, accruedblocks INTEGER, bonusblocks INTEGER)");
             statement.execute("CREATE TABLE IF NOT EXISTS griefprevention_schemaversion (version INTEGER)");
 
             // By making this run only for MySQL, we technically support SQLite too, as this is the only invalid
@@ -117,8 +118,7 @@ public class DatabaseDataStore extends DataStore
             {
                 setSchemaVersion(latestSchemaVersion);
             }
-        }
-        catch (Exception e3)
+        } catch (Exception e3)
         {
             GriefPrevention.AddLogEntry("ERROR: Unable to create the necessary database table.  Details:");
             GriefPrevention.AddLogEntry(e3.getMessage());
@@ -189,10 +189,10 @@ public class DatabaseDataStore extends DataStore
                 {
                     UUIDFetcher fetcher = new UUIDFetcher(namesToConvert);
                     fetcher.call();
-                }
-                catch (Exception e)
+                } catch (Exception e)
                 {
-                    GriefPrevention.AddLogEntry("Failed to resolve a batch of names to UUIDs.  Details:" + e.getMessage());
+                    GriefPrevention.AddLogEntry(
+                            "Failed to resolve a batch of names to UUIDs.  Details:" + e.getMessage());
                     e.printStackTrace();
                 }
 
@@ -232,15 +232,13 @@ public class DatabaseDataStore extends DataStore
                         updateStmnt.setString(1, changes.get(name).toString());
                         updateStmnt.setString(2, name);
                         updateStmnt.executeUpdate();
-                    }
-                    catch (SQLException e)
+                    } catch (SQLException e)
                     {
                         GriefPrevention.AddLogEntry("Unable to convert player data for " + name + ".  Skipping.");
                         GriefPrevention.AddLogEntry(e.getMessage());
                     }
                 }
-            }
-            catch (SQLException e)
+            } catch (SQLException e)
             {
                 GriefPrevention.AddLogEntry("Unable to convert player data.  Details:");
                 GriefPrevention.AddLogEntry(e.getMessage());
@@ -251,7 +249,8 @@ public class DatabaseDataStore extends DataStore
         if (getSchemaVersion() <= 2)
         {
             statement = databaseConnection.createStatement();
-            statement.execute("ALTER TABLE griefprevention_claimdata ADD inheritNothing BOOLEAN DEFAULT 0 AFTER managers");
+            statement.execute(
+                    "ALTER TABLE griefprevention_claimdata ADD inheritNothing BOOLEAN DEFAULT 0 AFTER managers");
         }
 
         //load claims data into memory
@@ -282,14 +281,16 @@ public class DatabaseDataStore extends DataStore
                     lesserBoundaryCorner = locationFromString(lesserCornerString, validWorlds);
                     String greaterCornerString = results.getString("greatercorner");
                     greaterBoundaryCorner = locationFromString(greaterCornerString, validWorlds);
-                }
-                catch (Exception e)
+                } catch (Exception e)
                 {
                     if (e.getMessage() != null && e.getMessage().contains("World not found"))
                     {
-                        GriefPrevention.AddLogEntry("Failed to load a claim (ID:" + claimID + ") because its world isn't loaded (yet?).  Please delete the claim or contact the GriefPrevention developer with information about which plugin(s) you're using to load or create worlds.  " + lesserCornerString);
+                        GriefPrevention.AddLogEntry("Failed to load a claim (ID:" + claimID +
+                                                    ") because its world isn't loaded (yet?).  Please delete the claim or contact the GriefPrevention developer with information about which plugin(s) you're using to load or create worlds.  " +
+                                                    lesserCornerString);
                         continue;
-                    } else
+                    }
+                    else
                     {
                         throw e;
                     }
@@ -300,27 +301,29 @@ public class DatabaseDataStore extends DataStore
                 if (ownerName.isEmpty() || ownerName.startsWith("--"))
                 {
                     ownerID = null;  //administrative land claim or subdivision
-                } else if (getSchemaVersion() < 1)
+                }
+                else if (getSchemaVersion() < 1)
                 {
                     try
                     {
                         ownerID = UUIDFetcher.getUUIDOf(ownerName);
-                    }
-                    catch (Exception ex)
+                    } catch (Exception ex)
                     {
                         GriefPrevention.AddLogEntry("This owner name did not convert to a UUID: " + ownerName + ".");
-                        GriefPrevention.AddLogEntry("  Converted land claim to administrative @ " + lesserBoundaryCorner.toString());
+                        GriefPrevention.AddLogEntry(
+                                "  Converted land claim to administrative @ " + lesserBoundaryCorner.toString());
                     }
-                } else
+                }
+                else
                 {
                     try
                     {
                         ownerID = UUID.fromString(ownerName);
-                    }
-                    catch (Exception ex)
+                    } catch (Exception ex)
                     {
                         GriefPrevention.AddLogEntry("This owner entry is not a UUID: " + ownerName + ".");
-                        GriefPrevention.AddLogEntry("  Converted land claim to administrative @ " + lesserBoundaryCorner.toString());
+                        GriefPrevention.AddLogEntry(
+                                "  Converted land claim to administrative @ " + lesserBoundaryCorner.toString());
                     }
                 }
 
@@ -339,22 +342,33 @@ public class DatabaseDataStore extends DataStore
                 String managersString = results.getString("managers");
                 List<String> managerNames = Arrays.asList(managersString.split(";"));
                 managerNames = convertNameListToUUIDList(managerNames);
-                Claim claim = new Claim(lesserBoundaryCorner, greaterBoundaryCorner, ownerID, builderNames, containerNames, accessorNames, managerNames, inheritNothing, claimID);
+                Claim claim = new Claim(
+                        lesserBoundaryCorner,
+                        greaterBoundaryCorner,
+                        ownerID,
+                        builderNames,
+                        containerNames,
+                        accessorNames,
+                        managerNames,
+                        inheritNothing,
+                        claimID
+                );
 
                 if (removeClaim)
                 {
                     claimsToRemove.add(claim);
-                } else if (parentId == -1)
+                }
+                else if (parentId == -1)
                 {
                     //top level claim
                     addClaim(claim, false);
-                } else
+                }
+                else
                 {
                     //subdivision
                     subdivisionsToLoad.add(claim);
                 }
-            }
-            catch (SQLException e)
+            } catch (SQLException e)
             {
                 GriefPrevention.AddLogEntry("Unable to load a claim.  Details: " + e.getMessage() + " ... " + results);
                 e.printStackTrace();
@@ -370,7 +384,8 @@ public class DatabaseDataStore extends DataStore
             if (topLevelClaim == null)
             {
                 claimsToRemove.add(childClaim);
-                GriefPrevention.AddLogEntry("Removing orphaned claim subdivision: " + childClaim.getLesserBoundaryCorner().toString());
+                GriefPrevention.AddLogEntry(
+                        "Removing orphaned claim subdivision: " + childClaim.getLesserBoundaryCorner().toString());
                 continue;
             }
 
@@ -407,10 +422,10 @@ public class DatabaseDataStore extends DataStore
 
             //write claim data to the database
             writeClaimData(claim);
-        }
-        catch (SQLException e)
+        } catch (SQLException e)
         {
-            GriefPrevention.AddLogEntry("Unable to save data for claim at " + locationToString(claim.lesserBoundaryCorner) + ".  Details:");
+            GriefPrevention.AddLogEntry(
+                    "Unable to save data for claim at " + locationToString(claim.lesserBoundaryCorner) + ".  Details:");
             GriefPrevention.AddLogEntry(e.getMessage());
         }
     }
@@ -451,10 +466,10 @@ public class DatabaseDataStore extends DataStore
             insertStmt.setBoolean(9, inheritNothing);
             insertStmt.setLong(10, parentId);
             insertStmt.executeUpdate();
-        }
-        catch (SQLException e)
+        } catch (SQLException e)
         {
-            GriefPrevention.AddLogEntry("Unable to save data for claim at " + locationToString(claim.lesserBoundaryCorner) + ".  Details:");
+            GriefPrevention.AddLogEntry(
+                    "Unable to save data for claim at " + locationToString(claim.lesserBoundaryCorner) + ".  Details:");
             GriefPrevention.AddLogEntry(e.getMessage());
         }
     }
@@ -467,8 +482,7 @@ public class DatabaseDataStore extends DataStore
         {
             deleteStmnt.setLong(1, claim.id);
             deleteStmnt.executeUpdate();
-        }
-        catch (SQLException e)
+        } catch (SQLException e)
         {
             GriefPrevention.AddLogEntry("Unable to delete data for claim " + claim.id + ".  Details:");
             GriefPrevention.AddLogEntry(e.getMessage());
@@ -493,12 +507,11 @@ public class DatabaseDataStore extends DataStore
                 playerData.setAccruedClaimBlocks(results.getInt("accruedblocks"));
                 playerData.setBonusClaimBlocks(results.getInt("bonusblocks"));
             }
-        }
-        catch (SQLException e)
+        } catch (SQLException e)
         {
             StringWriter errors = new StringWriter();
             e.printStackTrace(new PrintWriter(errors));
-            GriefPrevention.AddLogEntry(playerID + " " + errors, LogType.EXCEPTION);
+            GriefPrevention.AddLogEntry(playerID + " " + errors, ActivityType.EXCEPTION);
         }
 
         return playerData;
@@ -531,12 +544,11 @@ public class DatabaseDataStore extends DataStore
             insertStmnt.setInt(3, playerData.getAccruedClaimBlocks());
             insertStmnt.setInt(4, playerData.getBonusClaimBlocks());
             insertStmnt.executeUpdate();
-        }
-        catch (SQLException e)
+        } catch (SQLException e)
         {
             StringWriter errors = new StringWriter();
             e.printStackTrace(new PrintWriter(errors));
-            GriefPrevention.AddLogEntry(playerID + " " + errors, LogType.EXCEPTION);
+            GriefPrevention.AddLogEntry(playerID + " " + errors, ActivityType.EXCEPTION);
         }
     }
 
@@ -557,8 +569,7 @@ public class DatabaseDataStore extends DataStore
             deleteStmnt.execute();
             insertStmnt.setLong(1, nextID);
             insertStmnt.executeUpdate();
-        }
-        catch (SQLException e)
+        } catch (SQLException e)
         {
             GriefPrevention.AddLogEntry("Unable to set next claim ID to " + nextID + ".  Details:");
             GriefPrevention.AddLogEntry(e.getMessage());
@@ -583,8 +594,7 @@ public class DatabaseDataStore extends DataStore
             insertStmnt.setInt(3, 0);
             insertStmnt.setInt(4, currentValue);
             insertStmnt.executeUpdate();
-        }
-        catch (SQLException e)
+        } catch (SQLException e)
         {
             GriefPrevention.AddLogEntry("Unable to save data for group " + groupName + ".  Details:");
             GriefPrevention.AddLogEntry(e.getMessage());
@@ -602,8 +612,7 @@ public class DatabaseDataStore extends DataStore
                 {
                     databaseConnection.close();
                 }
-            }
-            catch (SQLException e)
+            } catch (SQLException e)
             {
             }
         }
@@ -650,8 +659,7 @@ public class DatabaseDataStore extends DataStore
             {
                 return results.getInt("version");
             }
-        }
-        catch (SQLException e)
+        } catch (SQLException e)
         {
             GriefPrevention.AddLogEntry("Unable to retrieve schema version from database.  Details:");
             GriefPrevention.AddLogEntry(e.getMessage());
@@ -670,8 +678,7 @@ public class DatabaseDataStore extends DataStore
 
             insertStmnt.setInt(1, versionToSet);
             insertStmnt.executeUpdate();
-        }
-        catch (SQLException e)
+        } catch (SQLException e)
         {
             GriefPrevention.AddLogEntry("Unable to set next schema version to " + versionToSet + ".  Details:");
             GriefPrevention.AddLogEntry(e.getMessage());
@@ -693,5 +700,4 @@ public class DatabaseDataStore extends DataStore
         }
         return output;
     }
-
 }

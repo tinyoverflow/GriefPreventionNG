@@ -20,7 +20,7 @@ public class IgnoreClaimsCommand extends BaseCommand implements PlayerCommandExe
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.ignoreclaims")
                 .executesPlayer(this);
     }
@@ -28,12 +28,12 @@ public class IgnoreClaimsCommand extends BaseCommand implements PlayerCommandExe
     @Override
     public void run(Player player, CommandArguments arguments) throws WrapperCommandSyntaxException
     {
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
         playerData.ignoreClaims = !playerData.ignoreClaims;
 
         GriefPrevention.sendMessage(
                 player,
-                TextMode.Success,
+                TextMode.SUCCESS,
                 playerData.ignoreClaims ? Messages.IgnoringClaims : Messages.RespectingClaims
         );
     }

@@ -31,7 +31,8 @@ public class VehicleDamageListener implements Listener
     public void onVehicleDamage(@NotNull VehicleDamageEvent event)
     {
         //all of this is anti theft code
-        if (!plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isProtectVehiclesEnabled()) {
+        if (!plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isProtectVehiclesEnabled())
+        {
             return;
         }
 
@@ -45,15 +46,19 @@ public class VehicleDamageListener implements Listener
         EntityType damageSourceType = null;
 
         //if damage source is null or a creeper, don't allow the damage when the vehicle is in a land claim
-        if (damageSource != null) {
+        if (damageSource != null)
+        {
             damageSourceType = damageSource.getType();
 
-            if (damageSource instanceof Player player) {
+            if (damageSource instanceof Player player)
+            {
                 attacker = player;
             }
-            else if (damageSource instanceof Projectile projectile) {
+            else if (damageSource instanceof Projectile projectile)
+            {
                 arrow = projectile;
-                if (arrow.getShooter() instanceof Player shooter) {
+                if (arrow.getShooter() instanceof Player shooter)
+                {
                     attacker = shooter;
                 }
             }
@@ -71,7 +76,8 @@ public class VehicleDamageListener implements Listener
         Claim cachedClaim = null;
         PlayerData playerData = null;
 
-        if (attacker != null) {
+        if (attacker != null)
+        {
             playerData = dataStore.getPlayerData(attacker.getUniqueId());
             cachedClaim = playerData.lastClaim;
         }
@@ -82,7 +88,8 @@ public class VehicleDamageListener implements Listener
         if (claim == null) return;
 
         //if damaged by anything other than a player, cancel the event
-        if (attacker == null) {
+        if (attacker == null)
+        {
             event.setCancelled(true);
             if (arrow != null) arrow.remove();
             return;
@@ -93,7 +100,8 @@ public class VehicleDamageListener implements Listener
         Supplier<String> override = () ->
         {
             String message = dataStore.getMessage(Messages.NoDamageClaimedEntity, claim.getOwnerName());
-            if (finalAttacker.hasPermission("griefprevention.ignoreclaims")) {
+            if (finalAttacker.hasPermission("griefprevention.ignoreclaims"))
+            {
                 message += "  " + dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
             }
             return message;
@@ -104,10 +112,11 @@ public class VehicleDamageListener implements Listener
                 event,
                 override
         );
-        if (noContainersReason != null) {
+        if (noContainersReason != null)
+        {
             event.setCancelled(true);
             EntityDamageListener.preventInfiniteBounce(arrow, event.getVehicle());
-            GriefPrevention.sendMessage(attacker, TextMode.Err, noContainersReason.get());
+            GriefPrevention.sendMessage(attacker, TextMode.ERROR, noContainersReason.get());
         }
 
         //cache claim for later

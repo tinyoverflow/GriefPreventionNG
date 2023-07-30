@@ -18,12 +18,7 @@
 
 package me.tinyoverflow.griefprevention.tasks;
 
-import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.ClaimPermission;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.SiegeData;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
@@ -42,10 +37,10 @@ public class SecureClaimTask implements Runnable
     public void run()
     {
         //for each claim involved in this siege
-        for (int i = 0; i < this.siegeData.claims.size(); i++)
+        for (int i = 0; i < siegeData.claims.size(); i++)
         {
             //lock the doors
-            Claim claim = this.siegeData.claims.get(i);
+            Claim claim = siegeData.claims.get(i);
             claim.doorsOpen = false;
 
             //eject bad guys
@@ -53,9 +48,10 @@ public class SecureClaimTask implements Runnable
             Collection<Player> onlinePlayers = (Collection<Player>) GriefPrevention.instance.getServer().getOnlinePlayers();
             for (Player player : onlinePlayers)
             {
-                if (claim.contains(player.getLocation(), false, false) && claim.checkPermission(player, ClaimPermission.Access, null) != null)
+                if (claim.contains(player.getLocation(), false, false) &&
+                    claim.checkPermission(player, ClaimPermission.Access, null) != null)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, Messages.SiegeDoorsLockedEjection);
+                    GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.SiegeDoorsLockedEjection);
                     GriefPrevention.instance.ejectPlayer(player);
                 }
             }

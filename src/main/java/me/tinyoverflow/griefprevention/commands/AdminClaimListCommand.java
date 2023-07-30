@@ -22,7 +22,7 @@ public class AdminClaimListCommand extends BaseCommand implements PlayerCommandE
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.adminclaimlist")
                 .executesPlayer(this);
     }
@@ -30,7 +30,7 @@ public class AdminClaimListCommand extends BaseCommand implements PlayerCommandE
     @Override
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
-        List<Claim> claims = this.getPlugin()
+        List<Claim> claims = getPlugin()
                 .getDataStore()
                 .claims
                 .stream()
@@ -39,10 +39,14 @@ public class AdminClaimListCommand extends BaseCommand implements PlayerCommandE
 
         if (claims.size() > 0)
         {
-            GriefPrevention.sendMessage(player, TextMode.Instr, Messages.ClaimsListHeader);
+            GriefPrevention.sendMessage(player, TextMode.INSTRUCTION, Messages.ClaimsListHeader);
             for (Claim claim : claims)
             {
-                GriefPrevention.sendMessage(player, TextMode.Instr, GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()));
+                GriefPrevention.sendMessage(
+                        player,
+                        TextMode.INSTRUCTION,
+                        GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner())
+                );
             }
         }
     }

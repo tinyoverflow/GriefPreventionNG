@@ -23,7 +23,7 @@ public class UnlockItemsCommand extends BaseCommand implements PlayerCommandExec
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.unlockitems")
                 .withOptionalArguments(new PlayerArgument("target"))
                 .executesPlayer(this);
@@ -38,13 +38,18 @@ public class UnlockItemsCommand extends BaseCommand implements PlayerCommandExec
         if (player.hasPermission("griefprevention.unlockothersdrops") && targetPlayer.isPresent())
         {
             Player otherPlayer = (Player) targetPlayer.orElseThrow();
-            playerData = this.getPlugin().getDataStore().getPlayerData(otherPlayer.getUniqueId());
-            GriefPrevention.sendMessage(player, TextMode.Success, Messages.DropUnlockOthersConfirmation, otherPlayer.getName());
+            playerData = getPlugin().getDataStore().getPlayerData(otherPlayer.getUniqueId());
+            GriefPrevention.sendMessage(
+                    player,
+                    TextMode.SUCCESS,
+                    Messages.DropUnlockOthersConfirmation,
+                    otherPlayer.getName()
+            );
         }
         else
         {
-            playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
-            GriefPrevention.sendMessage(player, TextMode.Success, Messages.DropUnlockConfirmation);
+            playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+            GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.DropUnlockConfirmation);
         }
 
         playerData.dropsAreUnlocked = true;

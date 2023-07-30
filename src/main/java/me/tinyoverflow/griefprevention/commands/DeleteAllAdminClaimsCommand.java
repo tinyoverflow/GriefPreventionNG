@@ -7,7 +7,7 @@ import dev.jorel.commandapi.executors.PlayerCommandExecutor;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.Messages;
 import me.tinyoverflow.griefprevention.TextMode;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.entity.Player;
 
 public class DeleteAllAdminClaimsCommand extends BaseCommand implements PlayerCommandExecutor
@@ -30,14 +30,17 @@ public class DeleteAllAdminClaimsCommand extends BaseCommand implements PlayerCo
     {
         if (!player.hasPermission("griefprevention.deleteclaims"))
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.NoDeletePermission);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.NoDeletePermission);
             return;
         }
 
         //delete all admin claims
-        getPlugin().getDataStore().deleteClaimsForPlayer(null, true);  //null for owner id indicates an administrative claim
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.AllAdminDeleted);
-        GriefPrevention.AddLogEntry(player.getName() + " deleted all administrative claims.", LogType.ADMIN);
+        getPlugin().getDataStore().deleteClaimsForPlayer(
+                null,
+                true
+        );  //null for owner id indicates an administrative claim
+        GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.AllAdminDeleted);
+        GriefPrevention.AddLogEntry(player.getName() + " deleted all administrative claims.", ActivityType.ADMIN);
         getPlugin().getDataStore().getPlayerData(player.getUniqueId()).setVisibleBoundaries(null);
     }
 }

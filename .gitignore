@@ -74,3 +74,6 @@ target/
 *.name
 .idea
 *.iml
+
+# Maven
+dependency-reduced-pom.xml

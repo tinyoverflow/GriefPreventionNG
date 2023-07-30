@@ -32,19 +32,18 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class GriefPreventionLogger
+public class ActivityLogger
 {
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("HH:mm");
     private final SimpleDateFormat filenameFormat = new SimpleDateFormat("yyyy-MM-dd");
     private final StringBuffer messageBuffer = new StringBuffer();
 
-    private final Logger serverLogger;
+    private final java.util.logging.Logger serverLogger;
     private final File logDirectory;
     private final LoggerConfiguration configuration;
 
-    public GriefPreventionLogger(Logger serverLogger, File logDirectory, LoggerConfiguration configuration)
+    public ActivityLogger(java.util.logging.Logger serverLogger, File logDirectory, LoggerConfiguration configuration)
     {
         this.serverLogger = serverLogger;
         this.logDirectory = logDirectory;
@@ -56,7 +55,7 @@ public class GriefPreventionLogger
         }
     }
 
-    public void log(LogType type, String message)
+    public void log(ActivityType type, String message)
     {
         // Skip if the given log type is not enabled.
         if (!switch (type)
@@ -66,7 +65,10 @@ public class GriefPreventionLogger
             case ADMIN -> configuration.isAdminEnabled();
             case DEBUG -> configuration.isDebugEnabled();
             default -> true;
-        }) return;
+        })
+        {
+            return;
+        }
 
         // Write message to the memory buffer.
         String timestamp = timestampFormat.format(new Date());
@@ -86,8 +88,7 @@ public class GriefPreventionLogger
         {
             bufferedWriter.write(messageBuffer.toString());
             messageBuffer.setLength(0);
-        }
-        catch (IOException e)
+        } catch (IOException e)
         {
             serverLogger.severe("Could not write to log file " + logFile + ": " + e.getMessage());
         }
@@ -101,7 +102,12 @@ public class GriefPreventionLogger
         // Prune old logs once a day, if enabled.
         if (configuration.isLogPruningEnabled())
         {
-            scheduler.scheduleSyncRepeatingTask(plugin, new PruneLogsTask(serverLogger, logDirectory, configuration), 0, 24 * 60 * 60 * 20);
+            scheduler.scheduleSyncRepeatingTask(
+                    plugin,
+                    new PruneLogsTask(serverLogger, logDirectory, configuration),
+                    0,
+                    24 * 60 * 60 * 20
+            );
         }
     }
 }

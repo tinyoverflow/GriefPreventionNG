@@ -33,20 +33,23 @@ public class HangingPlaceListener implements Listener
 
         //if the player doesn't have permission, don't allow the placement
         String noBuildReason = plugin.allowBuild(event.getPlayer(), event.getEntity().getLocation(), Material.PAINTING);
-        if (noBuildReason != null) {
+        if (noBuildReason != null)
+        {
             event.setCancelled(true);
-            GriefPrevention.sendMessage(event.getPlayer(), TextMode.Err, noBuildReason);
+            GriefPrevention.sendMessage(event.getPlayer(), TextMode.ERROR, noBuildReason);
         }
 
         //otherwise, apply entity-count limitations for creative worlds
-        else if (plugin.creativeRulesApply(event.getEntity().getLocation())) {
+        else if (plugin.creativeRulesApply(event.getEntity().getLocation()))
+        {
             PlayerData playerData = dataStore.getPlayerData(event.getPlayer().getUniqueId());
             Claim claim = dataStore.getClaimAt(event.getBlock().getLocation(), false, playerData.lastClaim);
             if (claim == null) return;
 
             String noEntitiesReason = claim.allowMoreEntities(false);
-            if (noEntitiesReason != null) {
-                GriefPrevention.sendMessage(event.getPlayer(), TextMode.Err, noEntitiesReason);
+            if (noEntitiesReason != null)
+            {
+                GriefPrevention.sendMessage(event.getPlayer(), TextMode.ERROR, noEntitiesReason);
                 event.setCancelled(true);
             }
         }

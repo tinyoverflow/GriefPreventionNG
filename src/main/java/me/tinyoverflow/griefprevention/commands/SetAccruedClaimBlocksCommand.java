@@ -10,7 +10,7 @@ import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.Messages;
 import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.TextMode;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -43,8 +43,12 @@ public class SetAccruedClaimBlocksCommand extends BaseCommand implements PlayerC
         playerData.setAccruedClaimBlocks(newAmount);
         getPlugin().getDataStore().savePlayerData(targetPlayer.getUniqueId(), playerData);
 
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.SetClaimBlocksSuccess);
+        GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.SetClaimBlocksSuccess);
         if (player != null)
-            GriefPrevention.AddLogEntry(player.getName() + " set " + targetPlayer.getName() + "'s accrued claim blocks to " + newAmount + ".", LogType.ADMIN);
+        {
+            GriefPrevention.AddLogEntry(
+                    player.getName() + " set " + targetPlayer.getName() + "'s accrued claim blocks to " + newAmount +
+                    ".", ActivityType.ADMIN);
+        }
     }
 }

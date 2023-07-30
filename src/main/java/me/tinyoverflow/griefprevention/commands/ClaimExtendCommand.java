@@ -5,12 +5,7 @@ import dev.jorel.commandapi.arguments.IntegerArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.ClaimPermission;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -27,7 +22,7 @@ public class ClaimExtendCommand extends BaseCommand implements PlayerCommandExec
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.extendclaim")
                 .withArguments(new IntegerArgument("amount"))
                 .executesPlayer(this);
@@ -40,18 +35,19 @@ public class ClaimExtendCommand extends BaseCommand implements PlayerCommandExec
 
         //requires claim modification tool in hand
         if (player.getGameMode() != GameMode.CREATIVE &&
-                player.getInventory().getItemInMainHand().getType() != GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool())
+            player.getInventory().getItemInMainHand().getType() !=
+            GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool())
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.MustHoldModificationToolForThat);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.MustHoldModificationToolForThat);
             return;
         }
 
         //must be standing in a land claim
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
-        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true, playerData.lastClaim);
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        Claim claim = getPlugin().getDataStore().getClaimAt(player.getLocation(), true, playerData.lastClaim);
         if (claim == null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.StandInClaimToResize);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.StandInClaimToResize);
             return;
         }
 
@@ -59,7 +55,7 @@ public class ClaimExtendCommand extends BaseCommand implements PlayerCommandExec
         Supplier<String> errorMessage = claim.checkPermission(player, ClaimPermission.Edit, null);
         if (errorMessage != null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.NotYourClaim);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.NotYourClaim);
             return;
         }
 
@@ -67,13 +63,13 @@ public class ClaimExtendCommand extends BaseCommand implements PlayerCommandExec
         org.bukkit.util.Vector direction = player.getLocation().getDirection();
         if (direction.getY() > .75)
         {
-            GriefPrevention.sendMessage(player, TextMode.Info, Messages.ClaimsExtendToSky);
+            GriefPrevention.sendMessage(player, TextMode.INFO, Messages.ClaimsExtendToSky);
             return;
         }
 
         if (direction.getY() < -.75)
         {
-            GriefPrevention.sendMessage(player, TextMode.Info, Messages.ClaimsAutoExtendDownward);
+            GriefPrevention.sendMessage(player, TextMode.INFO, Messages.ClaimsAutoExtendDownward);
             return;
         }
 
@@ -136,7 +132,16 @@ public class ClaimExtendCommand extends BaseCommand implements PlayerCommandExec
 
         //attempt resize
         playerData.claimResizing = claim;
-        this.getPlugin().getDataStore().resizeClaimWithChecks(player, playerData, newx1, newx2, newy1, newy2, newz1, newz2);
+        getPlugin().getDataStore().resizeClaimWithChecks(
+                player,
+                playerData,
+                newx1,
+                newx2,
+                newy1,
+                newy2,
+                newz1,
+                newz2
+        );
         playerData.claimResizing = null;
     }
 }

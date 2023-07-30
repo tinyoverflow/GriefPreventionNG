@@ -3,6 +3,7 @@ package me.tinyoverflow.griefprevention.commands;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
+import me.tinyoverflow.tolker.Tolker;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -11,8 +12,17 @@ import org.bukkit.inventory.ItemFactory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
+import java.time.LocalDateTime;
+
 public class BookDemoCommand implements PlayerCommandExecutor
 {
+    private final Tolker tolker;
+
+    public BookDemoCommand(Tolker tolker)
+    {
+        this.tolker = tolker;
+    }
+
     @Override
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
@@ -26,5 +36,13 @@ public class BookDemoCommand implements PlayerCommandExecutor
         book.setItemMeta(bookMeta);
 
         player.openBook(book);
+
+        System.out.println(player.getClass().getTypeName());
+        tolker.build("demo-book")
+                .with("player", player)
+                .with("book", book)
+                .with("location", player.getLocation())
+                .withDate("time", LocalDateTime.now())
+                .send(player);
     }
 }

@@ -15,15 +15,18 @@ import org.bukkit.event.entity.ProjectileHitEvent;
 
 import java.util.function.Supplier;
 
-public class ProjectileHitListener implements Listener {
+public class ProjectileHitListener implements Listener
+{
     private final DataStore dataStore;
 
-    public ProjectileHitListener(DataStore dataStore) {
+    public ProjectileHitListener(DataStore dataStore)
+    {
         this.dataStore = dataStore;
     }
 
     @EventHandler(ignoreCancelled = true)
-    private void chorusFlower(ProjectileHitEvent event) {
+    private void chorusFlower(ProjectileHitEvent event)
+    {
         //don't track in worlds where claims are not enabled
         if (!GriefPrevention.instance.claimsEnabledForWorld(event.getEntity().getWorld())) return;
 
@@ -40,16 +43,18 @@ public class ProjectileHitListener implements Listener {
 
         if (projectile.getShooter() instanceof Player) shooter = (Player) projectile.getShooter();
 
-        if (shooter == null) {
+        if (shooter == null)
+        {
             event.setCancelled(true);
             return;
         }
 
         Supplier<String> allowContainer = claim.checkPermission(shooter, ClaimPermission.Inventory, event);
 
-        if (allowContainer != null) {
+        if (allowContainer != null)
+        {
             event.setCancelled(true);
-            GriefPrevention.sendMessage(shooter, TextMode.Err, allowContainer.get());
+            GriefPrevention.sendMessage(shooter, TextMode.ERROR, allowContainer.get());
         }
     }
 }

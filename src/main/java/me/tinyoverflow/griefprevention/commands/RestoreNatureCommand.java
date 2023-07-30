@@ -5,11 +5,7 @@ import dev.jorel.commandapi.arguments.BooleanArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.ShovelMode;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import org.bukkit.entity.Player;
 
 public class RestoreNatureCommand extends BaseCommand implements PlayerCommandExecutor
@@ -22,7 +18,7 @@ public class RestoreNatureCommand extends BaseCommand implements PlayerCommandEx
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.restorenature")
                 .withOptionalArguments(new BooleanArgument("aggressive"))
                 .executesPlayer(this);
@@ -32,13 +28,13 @@ public class RestoreNatureCommand extends BaseCommand implements PlayerCommandEx
     public void run(Player player, CommandArguments arguments) throws WrapperCommandSyntaxException
     {
         boolean aggressive = (boolean) arguments.getOptional("aggressive").orElse(false);
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
 
         playerData.shovelMode = aggressive
                 ? ShovelMode.RestoreNatureAggressive
                 : ShovelMode.RestoreNature;
 
-        GriefPrevention.sendMessage(player, TextMode.Instr, aggressive
+        GriefPrevention.sendMessage(player, TextMode.INSTRUCTION, aggressive
                 ? Messages.RestoreNatureAggressiveActivate
                 : Messages.RestoreNatureActivate);
     }

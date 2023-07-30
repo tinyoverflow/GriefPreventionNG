@@ -13,32 +13,42 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.function.Supplier;
 
-public class PlayerTeleportListener implements Listener {
+public class PlayerTeleportListener implements Listener
+{
     private final GriefPrevention plugin;
     private final DataStore dataStore;
 
-    public PlayerTeleportListener(GriefPrevention plugin, DataStore dataStore) {
+    public PlayerTeleportListener(GriefPrevention plugin, DataStore dataStore)
+    {
         this.plugin = plugin;
         this.dataStore = dataStore;
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onPlayerTeleport(PlayerTeleportEvent event) {
+    public void onPlayerTeleport(PlayerTeleportEvent event)
+    {
         Player player = event.getPlayer();
         PlayerData playerData = dataStore.getPlayerData(player.getUniqueId());
 
         //FEATURE: prevent players from using ender pearls to gain access to secured claims
         PlayerTeleportEvent.TeleportCause cause = event.getCause();
-        if (cause == PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT || (cause == PlayerTeleportEvent.TeleportCause.ENDER_PEARL && plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventEnderPearlsEnabled())) {
+        if (cause == PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT ||
+            (cause == PlayerTeleportEvent.TeleportCause.ENDER_PEARL &&
+             plugin.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventEnderPearlsEnabled()))
+        {
             Claim toClaim = dataStore.getClaimAt(event.getTo(), false, playerData.lastClaim);
-            if (toClaim != null) {
+            if (toClaim != null)
+            {
                 playerData.lastClaim = toClaim;
                 Supplier<String> noAccessReason = toClaim.checkPermission(player, ClaimPermission.Access, event);
-                if (noAccessReason != null) {
-                    GriefPrevention.sendMessage(player, TextMode.Err, noAccessReason.get());
+                if (noAccessReason != null)
+                {
+                    GriefPrevention.sendMessage(player, TextMode.ERROR, noAccessReason.get());
                     event.setCancelled(true);
                     if (cause == PlayerTeleportEvent.TeleportCause.ENDER_PEARL)
+                    {
                         player.getInventory().addItem(new ItemStack(Material.ENDER_PEARL));
+                    }
                 }
             }
         }
@@ -56,16 +66,18 @@ public class PlayerTeleportListener implements Listener {
 
         Location source = event.getFrom();
         Claim sourceClaim = dataStore.getClaimAt(source, false, playerData.lastClaim);
-        if (sourceClaim != null && sourceClaim.siegeData != null) {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.SiegeNoTeleport);
+        if (sourceClaim != null && sourceClaim.siegeData != null)
+        {
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.SiegeNoTeleport);
             event.setCancelled(true);
             return;
         }
 
         Location destination = event.getTo();
         Claim destinationClaim = dataStore.getClaimAt(destination, false, null);
-        if (destinationClaim != null && destinationClaim.siegeData != null) {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.BesiegedNoTeleport);
+        if (destinationClaim != null && destinationClaim.siegeData != null)
+        {
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.BesiegedNoTeleport);
             event.setCancelled(true);
         }
     }

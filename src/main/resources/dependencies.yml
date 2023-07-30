@@ -2,7 +2,11 @@ repositories:
   - id: paper
     type: default
     url: https://repo.papermc.io/repository/maven-public/
+  - id: jitpack.io
+    type: default
+    url: https://jitpack.io
 
 dependencies:
   - dev.jorel:commandapi-bukkit-shade:9.0.3
   - org.spongepowered:configurate-hocon:4.1.2
+  - com.github.tinyoverflow:tolker:0.1.1

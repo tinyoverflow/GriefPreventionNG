@@ -10,7 +10,7 @@ import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.Messages;
 import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.TextMode;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -38,7 +38,7 @@ public class AdjustClaimBlockLimitCommand extends BaseCommand implements PlayerC
         OfflinePlayer targetPlayer = (OfflinePlayer) commandArguments.get("target");
         if (targetPlayer == null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.PlayerNotFound2);
             return;
         }
 
@@ -46,9 +46,20 @@ public class AdjustClaimBlockLimitCommand extends BaseCommand implements PlayerC
         playerData.setAccruedClaimBlocksLimit(limit);
         getPlugin().getDataStore().savePlayerData(targetPlayer.getUniqueId(), playerData);
 
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.AdjustLimitSuccess, targetPlayer.getName(), String.valueOf(limit));
+        GriefPrevention.sendMessage(
+                player,
+                TextMode.SUCCESS,
+                Messages.AdjustLimitSuccess,
+                targetPlayer.getName(),
+                String.valueOf(limit)
+        );
         if (player != null)
-            GriefPrevention.AddLogEntry(player.getName() + " adjusted " + targetPlayer.getName() + "'s max accrued claim block limit to " + limit + ".", LogType.ADMIN);
-
+        {
+            GriefPrevention.AddLogEntry(
+                    player.getName() + " adjusted " + targetPlayer.getName() + "'s max accrued claim block limit to " +
+                    limit + ".",
+                    ActivityType.ADMIN
+            );
+        }
     }
 }

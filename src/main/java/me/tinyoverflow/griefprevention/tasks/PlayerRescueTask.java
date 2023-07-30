@@ -32,12 +32,10 @@ public class PlayerRescueTask implements Runnable
 {
     //original location where /trapped was used
     private final Location location;
-
-    //rescue destination, may be decided at instantiation or at execution
-    private Location destination;
-
     //player data
     private final Player player;
+    //rescue destination, may be decided at instantiation or at execution
+    private Location destination;
 
     public PlayerRescueTask(Player player, Location location, Location destination)
     {
@@ -57,23 +55,26 @@ public class PlayerRescueTask implements Runnable
         playerData.pendingTrapped = false;
 
         //if the player moved three or more blocks from where he used /trapped, admonish him and don't save him
-        if (!player.getLocation().getWorld().equals(this.location.getWorld()) || player.getLocation().distance(this.location) > 3)
+        if (!player.getLocation().getWorld().equals(location.getWorld()) ||
+            player.getLocation().distance(location) > 3)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.RescueAbortedMoved);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.RescueAbortedMoved);
             return;
         }
 
         //otherwise find a place to teleport him
-        if (this.destination == null)
+        if (destination == null)
         {
-            this.destination = GriefPrevention.instance.ejectPlayer(this.player);
+            destination = GriefPrevention.instance.ejectPlayer(player);
         }
         else
         {
-            player.teleport(this.destination);
+            player.teleport(destination);
         }
 
         //log entry, in case admins want to investigate the "trap"
-        GriefPrevention.AddLogEntry("Rescued trapped player " + player.getName() + " from " + GriefPrevention.getFriendlyLocationString(this.location) + " to " + GriefPrevention.getFriendlyLocationString(this.destination) + ".");
+        GriefPrevention.AddLogEntry("Rescued trapped player " + player.getName() + " from " +
+                                    GriefPrevention.getFriendlyLocationString(location) + " to " +
+                                    GriefPrevention.getFriendlyLocationString(destination) + ".");
     }
 }

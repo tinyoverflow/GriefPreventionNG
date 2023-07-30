@@ -32,11 +32,12 @@ public class PlayerCommandPreprocessListener implements Listener
         Player player = event.getPlayer();
         PlayerData playerData = dataStore.getPlayerData(event.getPlayer().getUniqueId());
 
-        boolean isCommandBlocked = plugin.getPluginConfig().getPvpConfiguration().getRestrictedCommands().contains(command);
+        boolean isCommandBlocked = plugin.getPluginConfig().getPvpConfiguration().getRestrictedCommands().contains(
+                command);
         if ((playerData.inPvpCombat() || playerData.siegeData != null) && isCommandBlocked)
         {
             event.setCancelled(true);
-            GriefPrevention.sendMessage(event.getPlayer(), TextMode.Err, Messages.CommandBannedInPvP);
+            GriefPrevention.sendMessage(event.getPlayer(), TextMode.ERROR, Messages.CommandBannedInPvP);
             return;
         }
 
@@ -61,7 +62,7 @@ public class PlayerCommandPreprocessListener implements Listener
                 Supplier<String> reason = claim.checkPermission(player, ClaimPermission.Access, event);
                 if (reason != null)
                 {
-                    GriefPrevention.sendMessage(player, TextMode.Err, reason.get());
+                    GriefPrevention.sendMessage(player, TextMode.ERROR, reason.get());
                     event.setCancelled(true);
                 }
             }

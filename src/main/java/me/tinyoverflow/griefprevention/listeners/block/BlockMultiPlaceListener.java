@@ -9,21 +9,25 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockMultiPlaceEvent;
 
-public class BlockMultiPlaceListener implements Listener {
+public class BlockMultiPlaceListener implements Listener
+{
 
     //when a player places multiple blocks...
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onBlocksPlace(BlockMultiPlaceEvent placeEvent) {
+    public void onBlocksPlace(BlockMultiPlaceEvent placeEvent)
+    {
         Player player = placeEvent.getPlayer();
 
         //don't track in worlds where claims are not enabled
         if (!GriefPrevention.instance.claimsEnabledForWorld(placeEvent.getBlock().getWorld())) return;
 
         //make sure the player is allowed to build at the location
-        for (BlockState block : placeEvent.getReplacedBlockStates()) {
+        for (BlockState block : placeEvent.getReplacedBlockStates())
+        {
             String noBuildReason = GriefPrevention.instance.allowBuild(player, block.getLocation(), block.getType());
-            if (noBuildReason != null) {
-                GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason);
+            if (noBuildReason != null)
+            {
+                GriefPrevention.sendMessage(player, TextMode.ERROR, noBuildReason);
                 placeEvent.setCancelled(true);
                 return;
             }

@@ -1,20 +1,11 @@
 package me.tinyoverflow.griefprevention.commands;
 
 import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.arguments.Argument;
-import dev.jorel.commandapi.arguments.ArgumentSuggestions;
-import dev.jorel.commandapi.arguments.CustomArgument;
-import dev.jorel.commandapi.arguments.OfflinePlayerArgument;
-import dev.jorel.commandapi.arguments.StringArgument;
+import dev.jorel.commandapi.arguments.*;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.Claim;
-import me.tinyoverflow.griefprevention.ClaimPermission;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.events.TrustChangedEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -37,10 +28,10 @@ public class TrustCommand extends BaseCommand implements PlayerCommandExecutor
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.trust")
                 .withArguments(new OfflinePlayerArgument("target"))
-                .withOptionalArguments(this.trustLevelArgument("level"))
+                .withOptionalArguments(trustLevelArgument("level"))
                 .executesPlayer(this);
     }
 
@@ -53,13 +44,13 @@ public class TrustCommand extends BaseCommand implements PlayerCommandExecutor
                 .orElse(ClaimPermission.Build);
 
         //determine which claim the player is standing in
-        Claim claim = this.getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
+        Claim claim = getPlugin().getDataStore().getClaimAt(player.getLocation(), true /*ignore height*/, null);
 
         //determine which claims should be modified
         ArrayList<Claim> targetClaims = new ArrayList<>();
         if (claim == null)
         {
-            PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+            PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
             targetClaims.addAll(playerData.getClaims());
         }
         else
@@ -67,7 +58,7 @@ public class TrustCommand extends BaseCommand implements PlayerCommandExecutor
             //check permission here
             if (claim.checkPermission(player, ClaimPermission.Manage, null) != null)
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.NoPermissionTrust, claim.getOwnerName());
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.NoPermissionTrust, claim.getOwnerName());
                 return;
             }
 
@@ -80,7 +71,7 @@ public class TrustCommand extends BaseCommand implements PlayerCommandExecutor
             //error message for trying to grant a permission the player doesn't have
             if (errorMessage != null)
             {
-                GriefPrevention.sendMessage(player, TextMode.Err, Messages.CantGrantThatPermission);
+                GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.CantGrantThatPermission);
                 return;
             }
 
@@ -90,7 +81,7 @@ public class TrustCommand extends BaseCommand implements PlayerCommandExecutor
         //if we didn't determine which claims to modify, tell the player to be specific
         if (targetClaims.size() == 0)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.GrantPermissionNoClaim);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.GrantPermissionNoClaim);
             return;
         }
 
@@ -109,25 +100,26 @@ public class TrustCommand extends BaseCommand implements PlayerCommandExecutor
         for (Claim currentClaim : event.getClaims())
         {
             currentClaim.setPermission(identifierToAdd, permissionLevel);
-            this.getPlugin().getDataStore().saveClaim(currentClaim);
+            getPlugin().getDataStore().saveClaim(currentClaim);
         }
 
         //notify player
-        String permissionDescription = switch (permissionLevel) {
-            case Build -> this.getPlugin().getDataStore().getMessage(Messages.BuildPermission);
-            case Inventory -> this.getPlugin().getDataStore().getMessage(Messages.ContainersPermission);
-            case Access -> this.getPlugin().getDataStore().getMessage(Messages.AccessPermission);
-            case Manage -> this.getPlugin().getDataStore().getMessage(Messages.PermissionsPermission);
+        String permissionDescription = switch (permissionLevel)
+        {
+            case Build -> getPlugin().getDataStore().getMessage(Messages.BuildPermission);
+            case Inventory -> getPlugin().getDataStore().getMessage(Messages.ContainersPermission);
+            case Access -> getPlugin().getDataStore().getMessage(Messages.AccessPermission);
+            case Manage -> getPlugin().getDataStore().getMessage(Messages.PermissionsPermission);
             default -> "";
         };
 
         String location = claim == null
-                ? this.getPlugin().getDataStore().getMessage(Messages.LocationAllClaims)
-                : this.getPlugin().getDataStore().getMessage(Messages.LocationCurrentClaim);
+                ? getPlugin().getDataStore().getMessage(Messages.LocationAllClaims)
+                : getPlugin().getDataStore().getMessage(Messages.LocationCurrentClaim);
 
         GriefPrevention.sendMessage(
                 player,
-                TextMode.Success,
+                TextMode.SUCCESS,
                 Messages.GrantPermissionConfirmation,
                 target.getName(),
                 permissionDescription,
@@ -141,8 +133,7 @@ public class TrustCommand extends BaseCommand implements PlayerCommandExecutor
             try
             {
                 return ClaimPermission.valueOf(info.input());
-            }
-            catch (IllegalArgumentException exception)
+            } catch (IllegalArgumentException exception)
             {
                 throw CustomArgumentException.fromMessageBuilder(
                         new MessageBuilder("Unknown trust level: ").appendArgInput()

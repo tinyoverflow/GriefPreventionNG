@@ -39,15 +39,19 @@ public class PlayerChatListener implements Listener
     private void handleTrappedQuestion(Player player, String message)
     {
         if (dataStore.getMessage(Messages.TrappedChatKeyword).isEmpty())
+        {
             return;
+        }
 
         String[] checkWords = dataStore.getMessage(Messages.TrappedChatKeyword).split(";");
         for (String checkWord : checkWords)
         {
             if (message.contains("/trapped") || !message.contains(checkWord))
+            {
                 continue;
+            }
 
-            GriefPrevention.sendMessage(player, TextMode.Info, Messages.TrappedInstructions, 10L);
+            GriefPrevention.sendMessage(player, TextMode.INFO, Messages.TrappedInstructions, 10L);
             break;
         }
     }
@@ -55,12 +59,14 @@ public class PlayerChatListener implements Listener
     private void handleHowToClaimQuestion(Player player, String message)
     {
         if (!howToClaimPattern.matcher(message).matches())
+        {
             return;
+        }
 
         String videoUrl = plugin.creativeRulesApply(player.getLocation())
                 ? DataStore.CREATIVE_VIDEO_URL
                 : DataStore.SURVIVAL_VIDEO_URL;
 
-        GriefPrevention.sendMessage(player, TextMode.Info, Messages.CreativeBasicsVideo2, 10L, videoUrl);
+        GriefPrevention.sendMessage(player, TextMode.INFO, Messages.CreativeBasicsVideo2, 10L, videoUrl);
     }
 }

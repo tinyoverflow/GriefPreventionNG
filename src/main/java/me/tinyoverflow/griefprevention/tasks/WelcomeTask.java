@@ -1,9 +1,9 @@
 package me.tinyoverflow.griefprevention.tasks;
 
-import me.tinyoverflow.griefprevention.datastore.DataStore;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.Messages;
 import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.datastore.DataStore;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -24,11 +24,16 @@ public class WelcomeTask implements Runnable
     public void run()
     {
         //abort if player has logged out since this task was scheduled
-        if (!this.player.isOnline()) return;
+        if (!player.isOnline()) return;
 
         //offer advice and a helpful link
-        GriefPrevention.sendMessage(player, TextMode.Instr, Messages.AvoidGriefClaimLand);
-        GriefPrevention.sendMessage(player, TextMode.Instr, Messages.SurvivalBasicsVideo2, DataStore.SURVIVAL_VIDEO_URL);
+        GriefPrevention.sendMessage(player, TextMode.INSTRUCTION, Messages.AvoidGriefClaimLand);
+        GriefPrevention.sendMessage(
+                player,
+                TextMode.INSTRUCTION,
+                Messages.SurvivalBasicsVideo2,
+                DataStore.SURVIVAL_VIDEO_URL
+        );
 
         //give the player a reference book for later
         if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getManualConfiguration().enabled)
@@ -46,36 +51,38 @@ public class WelcomeTask implements Runnable
 
             page1.append(URL).append("\n\n");
             page1.append(intro).append("\n\n");
-            String editToolName = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool().name().replace('_', ' ').toLowerCase();
-            String infoToolName = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getInvestigationTool().name().replace('_', ' ').toLowerCase();
+            String editToolName = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getModificationTool().name().replace(
+                    '_',
+                    ' '
+            ).toLowerCase();
+            String infoToolName = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getToolsConfiguration().getInvestigationTool().name().replace(
+                    '_',
+                    ' '
+            ).toLowerCase();
             String configClaimTools = datastore.getMessage(Messages.BookTools, editToolName, infoToolName);
             page1.append(configClaimTools);
-            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius < 0)
+            if (GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().automaticPreferredRadius <
+                0)
             {
                 page1.append(datastore.getMessage(Messages.BookDisabledChestClaims));
             }
 
-            StringBuilder page2 = new StringBuilder(datastore.getMessage(Messages.BookUsefulCommands)).append("\n\n");
-            page2.append("/Trust /UnTrust /TrustList\n");
-            page2.append("/ClaimsList\n");
-            page2.append("/AbandonClaim\n\n");
-            page2.append("/Claim /ExtendClaim\n");
+            String page2 = datastore.getMessage(Messages.BookUsefulCommands) + "\n\n" +
+                           "/Trust /UnTrust /TrustList\n" +
+                           "/ClaimsList\n" +
+                           "/AbandonClaim\n\n" +
+                           "/Claim /ExtendClaim\n" +
+                           "/IgnorePlayer\n\n" +
+                           "/SubdivideClaims\n" +
+                           "/AccessTrust\n" +
+                           "/ContainerTrust\n" +
+                           "/PermissionTrust";
 
-            page2.append("/IgnorePlayer\n\n");
-
-            page2.append("/SubdivideClaims\n");
-            page2.append("/AccessTrust\n");
-            page2.append("/ContainerTrust\n");
-            page2.append("/PermissionTrust");
-
-            meta.setPages(page1.toString(), page2.toString());
+            meta.setPages(page1.toString(), page2);
 
             ItemStack item = new ItemStack(Material.WRITTEN_BOOK);
             item.setItemMeta(meta);
             player.getInventory().addItem(item);
         }
-
     }
-
-
 }

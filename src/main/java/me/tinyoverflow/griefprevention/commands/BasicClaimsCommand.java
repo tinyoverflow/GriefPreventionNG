@@ -4,11 +4,7 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.ShovelMode;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import org.bukkit.entity.Player;
 
 public class BasicClaimsCommand extends BaseCommand implements PlayerCommandExecutor
@@ -21,7 +17,7 @@ public class BasicClaimsCommand extends BaseCommand implements PlayerCommandExec
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withPermission("griefprevention.basicclaims")
                 .executesPlayer(this);
     }
@@ -29,9 +25,9 @@ public class BasicClaimsCommand extends BaseCommand implements PlayerCommandExec
     @Override
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
         playerData.shovelMode = ShovelMode.Basic;
         playerData.claimSubdividing = null;
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.BasicClaimsMode);
+        GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.BasicClaimsMode);
     }
 }

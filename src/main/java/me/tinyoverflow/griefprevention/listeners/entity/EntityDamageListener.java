@@ -111,22 +111,22 @@ public class EntityDamageListener implements Listener
 
         //horse protections can be disabled
         if (event.getEntity() instanceof Horse &&
-                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectHorses)
+            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectHorses)
         {
             return;
         }
         if (event.getEntity() instanceof Donkey &&
-                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys)
+            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys)
         {
             return;
         }
         if (event.getEntity() instanceof Mule &&
-                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys)
+            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectDonkeys)
         {
             return;
         }
         if (event.getEntity() instanceof Llama &&
-                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectLlamas)
+            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectLlamas)
         {
             return;
         }
@@ -161,7 +161,8 @@ public class EntityDamageListener implements Listener
         if (damageSource instanceof Player damager)
         {
             attacker = damager;
-        } else if (damageSource instanceof Projectile projectile)
+        }
+        else if (damageSource instanceof Projectile projectile)
         {
             arrow = projectile;
             if (arrow.getShooter() instanceof Player shooter)
@@ -186,7 +187,8 @@ public class EntityDamageListener implements Listener
                 {
                     return;
                 }
-            } else if (event.getEntity() instanceof Tameable tameable)
+            }
+            else if (event.getEntity() instanceof Tameable tameable)
             {
                 if (attacker != null && handlePvpPetDamageByPlayer(subEvent, tameable, attacker, sendMessages))
                 {
@@ -232,7 +234,7 @@ public class EntityDamageListener implements Listener
         if ((type == EntityType.HOGLIN || type == EntityType.POLAR_BEAR) && entity instanceof Mob mob)
         {
             return !entity.getPersistentDataContainer().has(luredByPlayer, PersistentDataType.BYTE) &&
-                    mob.getTarget() != null;
+                   mob.getTarget() != null;
         }
 
         return false;
@@ -248,8 +250,8 @@ public class EntityDamageListener implements Listener
     {
         // If PVP is enabled, the damaged entity is not a pet, or the pet has no owner, allow.
         if (plugin.pvpRulesApply(event.getEntity().getWorld())
-                || !(event.getEntity() instanceof Tameable tameable)
-                || !tameable.isTamed())
+            || !(event.getEntity() instanceof Tameable tameable)
+            || !tameable.isTamed())
         {
             return false;
         }
@@ -378,7 +380,7 @@ public class EntityDamageListener implements Listener
                 {
                     GriefPrevention.sendMessage(
                             attacker,
-                            TextMode.Err,
+                            TextMode.ERROR,
                             attackerData.pvpImmune ? Messages.CantFightWhileImmune : Messages.ThatPlayerPvPImmune
                     );
                 }
@@ -389,15 +391,15 @@ public class EntityDamageListener implements Listener
         //FEATURE: prevent players from engaging in PvP combat inside land claims (when it's disabled)
         // Ignoring claims bypasses this feature.
         if (attackerData.ignoreClaims
-                || !plugin.getPluginConfig().getPvpConfiguration().isProtectInPlayerClaims()
-                && !plugin.getPluginConfig().getPvpConfiguration().isProtectInAdminClaims())
+            || !plugin.getPluginConfig().getPvpConfiguration().isProtectInPlayerClaims()
+               && !plugin.getPluginConfig().getPvpConfiguration().isProtectInAdminClaims())
         {
             return false;
         }
         Consumer<Messages> cancelHandler = message ->
         {
             event.setCancelled(true);
-            if (sendMessages) GriefPrevention.sendMessage(attacker, TextMode.Err, message);
+            if (sendMessages) GriefPrevention.sendMessage(attacker, TextMode.ERROR, message);
         };
         // Return whether PVP is handled by a claim at the attacker or defender's locations.
         return handlePvpInClaim(
@@ -407,7 +409,7 @@ public class EntityDamageListener implements Listener
                 attackerData,
                 () -> cancelHandler.accept(Messages.CantFightWhileImmune)
         )
-                || handlePvpInClaim(
+               || handlePvpInClaim(
                 attacker,
                 defender,
                 defender.getLocation(),
@@ -482,7 +484,7 @@ public class EntityDamageListener implements Listener
             event.setCancelled(true);
             if (sendMessages)
             {
-                GriefPrevention.sendMessage(attacker, TextMode.Err, Messages.CantFightWhileImmune);
+                GriefPrevention.sendMessage(attacker, TextMode.ERROR, Messages.CantFightWhileImmune);
             }
             return true;
         }
@@ -514,7 +516,7 @@ public class EntityDamageListener implements Listener
                     {
                         message += "  " + dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
                     }
-                    GriefPrevention.sendMessage(attacker, TextMode.Err, message);
+                    GriefPrevention.sendMessage(attacker, TextMode.ERROR, message);
                 }
             }
         }
@@ -536,17 +538,17 @@ public class EntityDamageListener implements Listener
     {
         EntityType entityType = event.getEntityType();
         if (entityType != EntityType.ITEM_FRAME
-                && entityType != EntityType.GLOW_ITEM_FRAME
-                && entityType != EntityType.ARMOR_STAND
-                && entityType != EntityType.VILLAGER
-                && entityType != EntityType.ENDER_CRYSTAL)
+            && entityType != EntityType.GLOW_ITEM_FRAME
+            && entityType != EntityType.ARMOR_STAND
+            && entityType != EntityType.VILLAGER
+            && entityType != EntityType.ENDER_CRYSTAL)
         {
             return false;
         }
 
         if (entityType == EntityType.VILLAGER
-                // Allow disabling villager protections in the config.
-                && (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectCreatures
+            // Allow disabling villager protections in the config.
+            && (!plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectCreatures
                 // Always allow zombies and raids to target villagers.
                 //why exception?  so admins can set up a village which can't be CHANGED by players, but must be "protected" by players.
                 || event.getDamager() instanceof Zombie
@@ -584,7 +586,7 @@ public class EntityDamageListener implements Listener
         if (failureReason == null) return false;
 
         event.setCancelled(true);
-        if (sendMessages) GriefPrevention.sendMessage(attacker, TextMode.Err, failureReason.get());
+        if (sendMessages) GriefPrevention.sendMessage(attacker, TextMode.ERROR, failureReason.get());
         return true;
     }
 
@@ -605,7 +607,7 @@ public class EntityDamageListener implements Listener
             boolean sendMessages)
     {
         if (!(event.getEntity() instanceof Creature) ||
-                !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectCreatures)
+            !plugin.getPluginConfig().getClaimConfiguration().getMobsConfiguration().protectCreatures)
         {
             return false;
         }
@@ -617,14 +619,14 @@ public class EntityDamageListener implements Listener
         EntityType damageSourceType = damageSource.getType();
         //if not a player, explosive, or ranged/area of effect attack, allow
         if (attacker == null
-                && damageSourceType != EntityType.CREEPER
-                && damageSourceType != EntityType.WITHER
-                && damageSourceType != EntityType.ENDER_CRYSTAL
-                && damageSourceType != EntityType.AREA_EFFECT_CLOUD
-                && damageSourceType != EntityType.WITCH
-                && !(damageSource instanceof Projectile)
-                && !(damageSource instanceof Explosive)
-                && !(damageSource instanceof ExplosiveMinecart))
+            && damageSourceType != EntityType.CREEPER
+            && damageSourceType != EntityType.WITHER
+            && damageSourceType != EntityType.ENDER_CRYSTAL
+            && damageSourceType != EntityType.AREA_EFFECT_CLOUD
+            && damageSourceType != EntityType.WITCH
+            && !(damageSource instanceof Projectile)
+            && !(damageSource instanceof Explosive)
+            && !(damageSource instanceof ExplosiveMinecart))
         {
             return true;
         }
@@ -688,7 +690,7 @@ public class EntityDamageListener implements Listener
         // Prevent projectiles from bouncing infinitely.
         preventInfiniteBounce(arrow, event.getEntity());
 
-        if (sendMessages) GriefPrevention.sendMessage(attacker, TextMode.Err, noContainersReason.get());
+        if (sendMessages) GriefPrevention.sendMessage(attacker, TextMode.ERROR, noContainersReason.get());
 
         return true;
     }
@@ -736,7 +738,7 @@ public class EntityDamageListener implements Listener
             {
                 message += "  " + dataStore.getMessage(Messages.IgnoreClaimsAdvertisement);
             }
-            GriefPrevention.sendMessage(attacker, TextMode.Err, message);
+            GriefPrevention.sendMessage(attacker, TextMode.ERROR, message);
         }
         return true;
     }

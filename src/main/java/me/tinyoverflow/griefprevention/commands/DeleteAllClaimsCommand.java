@@ -8,7 +8,7 @@ import dev.jorel.commandapi.executors.PlayerCommandExecutor;
 import me.tinyoverflow.griefprevention.GriefPrevention;
 import me.tinyoverflow.griefprevention.Messages;
 import me.tinyoverflow.griefprevention.TextMode;
-import me.tinyoverflow.griefprevention.logger.LogType;
+import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -37,10 +37,13 @@ public class DeleteAllClaimsCommand extends BaseCommand implements PlayerCommand
         //delete all that player's claims
         getPlugin().getDataStore().deleteClaimsForPlayer(otherPlayer.getUniqueId(), true);
 
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.DeleteAllSuccess, otherPlayer.getName());
+        GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.DeleteAllSuccess, otherPlayer.getName());
         if (player != null)
         {
-            GriefPrevention.AddLogEntry(player.getName() + " deleted all claims belonging to " + otherPlayer.getName() + ".", LogType.ADMIN);
+            GriefPrevention.AddLogEntry(
+                    player.getName() + " deleted all claims belonging to " + otherPlayer.getName() + ".",
+                    ActivityType.ADMIN
+            );
 
             //revert any current visualization
             if (player.isOnline())

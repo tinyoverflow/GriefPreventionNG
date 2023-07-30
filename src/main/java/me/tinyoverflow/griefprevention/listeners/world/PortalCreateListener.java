@@ -13,37 +13,48 @@ import org.bukkit.event.world.PortalCreateEvent;
 
 import java.util.function.Supplier;
 
-public class PortalCreateListener implements Listener {
+public class PortalCreateListener implements Listener
+{
     private final DataStore dataStore;
 
-    public PortalCreateListener(DataStore dataStore) {
+    public PortalCreateListener(DataStore dataStore)
+    {
         this.dataStore = dataStore;
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onNetherPortalCreate(final PortalCreateEvent event) {
-        if (event.getReason() != PortalCreateEvent.CreateReason.NETHER_PAIR) {
+    public void onNetherPortalCreate(final PortalCreateEvent event)
+    {
+        if (event.getReason() != PortalCreateEvent.CreateReason.NETHER_PAIR)
+        {
             return;
         }
 
         // Ignore this event if preventNonPlayerCreatedPortals config option is disabled, and we don't know the entity.
-        if (!(event.getEntity() instanceof Player) && !GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventNonPlayerPortalsEnabled()) {
+        if (!(event.getEntity() instanceof Player) &&
+            !GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getProtectionConfiguration().isPreventNonPlayerPortalsEnabled())
+        {
             return;
         }
 
-        for (BlockState blockState : event.getBlocks()) {
+        for (BlockState blockState : event.getBlocks())
+        {
             Claim claim = dataStore.getClaimAt(blockState.getLocation(), false, null);
-            if (claim != null) {
-                if (event.getEntity() instanceof Player player) {
+            if (claim != null)
+            {
+                if (event.getEntity() instanceof Player player)
+                {
                     Supplier<String> noPortalReason = claim.checkPermission(player, ClaimPermission.Build, event);
 
-                    if (noPortalReason != null) {
+                    if (noPortalReason != null)
+                    {
                         event.setCancelled(true);
-                        GriefPrevention.sendMessage(player, TextMode.Err, noPortalReason.get());
+                        GriefPrevention.sendMessage(player, TextMode.ERROR, noPortalReason.get());
                         return;
                     }
                 }
-                else {
+                else
+                {
                     // Cancels the event if in a claim, as we can not efficiently retrieve the person/entity who created the portal.
                     event.setCancelled(true);
                     return;

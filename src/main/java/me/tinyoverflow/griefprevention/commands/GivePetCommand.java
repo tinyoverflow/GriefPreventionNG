@@ -22,7 +22,7 @@ public class GivePetCommand extends BaseCommand implements PlayerCommandExecutor
     @Override
     public CommandAPICommand getCommand()
     {
-        return new CommandAPICommand(this.getCommandName())
+        return new CommandAPICommand(getCommandName())
                 .withArguments(new OfflinePlayerArgument("target"))
                 .withSubcommand(new CommandAPICommand("cancel").executesPlayer(this::cancel))
                 .executesPlayer(this);
@@ -31,15 +31,15 @@ public class GivePetCommand extends BaseCommand implements PlayerCommandExecutor
     @Override
     public void run(Player player, CommandArguments arguments) throws WrapperCommandSyntaxException
     {
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
 
         //find the specified player
         OfflinePlayer targetPlayer = (OfflinePlayer) arguments.get("target");
         if (targetPlayer == null
-                || !targetPlayer.isOnline() && !targetPlayer.hasPlayedBefore()
-                || targetPlayer.getName() == null)
+            || !targetPlayer.isOnline() && !targetPlayer.hasPlayedBefore()
+            || targetPlayer.getName() == null)
         {
-            GriefPrevention.sendMessage(player, TextMode.Err, Messages.PlayerNotFound2);
+            GriefPrevention.sendMessage(player, TextMode.ERROR, Messages.PlayerNotFound2);
             return;
         }
 
@@ -47,12 +47,13 @@ public class GivePetCommand extends BaseCommand implements PlayerCommandExecutor
         playerData.petGiveawayRecipient = targetPlayer;
 
         //send instructions
-        GriefPrevention.sendMessage(player, TextMode.Instr, Messages.ReadyToTransferPet);
+        GriefPrevention.sendMessage(player, TextMode.INSTRUCTION, Messages.ReadyToTransferPet);
     }
 
-    public void cancel(Player player, CommandArguments arguments) {
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+    public void cancel(Player player, CommandArguments arguments)
+    {
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
         playerData.petGiveawayRecipient = null;
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.PetTransferCancellation);
+        GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.PetTransferCancellation);
     }
 }

@@ -72,7 +72,8 @@ public class PotionSplashListener implements Listener
         if ((projectileSource instanceof Player))
         {
             thrower = (Player) projectileSource;
-        } else
+        }
+        else
         {
             thrower = null;
         }
@@ -108,7 +109,8 @@ public class PotionSplashListener implements Listener
                                     // If the source is not a block in the same claim as the affected entity, disallow.
                                     event.setIntensity(affected, 0);
                                 }
-                            } else
+                            }
+                            else
                             {
                                 // Source is a player. Determine if they have permission to access entities in the claim.
                                 Supplier<String> override = () -> instance.dataStore.getMessage(
@@ -126,7 +128,7 @@ public class PotionSplashListener implements Listener
                                     event.setIntensity(affected, 0);
                                     if (messagedPlayer.compareAndSet(false, true))
                                     {
-                                        GriefPrevention.sendMessage(thrower, TextMode.Err, noContainersReason.get());
+                                        GriefPrevention.sendMessage(thrower, TextMode.ERROR, noContainersReason.get());
                                     }
                                 }
                             }
@@ -151,7 +153,8 @@ public class PotionSplashListener implements Listener
 
                 //otherwise if in no-pvp zone, stop effect
                 //FEATURE: prevent players from engaging in PvP combat inside land claims (when it's disabled)
-                if (instance.getPluginConfig().getPvpConfiguration().isProtectInPlayerClaims() || instance.getPluginConfig().getPvpConfiguration().isProtectInAdminClaims())
+                if (instance.getPluginConfig().getPvpConfiguration().isProtectInPlayerClaims() ||
+                    instance.getPluginConfig().getPvpConfiguration().isProtectInAdminClaims())
                 {
                     PlayerData playerData = dataStore.getPlayerData(thrower.getUniqueId());
                     Consumer<Messages> cancelHandler = message ->
@@ -159,7 +162,7 @@ public class PotionSplashListener implements Listener
                         event.setIntensity(affected, 0);
                         if (messagedPlayer.compareAndSet(false, true))
                         {
-                            GriefPrevention.sendMessage(thrower, TextMode.Err, message);
+                            GriefPrevention.sendMessage(thrower, TextMode.ERROR, message);
                         }
                     };
                     if (EntityDamageListener.handlePvpInClaim(

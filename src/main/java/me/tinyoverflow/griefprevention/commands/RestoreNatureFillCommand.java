@@ -5,11 +5,7 @@ import dev.jorel.commandapi.arguments.IntegerArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
-import me.tinyoverflow.griefprevention.GriefPrevention;
-import me.tinyoverflow.griefprevention.Messages;
-import me.tinyoverflow.griefprevention.PlayerData;
-import me.tinyoverflow.griefprevention.ShovelMode;
-import me.tinyoverflow.griefprevention.TextMode;
+import me.tinyoverflow.griefprevention.*;
 import org.bukkit.entity.Player;
 
 public class RestoreNatureFillCommand extends BaseCommand implements PlayerCommandExecutor
@@ -31,11 +27,16 @@ public class RestoreNatureFillCommand extends BaseCommand implements PlayerComma
     @Override
     public void run(Player player, CommandArguments arguments) throws WrapperCommandSyntaxException
     {
-        PlayerData playerData = this.getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
 
         playerData.shovelMode = ShovelMode.RestoreNatureFill;
         playerData.fillRadius = (int) arguments.getOptional("radius").orElse(2);
 
-        GriefPrevention.sendMessage(player, TextMode.Success, Messages.FillModeActive, String.valueOf(playerData.fillRadius));
+        GriefPrevention.sendMessage(
+                player,
+                TextMode.SUCCESS,
+                Messages.FillModeActive,
+                String.valueOf(playerData.fillRadius)
+        );
     }
 }
