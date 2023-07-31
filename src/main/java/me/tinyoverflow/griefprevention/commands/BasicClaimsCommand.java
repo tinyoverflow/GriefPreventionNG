@@ -26,7 +26,7 @@ public class BasicClaimsCommand extends BaseCommand implements PlayerCommandExec
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
         PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
-        playerData.shovelMode = ShovelMode.Basic;
+        playerData.shovelMode = ShovelMode.BASIC;
         playerData.claimSubdividing = null;
         GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.BasicClaimsMode);
     }

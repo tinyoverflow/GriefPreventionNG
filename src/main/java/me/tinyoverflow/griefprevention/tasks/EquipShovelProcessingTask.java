@@ -55,9 +55,9 @@ public class EquipShovelProcessingTask implements Runnable
         playerData.claimResizing = null;
 
         //always reset to basic claims mode
-        if (playerData.shovelMode != ShovelMode.Basic)
+        if (playerData.shovelMode != ShovelMode.BASIC)
         {
-            playerData.shovelMode = ShovelMode.Basic;
+            playerData.shovelMode = ShovelMode.BASIC;
             GriefPrevention.sendMessage(player, TextMode.INFO, Messages.ShovelBasicClaimMode);
         }
 

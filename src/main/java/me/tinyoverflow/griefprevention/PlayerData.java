@@ -40,7 +40,7 @@ public class PlayerData
     //where this player was the last time we checked on him for earning claim blocks
     public Location lastAfkCheckLocation = null;
     //what "mode" the shovel is in determines what it will do when it's used
-    public ShovelMode shovelMode = ShovelMode.Basic;
+    public ShovelMode shovelMode = ShovelMode.BASIC;
     //radius for restore nature fill mode
     public int fillRadius = 0;
     //last place the player used the shovel, useful in creating and resizing claims,

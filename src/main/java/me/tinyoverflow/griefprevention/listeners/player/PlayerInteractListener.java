@@ -851,7 +851,7 @@ public class PlayerInteractListener implements Listener
                     }
 
                     //if he didn't click on a corner and is in subdivision mode, he's creating a new subdivision
-                    else if (playerData.shovelMode == ShovelMode.Subdivide)
+                    else if (playerData.shovelMode == ShovelMode.SUBDIVIDE)
                     {
                         //if it's the first click, he's trying to start a new subdivision
                         if (playerData.lastShovelLocation == null)
@@ -1039,7 +1039,7 @@ public class PlayerInteractListener implements Listener
                 int newClaimWidth = Math.abs(playerData.lastShovelLocation.getBlockX() - clickedBlock.getX()) + 1;
                 int newClaimHeight = Math.abs(playerData.lastShovelLocation.getBlockZ() - clickedBlock.getZ()) + 1;
 
-                if (playerData.shovelMode != ShovelMode.Admin)
+                if (playerData.shovelMode != ShovelMode.ADMIN)
                 {
                     if (newClaimWidth <
                         plugin.getPluginConfig().getClaimConfiguration().getCreationConfiguration().minimumWidth ||
@@ -1078,7 +1078,7 @@ public class PlayerInteractListener implements Listener
                 }
 
                 //if not an administrative claim, verify the player has enough claim blocks for this new claim
-                if (playerData.shovelMode != ShovelMode.Admin)
+                if (playerData.shovelMode != ShovelMode.ADMIN)
                 {
                     int newClaimArea = newClaimWidth * newClaimHeight;
                     int remainingBlocks = playerData.getRemainingClaimBlocks();

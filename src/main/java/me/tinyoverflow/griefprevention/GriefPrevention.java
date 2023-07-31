@@ -21,6 +21,8 @@ package me.tinyoverflow.griefprevention;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import dev.jorel.commandapi.CommandTree;
+import dev.jorel.commandapi.arguments.LiteralArgument;
+import dev.jorel.commandapi.arguments.MultiLiteralArgument;
 import me.tinyoverflow.griefprevention.commands.*;
 import me.tinyoverflow.griefprevention.configurations.GriefPreventionConfiguration;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
@@ -40,8 +42,6 @@ import me.tinyoverflow.griefprevention.listeners.world.StructureGrowListener;
 import me.tinyoverflow.griefprevention.logger.ActivityLogger;
 import me.tinyoverflow.griefprevention.logger.ActivityType;
 import me.tinyoverflow.griefprevention.tasks.*;
-import me.tinyoverflow.tolker.Tolker;
-import me.tinyoverflow.tolker.repositories.MemoryBag;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -544,51 +544,131 @@ public class GriefPrevention extends JavaPlugin
 
     private void registerCommands()
     {
-        MemoryBag memoryBag = new MemoryBag();
-        memoryBag.addMessage("demo-book", "<player> opened the book <book> at <location> at <time:'HH:mm:ss'>");
+        new CommandTree("claimadmin")
+                .withPermission("griefprevention.command.claimadmin")
+                .then(new LiteralArgument("list")
+                        .withPermission("griefprevention.command.claimadmin.list")
+                        .executesPlayer(new AdminClaimListCommand("adminclaimlist", this))
+                )
+                .then(new LiteralArgument("ignore")
+                        .withPermission("griefprevention.command.claimadmin.ignore")
+                        .executesPlayer(new IgnoreClaimsCommand("ignoreclaims", this))
+                )
+                .then(new LiteralArgument("delete-all")
+                        .withPermission("griefprevention.command.claimadmin.delete-all")
+                        .then(new MultiLiteralArgument("type", List.of("user", "admin", "all"))
+                                .executesPlayer(new DeleteAllClaimsCommand("deleteallclaims", this))
+                        )
+                );
 
-        Tolker tolker = new Tolker(memoryBag);
-        tolker.registerDefaultSerializers();
-
-        new CommandTree("demobook")
-                .executesPlayer(new BookDemoCommand(tolker))
+        new CommandTree("toolmode")
+                .withPermission("griefprevention.command.toolmode")
+                .then(new LiteralArgument("admin")
+                        .withPermission("griefprevention.command.toolmode.admin")
+                        .executesPlayer(new ToolModeCommand(this, ShovelMode.ADMIN))
+                )
+                .then(new LiteralArgument("basic")
+                        .withPermission("griefprevention.command.toolmode.basic")
+                        .executesPlayer(new ToolModeCommand(this, ShovelMode.BASIC))
+                )
+                .then(new LiteralArgument("subdivide")
+                        .withPermission("griefprevention.command.toolmode.subdivide")
+                        .executesPlayer(new ToolModeCommand(this, ShovelMode.SUBDIVIDE))
+                )
+                .executesPlayer(new ToolModeCommand(this, null)::help)
                 .register();
 
+        /**
+         * /claimadmin
+         *      list
+         *      delete-all (user/admin)
+         *      delete-in-world (user/admin)
+         *      ignore
+         *      restore-nature (normal/fill)
+         *
+         *
+         * /claim
+         *      create
+         *      abandon / delete?
+         *      abandon-all
+         *      list
+         *      extend
+         *      transfer (player)
+         *      config
+         *          explosions (true/false)
+         *          inherit-permission (true/false)
+         *
+         * /claimblocks
+         *      buy (amount)
+         *      sell (amount)
+         *      adjust (player) (bonus/accrued) (modification)
+         *      limit (player) (limit)
+         *
+         * /toolmode
+         *      basic
+         *      subdivide
+         *      admin
+         *
+         * /trust (player) [level=build]   // none = remove, otherwise build, access, switch, container
+         *
+         * /untrust (player)
+         *
+         * /trapped
+         *
+         * /siege (player)
+         *
+         * /givepet (player)
+         *
+         * /unlockitems [player]
+         */
+
         CommandManager commandManager = new CommandManager();
-        commandManager.add(new AbandonAllClaimsCommand("abandonallclaims", this));
-        commandManager.add(new AdjustBonusClaimBlocksAllCommand("adjustbonusclaimblocksall", this));
-        commandManager.add(new AdjustBonusClaimBlocksCommand("adjustbonusclaimblocks", this));
-        commandManager.add(new AdjustClaimBlockLimitCommand("adjustclaimblocklimit", this));
-        commandManager.add(new AdminClaimListCommand("adminclaimlist", this));
+
+        // Admin
+//        commandManager.add(new AdjustBonusClaimBlocksAllCommand("adjustbonusclaimblocksall", this));
+//        commandManager.add(new AdjustBonusClaimBlocksCommand("adjustbonusclaimblocks", this));
+//        commandManager.add(new AdjustClaimBlockLimitCommand("adjustclaimblocklimit", this));
+        commandManager.add(new DeleteAllAdminClaimsCommand("deleteuserclaimsinworld", this));
+//        commandManager.add(new DeleteClaimsInWorldCommand("deleteclaimsinworld", this));
+//        commandManager.add(new DeleteUserClaimsInWorldCommand("deleteuserclaimsinworld", this));
+//        commandManager.add(new RestoreNatureCommand("restorenature", this));
+//        commandManager.add(new RestoreNatureFillCommand("restorenaturefill", this));
+//        commandManager.add(new SetAccruedClaimBlocksCommand("setaccruedclaimblocks", this));
+
+        // Claim            DONE
+//        commandManager.add(new ClaimCommand("claim", this));
+//        commandManager.add(new AbandonAllClaimsCommand("abandonallclaims", this));
+//        commandManager.add(new ClaimAbandonCommand("abandonclaim", this));
+//        commandManager.add(new ClaimExplosionsCommand("claimexplosions", this));
+//        commandManager.add(new ClaimExtendCommand("extendclaim", this));
+//        commandManager.add(new ClaimsListCommand("claimslist", this));
+//        commandManager.add(new DeleteClaimCommand("deleteclaim", this));
+//        commandManager.add(new RestrictSubClaimCommand("restrictsubclaim", this));
+//        commandManager.add(new TransferClaimCommand("transferclaim", this));
+
+        // Claimblocks      DONE
+//        commandManager.add(new SellClaimBlocksCommand("sellclaimblocks", this));
+//        commandManager.add(new BuyClaimBlocksCommand("buyclaimblocks", this));
+
+//         Tool Modes       DONE
         commandManager.add(new AdminClaimsCommand("adminclaims", this));
         commandManager.add(new BasicClaimsCommand("basicclaims", this));
-        commandManager.add(new BuyClaimBlocksCommand("buyclaimblocks", this));
-        commandManager.add(new ClaimAbandonCommand("abandonclaim", this));
-        commandManager.add(new ClaimBookCommand("claimbook", this));
-        commandManager.add(new ClaimCommand("claim", this));
-        commandManager.add(new ClaimExplosionsCommand("claimexplosions", this));
-        commandManager.add(new ClaimExtendCommand("extendclaim", this));
-        commandManager.add(new ClaimsListCommand("claimslist", this));
-        commandManager.add(new DeleteAllAdminClaimsCommand("deleteuserclaimsinworld", this));
-        commandManager.add(new DeleteAllClaimsCommand("deleteallclaims", this));
-        commandManager.add(new DeleteClaimCommand("deleteclaim", this));
-        commandManager.add(new DeleteClaimsInWorldCommand("deleteclaimsinworld", this));
-        commandManager.add(new DeleteUserClaimsInWorldCommand("deleteuserclaimsinworld", this));
-        commandManager.add(new GivePetCommand("givepet", this));
-        commandManager.add(new IgnoreClaimsCommand("ignoreclaims", this));
-        commandManager.add(new RestoreNatureCommand("restorenature", this));
-        commandManager.add(new RestoreNatureFillCommand("restorenaturefill", this));
-        commandManager.add(new RestrictSubClaimCommand("restrictsubclaim", this));
-        commandManager.add(new SellClaimBlocksCommand("sellclaimblocks", this));
-        commandManager.add(new SetAccruedClaimBlocksCommand("setaccruedclaimblocks", this));
-        commandManager.add(new SiegeCommand("siege", this));
         commandManager.add(new SubdivideClaimsCommand("subdivideclaims", this));
-        commandManager.add(new TransferClaimCommand("transferclaim", this));
-        commandManager.add(new TrappedCommand("trapped", this));
-        commandManager.add(new TrustCommand("trust", this));
-        commandManager.add(new TrustListCommand("trustlist", this));
-        commandManager.add(new UnlockItemsCommand("unlockitems", this));
-        commandManager.add(new UntrustCommand("untrust", this));
+
+        // Trust            DONE
+//        commandManager.add(new TrustCommand("trust", this));
+//        commandManager.add(new UntrustCommand("untrust", this));
+//        commandManager.add(new TrustListCommand("trustlist", this));
+
+        // Help             DONE
+//        commandManager.add(new ClaimBookCommand("claimbook", this));
+
+        // Misc
+//        commandManager.add(new GivePetCommand("givepet", this));
+//        commandManager.add(new TrappedCommand("trapped", this));
+//        commandManager.add(new SiegeCommand("siege", this));
+//        commandManager.add(new UnlockItemsCommand("unlockitems", this));
+
         commandManager.register();
     }
 

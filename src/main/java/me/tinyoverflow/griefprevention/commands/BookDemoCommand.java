@@ -12,8 +12,6 @@ import org.bukkit.inventory.ItemFactory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
-import java.time.LocalDateTime;
-
 public class BookDemoCommand implements PlayerCommandExecutor
 {
     private final Tolker tolker;
@@ -36,13 +34,5 @@ public class BookDemoCommand implements PlayerCommandExecutor
         book.setItemMeta(bookMeta);
 
         player.openBook(book);
-
-        System.out.println(player.getClass().getTypeName());
-        tolker.build("demo-book")
-                .with("player", player)
-                .with("book", book)
-                .with("location", player.getLocation())
-                .withDate("time", LocalDateTime.now())
-                .send(player);
     }
 }
