@@ -29,7 +29,7 @@ public class RestoreNatureFillCommand extends BaseCommand implements PlayerComma
     {
         PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
 
-        playerData.shovelMode = ShovelMode.RestoreNatureFill;
+        playerData.toolMode = ToolMode.RESTORE_NATURE_FILL;
         playerData.fillRadius = (int) arguments.getOptional("radius").orElse(2);
 
         GriefPrevention.sendMessage(

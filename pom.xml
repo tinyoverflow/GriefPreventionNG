@@ -62,11 +62,13 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <filtering>true</filtering>
+                <filtering>false</filtering>
                 <includes>
                     <include>plugin.yml</include>
                     <include>paper-plugin.yml</include>
                     <include>dependencies.yml</include>
+                    <include>messages_en.properties</include>
+                    <include>messages_de.properties</include>
                 </includes>
             </resource>
         </resources>
@@ -76,8 +78,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>16</source>
-                    <target>16</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
             </plugin>
             <!-- Append git commit hash to version -->
@@ -193,7 +195,7 @@
         <dependency>
             <groupId>com.github.tinyoverflow</groupId>
             <artifactId>tolker</artifactId>
-            <version>0.1.1</version>
+            <version>0.1.3</version>
             <scope>provided</scope>
         </dependency>
 
@@ -202,6 +204,7 @@
             <groupId>org.spongepowered</groupId>
             <artifactId>configurate-hocon</artifactId>
             <version>4.1.2</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- SnakeYAML -->
@@ -209,14 +212,18 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>2.0</version>
+            <scope>provided</scope>
         </dependency>
+
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.28</version>
+            <scope>compile</scope>
         </dependency>
 
-        <!-- Worldguard dependency -->
+        <!-- WorldGuard -->
         <dependency>
             <groupId>com.sk89q.worldguard</groupId>
             <artifactId>worldguard-bukkit</artifactId>
@@ -238,7 +245,7 @@
             </exclusions>
         </dependency>
 
-        <!-- Vault dependency -->
+        <!-- Vault -->
         <dependency>
             <groupId>net.milkbowl.vault</groupId>
             <artifactId>VaultAPI</artifactId>

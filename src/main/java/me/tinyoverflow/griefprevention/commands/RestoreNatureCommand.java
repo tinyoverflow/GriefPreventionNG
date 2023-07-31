@@ -30,9 +30,9 @@ public class RestoreNatureCommand extends BaseCommand implements PlayerCommandEx
         boolean aggressive = (boolean) arguments.getOptional("aggressive").orElse(false);
         PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
 
-        playerData.shovelMode = aggressive
-                ? ShovelMode.RestoreNatureAggressive
-                : ShovelMode.RestoreNature;
+        playerData.toolMode = aggressive
+                ? ToolMode.RESTORE_NATURE_AGGRESSIVE
+                : ToolMode.RESTORE_NATURE;
 
         GriefPrevention.sendMessage(player, TextMode.INSTRUCTION, aggressive
                 ? Messages.RestoreNatureAggressiveActivate

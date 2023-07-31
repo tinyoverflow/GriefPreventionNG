@@ -27,7 +27,7 @@ public class SubdivideClaimsCommand extends BaseCommand implements PlayerCommand
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
         PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
-        playerData.shovelMode = ShovelMode.SUBDIVIDE;
+        playerData.toolMode = ToolMode.SUBDIVIDE;
         playerData.claimSubdividing = null;
         GriefPrevention.sendMessage(player, TextMode.INSTRUCTION, Messages.SubdivisionMode);
         GriefPrevention.sendMessage(

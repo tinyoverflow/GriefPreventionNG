@@ -2,28 +2,42 @@ package me.tinyoverflow.griefprevention.tasks;
 
 import me.tinyoverflow.griefprevention.Claim;
 import me.tinyoverflow.griefprevention.GriefPrevention;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.ChunkSnapshot;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.World.Environment;
 import org.bukkit.block.Biome;
 import org.bukkit.block.BlockState;
 import org.bukkit.loot.Lootable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 //automatically extends a claim downward based on block types detected
 public class AutoExtendClaimTask implements Runnable
 {
+
+    private final Claim claim;
+    private final ArrayList<ChunkSnapshot> chunks;
+    private final Environment worldType;
+    private final Map<Biome, Set<Material>> biomePlayerMaterials = new HashMap<>();
+    private final int minY;
+    private final int lowestExistingY;
+    private AutoExtendClaimTask(
+            @NotNull Claim claim,
+            @NotNull ArrayList<@NotNull ChunkSnapshot> chunks,
+            @NotNull Environment worldType,
+            int lowestExistingY)
+    {
+        this.claim = claim;
+        this.chunks = chunks;
+        this.worldType = worldType;
+        this.lowestExistingY = Math.min(lowestExistingY, claim.getLesserBoundaryCorner().getBlockY());
+        minY = Math.max(
+                Objects.requireNonNull(claim.getLesserBoundaryCorner().getWorld()).getMinHeight(),
+                GriefPrevention.instance.getPluginConfig()
+                        .getClaimConfiguration()
+                        .getCreationConfiguration().maximumDepth
+        );
+    }
 
     /**
      * Assemble information and schedule a task to update claim depth to include existing structures.
@@ -40,17 +54,13 @@ public class AutoExtendClaimTask implements Runnable
 
         int lowestLootableTile = lesserCorner.getBlockY();
         ArrayList<ChunkSnapshot> snapshots = new ArrayList<>();
-        for (int chunkX = lesserCorner.getBlockX() / 16; chunkX <= greaterCorner.getBlockX() / 16; chunkX++)
-        {
-            for (int chunkZ = lesserCorner.getBlockZ() / 16; chunkZ <= greaterCorner.getBlockZ() / 16; chunkZ++)
-            {
-                if (world.isChunkLoaded(chunkX, chunkZ))
-                {
+        for (int chunkX = lesserCorner.getBlockX() / 16; chunkX <= greaterCorner.getBlockX() / 16; chunkX++) {
+            for (int chunkZ = lesserCorner.getBlockZ() / 16; chunkZ <= greaterCorner.getBlockZ() / 16; chunkZ++) {
+                if (world.isChunkLoaded(chunkX, chunkZ)) {
                     Chunk chunk = world.getChunkAt(chunkX, chunkZ);
 
                     // If we're on the main thread, access to tile entities will speed up the process.
-                    if (Bukkit.isPrimaryThread())
-                    {
+                    if (Bukkit.isPrimaryThread()) {
                         // Find the lowest non-natural storage block in the chunk.
                         // This way chests, barrels, etc. are always protected even if player block definitions are lacking.
                         lowestLootableTile = Math.min(lowestLootableTile, Arrays.stream(chunk.getTileEntities())
@@ -71,53 +81,30 @@ public class AutoExtendClaimTask implements Runnable
 
         Bukkit.getScheduler().runTaskAsynchronously(
                 GriefPrevention.instance,
-                new AutoExtendClaimTask(claim, snapshots, world.getEnvironment(), lowestLootableTile));
-    }
-
-    private final Claim claim;
-    private final ArrayList<ChunkSnapshot> chunks;
-    private final Environment worldType;
-    private final Map<Biome, Set<Material>> biomePlayerMaterials = new HashMap<>();
-    private final int minY;
-    private final int lowestExistingY;
-
-    private AutoExtendClaimTask(
-            @NotNull Claim claim,
-            @NotNull ArrayList<@NotNull ChunkSnapshot> chunks,
-            @NotNull Environment worldType,
-            int lowestExistingY)
-    {
-        this.claim = claim;
-        this.chunks = chunks;
-        this.worldType = worldType;
-        this.lowestExistingY = Math.min(lowestExistingY, claim.getLesserBoundaryCorner().getBlockY());
-        this.minY = Math.max(
-                Objects.requireNonNull(claim.getLesserBoundaryCorner().getWorld()).getMinHeight(),
-                GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getCreationConfiguration().maximumDepth);
+                new AutoExtendClaimTask(claim, snapshots, world.getEnvironment(), lowestLootableTile)
+        );
     }
 
     @Override
     public void run()
     {
-        int newY = this.getLowestBuiltY();
-        if (newY < this.claim.getLesserBoundaryCorner().getBlockY())
-        {
+        int newY = getLowestBuiltY();
+        if (newY < claim.getLesserBoundaryCorner().getBlockY()) {
             Bukkit.getScheduler().runTask(GriefPrevention.instance, new ExecuteExtendClaimTask(claim, newY));
         }
     }
 
     private int getLowestBuiltY()
     {
-        int y = this.lowestExistingY;
+        int y = lowestExistingY;
 
-        if (yTooSmall(y)) return this.minY;
+        if (yTooSmall(y)) return minY;
 
-        for (ChunkSnapshot chunk : this.chunks)
-        {
+        for (ChunkSnapshot chunk : chunks) {
             y = findLowerBuiltY(chunk, y);
 
             // If already at minimum Y, stop searching.
-            if (yTooSmall(y)) return this.minY;
+            if (yTooSmall(y)) return minY;
         }
 
         return y;
@@ -126,23 +113,20 @@ public class AutoExtendClaimTask implements Runnable
     private int findLowerBuiltY(ChunkSnapshot chunkSnapshot, int y)
     {
         // Specifically not using yTooSmall here to allow protecting bottom layer.
-        nextY: for (int newY = y - 1; newY >= this.minY; newY--)
-        {
-            for (int x = 0; x < 16; x++)
-            {
-                for (int z = 0; z < 16; z++)
-                {
+        nextY:
+        for (int newY = y - 1; newY >= minY; newY--) {
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
                     // If the block is natural, ignore it and continue searching the same Y level.
                     if (!isPlayerBlock(chunkSnapshot, x, newY, z)) continue;
 
                     // If the block is player-placed and we're at the minimum Y allowed, we're done searching.
-                    if (yTooSmall(y)) return this.minY;
+                    if (yTooSmall(y)) return minY;
 
                     // Because we found a player block, repeatedly check the next block in the column.
-                    while (isPlayerBlock(chunkSnapshot, x, newY--, z))
-                    {
+                    while (isPlayerBlock(chunkSnapshot, x, newY--, z)) {
                         // If we've hit minimum Y we're done searching.
-                        if (yTooSmall(y)) return this.minY;
+                        if (yTooSmall(y)) return minY;
                     }
 
                     // Undo increment for unsuccessful player block check.
@@ -163,7 +147,7 @@ public class AutoExtendClaimTask implements Runnable
 
     private boolean yTooSmall(int y)
     {
-        return y <= this.minY;
+        return y <= minY;
     }
 
     private boolean isPlayerBlock(ChunkSnapshot chunkSnapshot, int x, int y, int z)
@@ -171,12 +155,15 @@ public class AutoExtendClaimTask implements Runnable
         Material blockType = chunkSnapshot.getBlockType(x, y, z);
         Biome biome = chunkSnapshot.getBiome(x, y, z);
 
-        return this.getBiomePlayerBlocks(biome).contains(blockType);
+        return getBiomePlayerBlocks(biome).contains(blockType);
     }
 
     private Set<Material> getBiomePlayerBlocks(Biome biome)
     {
-        return biomePlayerMaterials.computeIfAbsent(biome, newBiome -> RestoreNatureProcessingTask.getPlayerBlocks(this.worldType, newBiome));
+        return biomePlayerMaterials.computeIfAbsent(
+                biome,
+                newBiome -> RestoreNatureProcessingTask.getPlayerBlocks(worldType, newBiome)
+        );
     }
 
     //runs in the main execution thread, where it can safely change claims and save those changes
@@ -188,5 +175,4 @@ public class AutoExtendClaimTask implements Runnable
             GriefPrevention.instance.dataStore.extendClaim(claim, newY);
         }
     }
-
 }

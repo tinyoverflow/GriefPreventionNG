@@ -26,7 +26,7 @@ public class AdminClaimsCommand extends BaseCommand implements PlayerCommandExec
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
         PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
-        playerData.shovelMode = ShovelMode.ADMIN;
+        playerData.toolMode = ToolMode.ADMIN;
         GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.AdminClaimsMode);
     }
 }

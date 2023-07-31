@@ -19,12 +19,12 @@
 package me.tinyoverflow.griefprevention;
 
 //enumeration for golden shovel modes
-public enum ShovelMode
+public enum ToolMode
 {
     BASIC,
     ADMIN,
     SUBDIVIDE,
-    RestoreNature,
-    RestoreNatureAggressive,
-    RestoreNatureFill
+    RESTORE_NATURE,
+    RESTORE_NATURE_AGGRESSIVE,
+    RESTORE_NATURE_FILL
 }

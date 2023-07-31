@@ -55,9 +55,8 @@ public class EquipShovelProcessingTask implements Runnable
         playerData.claimResizing = null;
 
         //always reset to basic claims mode
-        if (playerData.shovelMode != ShovelMode.BASIC)
-        {
-            playerData.shovelMode = ShovelMode.BASIC;
+        if (playerData.toolMode != ToolMode.BASIC) {
+            playerData.toolMode = ToolMode.BASIC;
             GriefPrevention.sendMessage(player, TextMode.INFO, Messages.ShovelBasicClaimMode);
         }
 
@@ -71,8 +70,7 @@ public class EquipShovelProcessingTask implements Runnable
         );
 
         //link to a video demo of land claiming, based on world type
-        if (GriefPrevention.instance.creativeRulesApply(player.getLocation()))
-        {
+        if (GriefPrevention.instance.creativeRulesApply(player.getLocation())) {
             GriefPrevention.sendMessage(
                     player,
                     TextMode.INSTRUCTION,
@@ -80,8 +78,7 @@ public class EquipShovelProcessingTask implements Runnable
                     DataStore.CREATIVE_VIDEO_URL
             );
         }
-        else if (GriefPrevention.instance.claimsEnabledForWorld(player.getWorld()))
-        {
+        else if (GriefPrevention.instance.claimsEnabledForWorld(player.getWorld())) {
             GriefPrevention.sendMessage(
                     player,
                     TextMode.INSTRUCTION,
@@ -92,8 +89,7 @@ public class EquipShovelProcessingTask implements Runnable
 
         //if standing in a claim owned by the player, visualize it
         Claim claim = GriefPrevention.instance.dataStore.getClaimAt(player.getLocation(), true, playerData.lastClaim);
-        if (claim != null && claim.checkPermission(player, ClaimPermission.Edit, null) == null)
-        {
+        if (claim != null && claim.checkPermission(player, ClaimPermission.Edit, null) == null) {
             playerData.lastClaim = claim;
             BoundaryVisualization.visualizeClaim(player, claim, VisualizationType.CLAIM);
         }

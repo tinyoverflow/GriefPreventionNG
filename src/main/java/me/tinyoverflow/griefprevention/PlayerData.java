@@ -40,7 +40,7 @@ public class PlayerData
     //where this player was the last time we checked on him for earning claim blocks
     public Location lastAfkCheckLocation = null;
     //what "mode" the shovel is in determines what it will do when it's used
-    public ShovelMode shovelMode = ShovelMode.BASIC;
+    public ToolMode toolMode = ToolMode.BASIC;
     //radius for restore nature fill mode
     public int fillRadius = 0;
     //last place the player used the shovel, useful in creating and resizing claims,
@@ -134,8 +134,7 @@ public class PlayerData
     {
         int remainingBlocks = getAccruedClaimBlocks() + getBonusClaimBlocks() +
                               GriefPrevention.instance.dataStore.getGroupBonusBlocks(playerID);
-        for (int i = 0; i < getClaims().size(); i++)
-        {
+        for (int i = 0; i < getClaims().size(); i++) {
             Claim claim = getClaims().get(i);
             remainingBlocks -= claim.getArea();
         }
@@ -149,13 +148,11 @@ public class PlayerData
         if (accruedClaimBlocks == null) loadDataFromSecondaryStorage();
 
         //update claim blocks with any he has accrued during his current play session
-        if (newlyAccruedClaimBlocks > 0)
-        {
+        if (newlyAccruedClaimBlocks > 0) {
             int accruedLimit = getAccruedClaimBlocksLimit();
 
             //if over the limit before adding blocks, leave it as-is, because the limit may have changed AFTER he accrued the blocks
-            if (accruedClaimBlocks < accruedLimit)
-            {
+            if (accruedClaimBlocks < accruedLimit) {
                 //move any in the holding area
                 int newTotal = accruedClaimBlocks + newlyAccruedClaimBlocks;
 
@@ -192,33 +189,33 @@ public class PlayerData
         //reach out to secondary storage to get any data there
         PlayerData storageData = GriefPrevention.instance.dataStore.getPlayerDataFromStorage(playerID);
 
-        if (accruedClaimBlocks == null)
-        {
-            if (storageData.accruedClaimBlocks != null)
-            {
+        if (accruedClaimBlocks == null) {
+            if (storageData.accruedClaimBlocks != null) {
                 accruedClaimBlocks = storageData.accruedClaimBlocks;
 
                 //ensure at least minimum accrued are accrued (in case of settings changes to increase initial amount)
                 if (GriefPrevention.instance.config_advanced_fixNegativeClaimblockAmounts && (accruedClaimBlocks <
-                                                                                              GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().initial))
+                                                                                              GriefPrevention.instance.getPluginConfig()
+                                                                                                      .getClaimConfiguration()
+                                                                                                      .getClaimBlocksConfiguration().initial))
                 {
-                    accruedClaimBlocks = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().initial;
+                    accruedClaimBlocks = GriefPrevention.instance.getPluginConfig()
+                            .getClaimConfiguration()
+                            .getClaimBlocksConfiguration().initial;
                 }
             }
-            else
-            {
-                accruedClaimBlocks = GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().initial;
+            else {
+                accruedClaimBlocks = GriefPrevention.instance.getPluginConfig()
+                        .getClaimConfiguration()
+                        .getClaimBlocksConfiguration().initial;
             }
         }
 
-        if (bonusClaimBlocks == null)
-        {
-            if (storageData.bonusClaimBlocks != null)
-            {
+        if (bonusClaimBlocks == null) {
+            if (storageData.bonusClaimBlocks != null) {
                 bonusClaimBlocks = storageData.bonusClaimBlocks;
             }
-            else
-            {
+            else {
                 bonusClaimBlocks = 0;
             }
         }
@@ -226,23 +223,19 @@ public class PlayerData
 
     public Vector<Claim> getClaims()
     {
-        if (claims == null)
-        {
+        if (claims == null) {
             claims = new Vector<>();
 
             //find all the claims belonging to this player and note them for future reference
             DataStore dataStore = GriefPrevention.instance.dataStore;
             int totalClaimsArea = 0;
-            for (int i = 0; i < dataStore.claims.size(); i++)
-            {
+            for (int i = 0; i < dataStore.claims.size(); i++) {
                 Claim claim = dataStore.claims.get(i);
-                if (!claim.inDataStore)
-                {
+                if (!claim.inDataStore) {
                     dataStore.claims.remove(i--);
                     continue;
                 }
-                if (playerID.equals(claim.ownerID))
-                {
+                if (playerID.equals(claim.ownerID)) {
                     claims.add(claim);
                     totalClaimsArea += claim.getArea();
                 }
@@ -254,7 +247,8 @@ public class PlayerData
             //if total claimed area is more than total blocks available
             int totalBlocks = accruedClaimBlocks + getBonusClaimBlocks() +
                               GriefPrevention.instance.dataStore.getGroupBonusBlocks(playerID);
-            if (GriefPrevention.instance.config_advanced_fixNegativeClaimblockAmounts && totalBlocks < totalClaimsArea)
+            if (GriefPrevention.instance.config_advanced_fixNegativeClaimblockAmounts &&
+                totalBlocks < totalClaimsArea)
             {
                 OfflinePlayer player = GriefPrevention.instance.getServer().getOfflinePlayer(playerID);
                 GriefPrevention.AddLogEntry(
@@ -273,8 +267,7 @@ public class PlayerData
                         ActivityType.DEBUG,
                         true
                 );
-                for (Claim claim : claims)
-                {
+                for (Claim claim : claims) {
                     if (!claim.inDataStore) continue;
                     GriefPrevention.AddLogEntry(
                             GriefPrevention.getFriendlyLocationString(claim.getLesserBoundaryCorner()) + " // "
@@ -298,8 +291,7 @@ public class PlayerData
                 GriefPrevention.AddLogEntry("New total blocks: " + totalBlocks, ActivityType.DEBUG, true);
 
                 //if that didn't fix it, then make up the difference with bonus blocks
-                if (totalBlocks < totalClaimsArea)
-                {
+                if (totalBlocks < totalClaimsArea) {
                     int bonusBlocksToAdd = totalClaimsArea - totalBlocks;
                     bonusClaimBlocks += bonusBlocksToAdd;
                     GriefPrevention.AddLogEntry(
@@ -331,10 +323,8 @@ public class PlayerData
             }
         }
 
-        for (int i = 0; i < claims.size(); i++)
-        {
-            if (!claims.get(i).inDataStore)
-            {
+        for (int i = 0; i < claims.size(); i++) {
+            if (!claims.get(i).inDataStore) {
                 claims.remove(i--);
             }
         }
@@ -345,9 +335,10 @@ public class PlayerData
     //Limit can be changed by addons
     public int getAccruedClaimBlocksLimit()
     {
-        if (AccruedClaimBlocksLimit < 0)
-        {
-            return GriefPrevention.instance.getPluginConfig().getClaimConfiguration().getClaimBlocksConfiguration().accrued.limit;
+        if (AccruedClaimBlocksLimit < 0) {
+            return GriefPrevention.instance.getPluginConfig()
+                    .getClaimConfiguration()
+                    .getClaimBlocksConfiguration().accrued.limit;
         }
         return AccruedClaimBlocksLimit;
     }
@@ -369,8 +360,7 @@ public class PlayerData
 
     public void setVisibleBoundaries(@Nullable BoundaryVisualization visibleBoundaries)
     {
-        if (this.visibleBoundaries != null)
-        {
+        if (this.visibleBoundaries != null) {
             this.visibleBoundaries.revert(Bukkit.getPlayer(playerID));
         }
 
