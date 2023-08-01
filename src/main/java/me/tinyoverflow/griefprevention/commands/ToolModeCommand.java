@@ -48,13 +48,17 @@ public class ToolModeCommand implements PlayerCommandExecutor
         for (ToolMode toolMode : ToolMode.values()) {
             String modeName = CaseUtil.fromMacro(toolMode.name()).toKebab();
 
+            if (!player.hasPermission("griefprevention.command.toolmode." + modeName)) {
+                continue;
+            }
+
             TextComponent component = (TextComponent) plugin.getTolker()
                     .from("tool-mode." + modeName + ".title")
                     .build();
 
             plugin.getTolker()
                     .from("tool-mode.help.mode-description")
-                    .with("title", component.content())
+                    .with("title", component)
                     .withBool("active", playerData.toolMode == toolMode)
                     .send(player);
         }
