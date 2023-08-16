@@ -76,6 +76,7 @@ public abstract class DataStore
     //in-memory cache for messages
     private String[] messages;
 
+    //#region Chunk Hashes
     //gets an almost-unique, persistent identifier for a chunk
     public static Long getChunkHash(long chunkx, long chunkz)
     {
@@ -109,6 +110,7 @@ public abstract class DataStore
 
         return hashes;
     }
+    //#endregion
 
     //initialization!
     void initialize() throws Exception
@@ -347,32 +349,6 @@ public abstract class DataStore
 
     //increments the claim ID and updates secondary storage to be sure it's saved
     abstract void incrementNextClaimID();
-
-    //retrieves player data from memory or secondary storage, as necessary
-    //if the player has never been on the server before, this will return a fresh player data with default values
-    synchronized public PlayerData getPlayerData(UUID playerID)
-    {
-        //first, look in memory
-        PlayerData playerData = playerNameToPlayerDataMap.get(playerID);
-
-        //if not there, build a fresh instance with some blanks for what may be in secondary storage
-        if (playerData == null) {
-            playerData = new PlayerData();
-            playerData.playerID = playerID;
-
-            //shove that new player data into the hash map cache
-            playerNameToPlayerDataMap.put(playerID, playerData);
-        }
-
-        return playerData;
-    }
-
-    synchronized public PlayerData getPlayerData(OfflinePlayer player)
-    {
-        return getPlayerData(player.getUniqueId());
-    }
-
-    public abstract PlayerData getPlayerDataFromStorage(UUID playerID);
 
     //deletes a claim or subdivision
     synchronized public void deleteClaim(Claim claim, boolean releasePets)
@@ -674,7 +650,7 @@ public abstract class DataStore
             result.claim = newClaim;
             return result;
         }
-        
+
         assignClaimID(newClaim); // assign a claim ID before calling event, in case a plugin wants to know the ID.
         ClaimCreatedEvent event = new ClaimCreatedEvent(newClaim, creatingPlayer);
         Bukkit.getPluginManager().callEvent(event);
@@ -691,6 +667,33 @@ public abstract class DataStore
         result.claim = newClaim;
         return result;
     }
+
+    //#region Loading/Saving Player Data
+    //retrieves player data from memory or secondary storage, as necessary
+    //if the player has never been on the server before, this will return a fresh player data with default values
+    synchronized public PlayerData getPlayerData(UUID playerID)
+    {
+        //first, look in memory
+        PlayerData playerData = playerNameToPlayerDataMap.get(playerID);
+
+        //if not there, build a fresh instance with some blanks for what may be in secondary storage
+        if (playerData == null) {
+            playerData = new PlayerData();
+            playerData.playerID = playerID;
+
+            //shove that new player data into the hash map cache
+            playerNameToPlayerDataMap.put(playerID, playerData);
+        }
+
+        return playerData;
+    }
+
+    synchronized public PlayerData getPlayerData(OfflinePlayer player)
+    {
+        return getPlayerData(player.getUniqueId());
+    }
+
+    public abstract PlayerData getPlayerDataFromStorage(UUID playerID);
 
     //saves changes to player data to secondary storage.  MUST be called after you're done making changes, otherwise a reload will lose them
     public void savePlayerDataSync(UUID playerID, PlayerData playerData)
@@ -746,6 +749,7 @@ public abstract class DataStore
     }
 
     abstract void overrideSavePlayerData(UUID playerID, PlayerData playerData);
+    //#endregion
 
     //extends a claim to a new depth
     //respects the max depth config variable
@@ -818,6 +822,7 @@ public abstract class DataStore
         });
     }
 
+    //#region Siege
     //starts a siege on a claim
     //does NOT check siege cooldowns, see onCooldown() below
     synchronized public void startSiege(Player attacker, Player defender, Claim defenderClaim)
@@ -1020,6 +1025,7 @@ public abstract class DataStore
         playerData.siegeData.claims.add(claim);
         claim.siegeData = playerData.siegeData;
     }
+    //#endregion
 
     //deletes all claims owned by a player
     synchronized public void deleteClaimsForPlayer(UUID playerID, boolean releasePets)
@@ -1292,6 +1298,7 @@ public abstract class DataStore
         }
     }
 
+    //#region Messaging
     public void loadMessages()
     {
         Messages[] messageIDs = Messages.values();
@@ -2236,6 +2243,7 @@ public abstract class DataStore
 
         return message;
     }
+    //#endregion
 
     public abstract void close();
 
@@ -2280,6 +2288,7 @@ public abstract class DataStore
         }
     }
 
+    //#region Exceptions
     public static class NoTransferException extends RuntimeException
     {
         private static final long serialVersionUID = 1L;
@@ -2289,7 +2298,9 @@ public abstract class DataStore
             super(message);
         }
     }
+    //#endregion
 
+    //#region Tasks
     private class SavePlayerDataThread extends Thread
     {
         private final UUID playerID;
@@ -2309,4 +2320,5 @@ public abstract class DataStore
             asyncSavePlayerData(playerID, playerData);
         }
     }
+    //#endregion
 }

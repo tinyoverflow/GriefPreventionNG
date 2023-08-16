@@ -39,7 +39,7 @@ public class ToolModeCommand implements PlayerCommandExecutor
                 .send(player);
     }
 
-    public void help(Player player, CommandArguments commandArguments)
+    public void help(Player player, CommandArguments ignoredCommandArguments)
     {
         PlayerData playerData = plugin.getDataStore().getPlayerData(player.getUniqueId());
 
