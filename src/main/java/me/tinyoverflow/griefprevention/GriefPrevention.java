@@ -32,7 +32,6 @@ import me.tinyoverflow.griefprevention.commands.ToolModeCommand;
 import me.tinyoverflow.griefprevention.configurations.GriefPreventionConfiguration;
 import me.tinyoverflow.griefprevention.data.RepositoryContainer;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
-import me.tinyoverflow.griefprevention.datastore.DatabaseDataStore;
 import me.tinyoverflow.griefprevention.datastore.FlatFileDataStore;
 import me.tinyoverflow.griefprevention.events.PreventBlockBreakEvent;
 import me.tinyoverflow.griefprevention.handlers.EconomyHandler;
@@ -165,9 +164,6 @@ public class GriefPrevention extends JavaPlugin
     @Getter
     private Tolker tolker;
     private EconomyHandler economyHandler;
-    private String databaseUrl;
-    private String databaseUserName;
-    private String databasePassword;
 
     public GriefPrevention(GriefPreventionConfiguration configuration, RepositoryContainer repositoryContainer)
     {
@@ -358,35 +354,6 @@ public class GriefPrevention extends JavaPlugin
         customLogger.registerTasks(this, getServer().getScheduler());
 
         AddLogEntry("Finished loading configuration.");
-
-        //when datastore initializes, it loads player and claim data, and posts some stats to the log
-        if (databaseUrl.length() > 0) {
-            try {
-                DatabaseDataStore databaseStore = new DatabaseDataStore(
-                        databaseUrl,
-                        databaseUserName,
-                        databasePassword
-                );
-
-                if (FlatFileDataStore.hasData()) {
-                    GriefPrevention.AddLogEntry(
-                            "There appears to be some data on the hard drive.  Migrating those data to the database...");
-                    FlatFileDataStore flatFileStore = new FlatFileDataStore(getDataFolder());
-                    dataStore = flatFileStore;
-                    flatFileStore.migrateData(databaseStore);
-                    GriefPrevention.AddLogEntry("Data migration process complete.");
-                }
-
-                dataStore = databaseStore;
-            }
-            catch (Exception e) {
-                GriefPrevention.AddLogEntry(
-                        "Because there was a problem with the database, GriefPrevention will not function properly.  Either update the database config settings resolve the issue, or delete those lines from your config.yml so that GriefPrevention can use the file system to store data.");
-                e.printStackTrace();
-                getServer().getPluginManager().disablePlugin(this);
-                return;
-            }
-        }
 
         // if not using the database because it's not configured or because there was a problem, use the file system to store data
         // this is the preferred method, as it's simpler than the database scenario
@@ -802,11 +769,6 @@ public class GriefPrevention extends JavaPlugin
         config_rabbitsEatCrops = config.getBoolean("GriefPrevention.RabbitsEatCrops", true);
         config_zombiesBreakDoors = config.getBoolean("GriefPrevention.HardModeZombiesBreakDoors", false);
 
-        //optional database settings
-        databaseUrl = config.getString("GriefPrevention.Database.URL", "");
-        databaseUserName = config.getString("GriefPrevention.Database.UserName", "");
-        databasePassword = config.getString("GriefPrevention.Database.Password", "");
-
         config_advanced_fixNegativeClaimblockAmounts = config.getBoolean(
                 "GriefPrevention.Advanced.fixNegativeClaimblockAmounts",
                 true
@@ -857,10 +819,6 @@ public class GriefPrevention extends JavaPlugin
         outConfig.set("GriefPrevention.CreaturesTrampleCrops", config_creaturesTrampleCrops);
         outConfig.set("GriefPrevention.RabbitsEatCrops", config_rabbitsEatCrops);
         outConfig.set("GriefPrevention.HardModeZombiesBreakDoors", config_zombiesBreakDoors);
-
-        outConfig.set("GriefPrevention.Database.URL", databaseUrl);
-        outConfig.set("GriefPrevention.Database.UserName", databaseUserName);
-        outConfig.set("GriefPrevention.Database.Password", databasePassword);
 
         outConfig.set(
                 "GriefPrevention.Advanced.fixNegativeClaimblockAmounts",

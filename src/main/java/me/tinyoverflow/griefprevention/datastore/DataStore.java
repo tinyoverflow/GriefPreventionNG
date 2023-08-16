@@ -42,7 +42,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 //singleton class which manages all GriefPrevention data (except for config options)
@@ -59,11 +58,7 @@ public abstract class DataStore
             String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpcrea" + ChatColor.RESET;
     public static final String SUBDIVISION_VIDEO_URL =
             String.valueOf(ChatColor.DARK_AQUA) + ChatColor.UNDERLINE + "bit.ly/mcgpsub" + ChatColor.RESET;
-    //pattern for unique user identifiers (UUIDs)
-    protected final static Pattern uuidpattern = Pattern.compile(
-            "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     //the latest version of the data schema implemented here
-    protected static final int latestSchemaVersion = 3;
     final static String messagesFilePath = dataLayerFolderPath + File.separator + "messages.yml";
     static String playerDataFolderPath = dataLayerFolderPath + File.separator + "PlayerData";
     //turns a location into a string, useful in data storage
@@ -82,7 +77,6 @@ public abstract class DataStore
     //in-memory cache for messages
     private String[] messages;
     //current version of the schema of data in secondary storage
-    private int currentSchemaVersion = -1;  //-1 means not determined yet
     //world guard reference, if available
     private WorldGuardWrapper worldGuard = null;
 
@@ -120,28 +114,6 @@ public abstract class DataStore
         return hashes;
     }
 
-    //reading and writing the schema version to the data store
-    abstract int getSchemaVersionFromStorage();
-
-    abstract void updateSchemaVersionInStorage(int versionToSet);
-
-    protected int getSchemaVersion()
-    {
-        if (currentSchemaVersion >= 0) {
-            return currentSchemaVersion;
-        }
-        else {
-            currentSchemaVersion = getSchemaVersionFromStorage();
-            return currentSchemaVersion;
-        }
-    }
-
-    protected void setSchemaVersion(int versionToSet)
-    {
-        currentSchemaVersion = versionToSet;
-        updateSchemaVersionInStorage(versionToSet);
-    }
-
     //initialization!
     void initialize() throws Exception
     {
@@ -171,30 +143,6 @@ public abstract class DataStore
         //load up all the messages from messages.yml
         loadMessages();
         GriefPrevention.AddLogEntry("Customizable messages loaded.");
-
-        //if converting up from an earlier schema version, write all claims back to storage using the latest format
-        if (getSchemaVersion() < latestSchemaVersion) {
-            GriefPrevention.AddLogEntry("Please wait.  Updating data format.");
-
-            for (Claim claim : claims) {
-                saveClaim(claim);
-
-                for (Claim subClaim : claim.children) {
-                    saveClaim(subClaim);
-                }
-            }
-
-            //clean up any UUID conversion work
-            if (UUIDFetcher.lookupCache != null) {
-                UUIDFetcher.lookupCache.clear();
-                UUIDFetcher.correctedNames.clear();
-            }
-
-            GriefPrevention.AddLogEntry("Update finished.");
-        }
-
-        //make a note of the data store schema version
-        setSchemaVersion(latestSchemaVersion);
 
         //try to hook into world guard
         try {
@@ -231,23 +179,6 @@ public abstract class DataStore
 
         return bonusBlocks;
     }
-
-    //grants a group (players with a specific permission) bonus claim blocks as long as they're still members of the group
-    synchronized public int adjustGroupBonusBlocks(String groupName, int amount)
-    {
-        Integer currentValue = permissionToBonusBlocksMap.get(groupName);
-        if (currentValue == null) currentValue = 0;
-
-        currentValue += amount;
-        permissionToBonusBlocksMap.put(groupName, currentValue);
-
-        //write changes to storage to ensure they don't get lost
-        saveGroupBonusBlocks(groupName, currentValue);
-
-        return currentValue;
-    }
-
-    abstract void saveGroupBonusBlocks(String groupName, int amount);
 
     synchronized public void changeClaimOwner(Claim claim, UUID newOwnerID)
     {
@@ -457,12 +388,6 @@ public abstract class DataStore
     public abstract PlayerData getPlayerDataFromStorage(UUID playerID);
 
     //deletes a claim or subdivision
-    synchronized public void deleteClaim(Claim claim)
-    {
-        deleteClaim(claim, true, false);
-    }
-
-    //deletes a claim or subdivision
     synchronized public void deleteClaim(Claim claim, boolean releasePets)
     {
         deleteClaim(claim, true, releasePets);
@@ -627,12 +552,7 @@ public abstract class DataStore
     public Collection<Claim> getClaims(int chunkx, int chunkz)
     {
         ArrayList<Claim> chunkClaims = chunksToClaimsMap.get(getChunkHash(chunkx, chunkz));
-        if (chunkClaims != null) {
-            return Collections.unmodifiableCollection(chunkClaims);
-        }
-        else {
-            return Collections.unmodifiableCollection(new ArrayList<>());
-        }
+        return Collections.unmodifiableCollection(Objects.requireNonNullElseGet(chunkClaims, ArrayList::new));
     }
 
     /*
@@ -751,7 +671,9 @@ public abstract class DataStore
 
         for (Claim otherClaim : claimsToCheck) {
             //if we find an existing claim which will be overlapped
-            if (otherClaim.id != newClaim.id && otherClaim.inDataStore && otherClaim.overlaps(newClaim)) {
+            if (!Objects.equals(otherClaim.id, newClaim.id) && otherClaim.inDataStore &&
+                otherClaim.overlaps(newClaim))
+            {
                 //result = fail, return conflicting claim
                 result.succeeded = false;
                 result.claim = otherClaim;
@@ -1051,7 +973,9 @@ public abstract class DataStore
         }
     }
 
-    //whether or not a sieger can siege a particular victim or claim, considering only cooldowns
+    /**
+     * whether a sieger can siege a particular victim or claim, considering only cooldowns
+     */
     synchronized public boolean onCooldown(Player attacker, Player defender, Claim defenderClaim)
     {
         Long cooldownEnd = null;
@@ -1337,7 +1261,7 @@ public abstract class DataStore
             }
 
             //if increased to a sufficiently large size and no subdivisions yet, send subdivision instructions
-            if (oldClaim.getArea() < 1000 && result.claim.getArea() >= 1000 && result.claim.children.size() == 0 &&
+            if (oldClaim.getArea() < 1000 && result.claim.getArea() >= 1000 && result.claim.children.isEmpty() &&
                 !player.hasPermission("griefprevention.adminclaims"))
             {
                 GriefPrevention.sendMessage(player, TextMode.INFO, Messages.BecomeMayor, 200L);
@@ -2335,40 +2259,6 @@ public abstract class DataStore
         }
 
         return message;
-    }
-
-    //used in updating the data schema from 0 to 1.
-    //converts player names in a list to uuids
-    protected List<String> convertNameListToUUIDList(List<String> names)
-    {
-        //doesn't apply after schema has been updated to version 1
-        if (getSchemaVersion() >= 1) return names;
-
-        //list to build results
-        List<String> resultNames = new ArrayList<>();
-
-        for (String name : names) {
-            //skip non-player-names (groups and "public"), leave them as-is
-            if (name.startsWith("[") || name.equals("public")) {
-                resultNames.add(name);
-                continue;
-            }
-
-            //otherwise try to convert to a UUID
-            UUID playerID = null;
-            try {
-                playerID = UUIDFetcher.getUUIDOf(name);
-            }
-            catch (Exception ignored) {
-            }
-
-            //if successful, replace player name with corresponding UUID
-            if (playerID != null) {
-                resultNames.add(playerID.toString());
-            }
-        }
-
-        return resultNames;
     }
 
     public abstract void close();
