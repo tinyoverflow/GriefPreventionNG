@@ -1,6 +1,8 @@
 package me.tinyoverflow.griefprevention.configurations;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
@@ -9,6 +11,10 @@ import org.spongepowered.configurate.objectmapping.meta.Setting;
 @Data
 public class GriefPreventionConfiguration
 {
+    @Getter
+    @Setter
+    private static GriefPreventionConfiguration instance;
+
     @Setting("claims")
     @Comment("Configures where and how claims should work and what to protect.")
     private final ClaimConfiguration claimConfiguration = new ClaimConfiguration();

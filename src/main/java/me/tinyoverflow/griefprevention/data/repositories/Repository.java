@@ -1,12 +1,20 @@
 package me.tinyoverflow.griefprevention.data.repositories;
 
-import me.tinyoverflow.griefprevention.data.Saveable;
-
-import java.util.UUID;
-
-public interface Repository<K, T extends Saveable<? extends K>>
+public interface Repository<K, T>
 {
-    T load(UUID player);
+    /**
+     * Loads a {@link K} object from the data store.
+     *
+     * @param id The {@link T} to load the data for.
+     * @return The hydrated {@link K} instance.
+     */
+    K load(T id);
 
-    boolean save(T playerData);
+    /**
+     * Saves a {@link K} object to the data store.
+     *
+     * @param model The {@link K} instance to save.
+     * @return Whether the saving was successful.
+     */
+    boolean save(K model);
 }

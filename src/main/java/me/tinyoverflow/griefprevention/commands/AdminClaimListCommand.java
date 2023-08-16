@@ -1,6 +1,5 @@
 package me.tinyoverflow.griefprevention.commands;
 
-import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
@@ -12,36 +11,28 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 
-public class AdminClaimListCommand extends BaseCommand implements PlayerCommandExecutor
+public class AdminClaimListCommand implements PlayerCommandExecutor
 {
-    public AdminClaimListCommand(String commandName, GriefPrevention plugin)
-    {
-        super(commandName, plugin);
-    }
+    private final GriefPrevention plugin;
 
-    @Override
-    public CommandAPICommand getCommand()
+    public AdminClaimListCommand(GriefPrevention plugin)
     {
-        return new CommandAPICommand(getCommandName())
-                .withPermission("griefprevention.adminclaimlist")
-                .executesPlayer(this);
+        this.plugin = plugin;
     }
 
     @Override
     public void run(Player player, CommandArguments commandArguments) throws WrapperCommandSyntaxException
     {
-        List<Claim> claims = getPlugin()
+        List<Claim> claims = plugin
                 .getDataStore()
                 .claims
                 .stream()
                 .filter(Claim::isAdminClaim)
                 .toList();
 
-        if (claims.size() > 0)
-        {
+        if (!claims.isEmpty()) {
             GriefPrevention.sendMessage(player, TextMode.INSTRUCTION, Messages.ClaimsListHeader);
-            for (Claim claim : claims)
-            {
+            for (Claim claim : claims) {
                 GriefPrevention.sendMessage(
                         player,
                         TextMode.INSTRUCTION,

@@ -1,10 +1,12 @@
 package me.tinyoverflow.griefprevention.configurations;
 
+import lombok.Getter;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 @ConfigSerializable
+@Getter
 public class ClaimCreationConfiguration
 {
     @Setting
@@ -38,4 +40,9 @@ public class ClaimCreationConfiguration
     @Setting
     @Comment("A claim would not be automatically be created if it cannot have the minimum radius.")
     public int automaticMinimumRadius = 0;
+
+    public boolean hasClaimLimit()
+    {
+        return maximumClaims > 0;
+    }
 }

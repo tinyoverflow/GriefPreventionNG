@@ -45,6 +45,7 @@ public class ToolModeCommand implements PlayerCommandExecutor
 
         plugin.getTolker()
                 .from("tool-mode.help.title").send(player);
+
         for (ToolMode toolMode : ToolMode.values()) {
             String modeName = CaseUtil.fromMacro(toolMode.name()).toKebab();
 

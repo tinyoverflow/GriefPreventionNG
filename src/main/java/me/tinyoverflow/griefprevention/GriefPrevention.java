@@ -25,8 +25,12 @@ import dev.jorel.commandapi.arguments.IntegerArgument;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.arguments.MultiLiteralArgument;
 import lombok.Getter;
-import me.tinyoverflow.griefprevention.commands.*;
+import me.tinyoverflow.griefprevention.commands.AdminClaimListCommand;
+import me.tinyoverflow.griefprevention.commands.DeleteAllClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.IgnoreClaimsCommand;
+import me.tinyoverflow.griefprevention.commands.ToolModeCommand;
 import me.tinyoverflow.griefprevention.configurations.GriefPreventionConfiguration;
+import me.tinyoverflow.griefprevention.data.RepositoryContainer;
 import me.tinyoverflow.griefprevention.datastore.DataStore;
 import me.tinyoverflow.griefprevention.datastore.DatabaseDataStore;
 import me.tinyoverflow.griefprevention.datastore.FlatFileDataStore;
@@ -63,13 +67,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.configurate.ConfigurateException;
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -78,14 +77,16 @@ public class GriefPrevention extends JavaPlugin
 {
     //for convenience, a reference to the instance of this plugin
     public static GriefPrevention instance;
+
     //for logging to the console and log file
     private static java.util.logging.Logger log;
-    private final Path configurationFile;
+    private final GriefPreventionConfiguration configuration;
     //this handles data storage, like player and region data
+    @Getter
     public DataStore dataStore;
     //this tracks item stacks expected to drop which will need protection
     public ArrayList<PendingItemProtection> pendingItemWatchList = new ArrayList<>();
-    //claim mode for each world
+    //#region Deprecated Configuration Variables
     @Deprecated(forRemoval = true)
     public boolean config_lockDeathDropsInPvpWorlds;                 // whether players' dropped on death items are protected in pvp worlds
     @Deprecated(forRemoval = true)
@@ -153,6 +154,7 @@ public class GriefPrevention extends JavaPlugin
     public boolean config_logs_mutedChatEnabled;
     //Track scheduled "rescues" so we can cancel them if the player happens to teleport elsewhere, so we can cancel it.
     public ConcurrentHashMap<UUID, BukkitTask> portalReturnTaskMap = new ConcurrentHashMap<>();
+    //#endregion
     //log entry manager for GP's custom log files
     ActivityLogger customLogger;
     // Player event handler
@@ -160,23 +162,16 @@ public class GriefPrevention extends JavaPlugin
     HashMap<World, Boolean> config_pvp_specifiedWorlds;                //list of worlds where pvp anti-grief rules apply, according to the config file
     //helper method to resolve a player by name
     ConcurrentHashMap<String, UUID> playerNameToIDMap = new ConcurrentHashMap<>();
-    private HoconConfigurationLoader configurationLoader;
-    private ConfigurationNode configurationNode;
-    private GriefPreventionConfiguration configuration;
+    @Getter
+    private Tolker tolker;
     private EconomyHandler economyHandler;
     private String databaseUrl;
     private String databaseUserName;
     private String databasePassword;
 
-    @Getter
-    private Tolker tolker;
-
-    public GriefPrevention()
+    public GriefPrevention(GriefPreventionConfiguration configuration, RepositoryContainer repositoryContainer)
     {
-        configurationFile = Paths.get(
-                getDataFolder().getPath(),
-                "config.conf"
-        );
+        this.configuration = configuration;
     }
 
     //adds a server log entry
@@ -542,149 +537,154 @@ public class GriefPrevention extends JavaPlugin
     private void registerCommands()
     {
         new CommandTree("claimadmin")
-                .withPermission("griefprevention.command.claimadmin")
+                .withPermission(Permissions.Commands.CLAIM_ADMIN)
                 .then(new LiteralArgument("list")
-                        .withPermission("griefprevention.command.claimadmin.list")
-                        .executesPlayer(new AdminClaimListCommand("adminclaimlist", this))
+                        .withPermission(Permissions.Commands.ClaimAdmin.LIST)
+                        .executesPlayer(new AdminClaimListCommand(this))
                 )
                 .then(new LiteralArgument("ignore")
-                        .withPermission("griefprevention.command.claimadmin.ignore")
-                        .executesPlayer(new IgnoreClaimsCommand("ignoreclaims", this))
+                        .withPermission(Permissions.Commands.ClaimAdmin.IGNORE)
+                        .executesPlayer(new IgnoreClaimsCommand(this))
                 )
                 .then(new LiteralArgument("delete-all")
-                        .withPermission("griefprevention.command.claimadmin.delete-all")
+                        .withPermission(Permissions.Commands.ClaimAdmin.DELETE_ALL)
                         .then(new MultiLiteralArgument("type", List.of("user", "admin", "all"))
-                                .executesPlayer(new DeleteAllClaimsCommand("deleteallclaims", this))
+                                .executesPlayer(new DeleteAllClaimsCommand(this))
                         )
-                );
+                )
+                .register();
 
         new CommandTree("toolmode")
-                .withPermission("griefprevention.command.toolmode")
+                .withPermission(Permissions.Commands.TOOLMODE)
+                .executesPlayer(new ToolModeCommand(this)::help)
                 .then(new LiteralArgument("mode", "admin")
                         .setListed(true)
-                        .withPermission("griefprevention.command.toolmode.admin")
+                        .withPermission(Permissions.Commands.ToolMode.ADMIN)
                         .executesPlayer(new ToolModeCommand(this))
                 )
                 .then(new LiteralArgument("mode", "basic")
                         .setListed(true)
-                        .withPermission("griefprevention.command.toolmode.basic")
+                        .withPermission(Permissions.Commands.ToolMode.BASIC)
                         .executesPlayer(new ToolModeCommand(this))
                 )
                 .then(new LiteralArgument("mode", "subdivide")
                         .setListed(true)
-                        .withPermission("griefprevention.command.toolmode.subdivide")
+                        .withPermission(Permissions.Commands.ToolMode.SUBDIVIDE)
                         .executesPlayer(new ToolModeCommand(this))
                 )
                 .then(new LiteralArgument("mode", "restore-nature")
                         .setListed(true)
-                        .withPermission("griefprevention.command.toolmode.restore-nature")
+                        .withPermission(Permissions.Commands.ToolMode.RESTORE_NATURE)
                         .executesPlayer(new ToolModeCommand(this))
                 )
                 .then(new LiteralArgument("mode", "restore-nature-aggressive")
                         .setListed(true)
-                        .withPermission("griefprevention.command.toolmode.restore-nature-aggressive")
+                        .withPermission(Permissions.Commands.ToolMode.RESTORE_NATURE_AGGRESSIVE)
                         .executesPlayer(new ToolModeCommand(this))
                 )
                 .then(new LiteralArgument("mode", "restore-nature-fill")
                         .setListed(true)
-                        .withPermission("griefprevention.command.toolmode.restore-nature-fill")
+                        .withPermission(Permissions.Commands.ToolMode.RESTORE_NATURE_FILL)
                         .then(new IntegerArgument("radius", 1, 10)
                                 .executesPlayer(new ToolModeCommand(this))
                         )
                 )
-                .executesPlayer(new ToolModeCommand(this)::help)
                 .register();
 
-        /**
-         * /claimadmin
-         *      list
-         *      delete-all (user/admin)
-         *      delete-in-world (user/admin)
-         *      ignore         *
-         *
-         * /claim
-         *      create
-         *      abandon / delete?
-         *      abandon-all
-         *      list
-         *      extend
-         *      transfer (player)
-         *      config
-         *          explosions (true/false)
-         *          inherit-permission (true/false)
-         *
-         * /claimblocks
-         *      buy (amount)
-         *      sell (amount)
-         *      adjust (player) (bonus/accrued) (modification)
-         *      limit (player) (limit)
-         *
-         * /toolmode
-         *      basic
-         *      subdivide
-         *      admin
-         *
-         * /trust (player) [level=build]   // none = remove, otherwise build, access, switch, container
-         *
-         * /untrust (player)
-         *
-         * /trapped
-         *
-         * /siege (player)
-         *
-         * /givepet (player)
-         *
-         * /unlockitems [player]
+        /*new CommandTree("claim")
+                .withPermission("griefprevention.command.claim")
+                .register(new ClaimCommand("test", this));*/
+
+        /*
+          /claimadmin
+               list
+               delete-all (user/admin)
+               delete-in-world (user/admin)
+               ignore         *
+
+          /claim
+               create
+               abandon / delete?
+               abandon-all
+               list
+               extend
+               transfer (player)
+               config
+                   explosions (true/false)
+                   inherit-permission (true/false)
+
+          /claimblocks
+               buy (amount)
+               sell (amount)
+               adjust (player) (bonus/accrued) (modification)
+               limit (player) (limit)
+
+          /toolmode
+               basic
+               subdivide
+               admin
+
+          /trust (player) [level=build]   // none = remove, otherwise build, access, switch, container
+
+          /untrust (player)
+
+          /trapped
+
+          /siege (player)
+
+          /givepet (player)
+
+          /unlockitems [player]
          */
 
-        CommandManager commandManager = new CommandManager();
+        // CommandManager commandManager = new CommandManager();
 
         // Admin
-//        commandManager.add(new AdjustBonusClaimBlocksAllCommand("adjustbonusclaimblocksall", this));
-//        commandManager.add(new AdjustBonusClaimBlocksCommand("adjustbonusclaimblocks", this));
-//        commandManager.add(new AdjustClaimBlockLimitCommand("adjustclaimblocklimit", this));
-        commandManager.add(new DeleteAllAdminClaimsCommand("deleteuserclaimsinworld", this));
-//        commandManager.add(new DeleteClaimsInWorldCommand("deleteclaimsinworld", this));
-//        commandManager.add(new DeleteUserClaimsInWorldCommand("deleteuserclaimsinworld", this));
-//        commandManager.add(new RestoreNatureCommand("restorenature", this));
-//        commandManager.add(new RestoreNatureFillCommand("restorenaturefill", this));
-//        commandManager.add(new SetAccruedClaimBlocksCommand("setaccruedclaimblocks", this));
+        //        commandManager.add(new AdjustBonusClaimBlocksAllCommand("adjustbonusclaimblocksall", this));
+        //        commandManager.add(new AdjustBonusClaimBlocksCommand("adjustbonusclaimblocks", this));
+        //        commandManager.add(new AdjustClaimBlockLimitCommand("adjustclaimblocklimit", this));
+        //        commandManager.add(new DeleteAllAdminClaimsCommand("deleteuserclaimsinworld", this));
+        //        commandManager.add(new DeleteClaimsInWorldCommand("deleteclaimsinworld", this));
+        //        commandManager.add(new DeleteUserClaimsInWorldCommand("deleteuserclaimsinworld", this));
+        //        commandManager.add(new RestoreNatureCommand("restorenature", this));
+        //        commandManager.add(new RestoreNatureFillCommand("restorenaturefill", this));
+        //        commandManager.add(new SetAccruedClaimBlocksCommand("setaccruedclaimblocks", this));
 
         // Claim            DONE
-//        commandManager.add(new ClaimCommand("claim", this));
-//        commandManager.add(new AbandonAllClaimsCommand("abandonallclaims", this));
-//        commandManager.add(new ClaimAbandonCommand("abandonclaim", this));
-//        commandManager.add(new ClaimExplosionsCommand("claimexplosions", this));
-//        commandManager.add(new ClaimExtendCommand("extendclaim", this));
-//        commandManager.add(new ClaimsListCommand("claimslist", this));
-//        commandManager.add(new DeleteClaimCommand("deleteclaim", this));
-//        commandManager.add(new RestrictSubClaimCommand("restrictsubclaim", this));
-//        commandManager.add(new TransferClaimCommand("transferclaim", this));
+        //        commandManager.add(new ClaimCommand("claim", this));
+        //        commandManager.add(new AbandonAllClaimsCommand("abandonallclaims", this));
+        //        commandManager.add(new ClaimAbandonCommand("abandonclaim", this));
+        //        commandManager.add(new ClaimExplosionsCommand("claimexplosions", this));
+        //        commandManager.add(new ClaimExtendCommand("extendclaim", this));
+        //        commandManager.add(new ClaimsListCommand("claimslist", this));
+        //        commandManager.add(new DeleteClaimCommand("deleteclaim", this));
+        //        commandManager.add(new RestrictSubClaimCommand("restrictsubclaim", this));
+        //        commandManager.add(new TransferClaimCommand("transferclaim", this));
 
         // Claimblocks      DONE
-//        commandManager.add(new SellClaimBlocksCommand("sellclaimblocks", this));
-//        commandManager.add(new BuyClaimBlocksCommand("buyclaimblocks", this));
+        //        commandManager.add(new SellClaimBlocksCommand("sellclaimblocks", this));
+        //        commandManager.add(new BuyClaimBlocksCommand("buyclaimblocks", this));
 
-//         Tool Modes       DONE
-        commandManager.add(new AdminClaimsCommand("adminclaims", this));
-        commandManager.add(new BasicClaimsCommand("basicclaims", this));
-        commandManager.add(new SubdivideClaimsCommand("subdivideclaims", this));
+        //         Tool Modes       DONE
+        //        commandManager.add(new AdminClaimsCommand("adminclaims", this));
+        //        commandManager.add(new BasicClaimsCommand("basicclaims", this));
+        //        commandManager.add(new SubdivideClaimsCommand("subdivideclaims", this));
 
         // Trust            DONE
-        commandManager.add(new TrustCommand("trust", this));
-//        commandManager.add(new UntrustCommand("untrust", this));
-//        commandManager.add(new TrustListCommand("trustlist", this));
+        //        commandManager.add(new TrustCommand("trust", this));
+        //        commandManager.add(new UntrustCommand("untrust", this));
+        //        commandManager.add(new TrustListCommand("trustlist", this));
 
         // Help             DONE
-//        commandManager.add(new ClaimBookCommand("claimbook", this));
+        //        commandManager.add(new ClaimBookCommand("claimbook", this));
 
         // Misc
-//        commandManager.add(new GivePetCommand("givepet", this));
-//        commandManager.add(new TrappedCommand("trapped", this));
-//        commandManager.add(new SiegeCommand("siege", this));
-//        commandManager.add(new UnlockItemsCommand("unlockitems", this));
+        //        commandManager.add(new GivePetCommand("givepet", this));
+        //        commandManager.add(new TrappedCommand("trapped", this));
+        //        commandManager.add(new SiegeCommand("siege", this));
+        //        commandManager.add(new UnlockItemsCommand("unlockitems", this));
 
-        commandManager.register();
+        // commandManager.register();
     }
 
     private void registerEvents(Listener... listeners)
@@ -694,41 +694,17 @@ public class GriefPrevention extends JavaPlugin
         }
     }
 
-    private void savePluginConfig()
-    {
-        try {
-            configurationNode.set(configuration);
-            configurationLoader.save(configurationNode);
-        }
-        catch (ConfigurateException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public GriefPreventionConfiguration getPluginConfig()
     {
         return configuration;
     }
 
+    /**
+     * @deprecated Loading the configuration is done inside the bootstrapper.
+     * TODO: Remove legacy code once all references have been updated.
+     */
     private void loadPluginConfig()
     {
-        try {
-            configurationLoader = HoconConfigurationLoader.builder()
-                    .path(configurationFile)
-                    .build();
-
-            configurationNode = configurationLoader.load();
-            configuration = configurationNode.get(GriefPreventionConfiguration.class);
-
-            // Always saving the file on load to make sure that it exists
-            // and is always up-to-date.
-            savePluginConfig();
-        }
-        catch (ConfigurateException e) {
-            throw new RuntimeException(e);
-        }
-
-        // TODO: Remove legacy code once all references have been updated.
         //load the config if it exists
         FileConfiguration config = YamlConfiguration.loadConfiguration(new File(DataStore.configFilePath));
         FileConfiguration outConfig = new YamlConfiguration();
@@ -921,11 +897,6 @@ public class GriefPrevention extends JavaPlugin
         AddLogEntry("GriefPrevention disabled.");
     }
 
-    public DataStore getDataStore()
-    {
-        return dataStore;
-    }
-
     //called when a player spawns, applies protection for that player if necessary
     @Deprecated(forRemoval = true)
     public void checkPvpProtectionNeeded(Player player)
@@ -1036,8 +1007,8 @@ public class GriefPrevention extends JavaPlugin
                 //exception: when chest claims are enabled, players who have zero land claims and are placing a chest
                 if (material != Material.CHEST || playerData.getClaims().size() > 0 ||
                     GriefPrevention.instance.getPluginConfig()
-                            .getClaimConfiguration()
-                            .getCreationConfiguration().automaticPreferredRadius ==
+                                            .getClaimConfiguration()
+                                            .getCreationConfiguration().automaticPreferredRadius ==
                     -1)
                 {
                     String reason = dataStore.getMessage(Messages.NoBuildOutsideClaims);

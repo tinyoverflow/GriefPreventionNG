@@ -1,6 +1,5 @@
 package me.tinyoverflow.griefprevention.commands;
 
-import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
@@ -10,25 +9,19 @@ import me.tinyoverflow.griefprevention.PlayerData;
 import me.tinyoverflow.griefprevention.TextMode;
 import org.bukkit.entity.Player;
 
-public class IgnoreClaimsCommand extends BaseCommand implements PlayerCommandExecutor
+public class IgnoreClaimsCommand implements PlayerCommandExecutor
 {
-    public IgnoreClaimsCommand(String commandName, GriefPrevention plugin)
-    {
-        super(commandName, plugin);
-    }
+    private final GriefPrevention plugin;
 
-    @Override
-    public CommandAPICommand getCommand()
+    public IgnoreClaimsCommand(GriefPrevention plugin)
     {
-        return new CommandAPICommand(getCommandName())
-                .withPermission("griefprevention.ignoreclaims")
-                .executesPlayer(this);
+        this.plugin = plugin;
     }
 
     @Override
     public void run(Player player, CommandArguments arguments) throws WrapperCommandSyntaxException
     {
-        PlayerData playerData = getPlugin().getDataStore().getPlayerData(player.getUniqueId());
+        PlayerData playerData = plugin.getDataStore().getPlayerData(player.getUniqueId());
         playerData.ignoreClaims = !playerData.ignoreClaims;
 
         GriefPrevention.sendMessage(

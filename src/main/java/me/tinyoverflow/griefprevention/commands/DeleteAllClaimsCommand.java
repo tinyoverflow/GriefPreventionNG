@@ -1,7 +1,5 @@
 package me.tinyoverflow.griefprevention.commands;
 
-import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.arguments.OfflinePlayerArgument;
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException;
 import dev.jorel.commandapi.executors.CommandArguments;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
@@ -12,20 +10,13 @@ import me.tinyoverflow.griefprevention.logger.ActivityType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-public class DeleteAllClaimsCommand extends BaseCommand implements PlayerCommandExecutor
+public class DeleteAllClaimsCommand implements PlayerCommandExecutor
 {
-    public DeleteAllClaimsCommand(String commandName, GriefPrevention plugin)
-    {
-        super(commandName, plugin);
-    }
+    private final GriefPrevention plugin;
 
-    @Override
-    public CommandAPICommand getCommand()
+    public DeleteAllClaimsCommand(GriefPrevention plugin)
     {
-        return new CommandAPICommand(getCommandName())
-                .withPermission("griefprevention.deleteallclaims")
-                .withArguments(new OfflinePlayerArgument("target"))
-                .executesPlayer(this);
+        this.plugin = plugin;
     }
 
     @Override
@@ -35,20 +26,18 @@ public class DeleteAllClaimsCommand extends BaseCommand implements PlayerCommand
         OfflinePlayer otherPlayer = (OfflinePlayer) commandArguments.get("target");
 
         //delete all that player's claims
-        getPlugin().getDataStore().deleteClaimsForPlayer(otherPlayer.getUniqueId(), true);
+        plugin.getDataStore().deleteClaimsForPlayer(otherPlayer.getUniqueId(), true);
 
         GriefPrevention.sendMessage(player, TextMode.SUCCESS, Messages.DeleteAllSuccess, otherPlayer.getName());
-        if (player != null)
-        {
+        if (player != null) {
             GriefPrevention.AddLogEntry(
                     player.getName() + " deleted all claims belonging to " + otherPlayer.getName() + ".",
                     ActivityType.ADMIN
             );
 
             //revert any current visualization
-            if (player.isOnline())
-            {
-                getPlugin().getDataStore().getPlayerData(player.getUniqueId()).setVisibleBoundaries(null);
+            if (player.isOnline()) {
+                plugin.getDataStore().getPlayerData(player.getUniqueId()).setVisibleBoundaries(null);
             }
         }
     }

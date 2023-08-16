@@ -196,18 +196,18 @@ public class PlayerData
                 //ensure at least minimum accrued are accrued (in case of settings changes to increase initial amount)
                 if (GriefPrevention.instance.config_advanced_fixNegativeClaimblockAmounts && (accruedClaimBlocks <
                                                                                               GriefPrevention.instance.getPluginConfig()
-                                                                                                      .getClaimConfiguration()
-                                                                                                      .getClaimBlocksConfiguration().initial))
+                                                                                                                      .getClaimConfiguration()
+                                                                                                                      .getClaimBlocksConfiguration().initial))
                 {
                     accruedClaimBlocks = GriefPrevention.instance.getPluginConfig()
-                            .getClaimConfiguration()
-                            .getClaimBlocksConfiguration().initial;
+                                                                 .getClaimConfiguration()
+                                                                 .getClaimBlocksConfiguration().initial;
                 }
             }
             else {
                 accruedClaimBlocks = GriefPrevention.instance.getPluginConfig()
-                        .getClaimConfiguration()
-                        .getClaimBlocksConfiguration().initial;
+                                                             .getClaimConfiguration()
+                                                             .getClaimBlocksConfiguration().initial;
             }
         }
 
@@ -337,8 +337,8 @@ public class PlayerData
     {
         if (AccruedClaimBlocksLimit < 0) {
             return GriefPrevention.instance.getPluginConfig()
-                    .getClaimConfiguration()
-                    .getClaimBlocksConfiguration().accrued.limit;
+                                           .getClaimConfiguration()
+                                           .getClaimBlocksConfiguration().accrued.limit;
         }
         return AccruedClaimBlocksLimit;
     }

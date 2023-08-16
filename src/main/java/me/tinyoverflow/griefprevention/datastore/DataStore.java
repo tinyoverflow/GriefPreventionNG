@@ -449,6 +449,11 @@ public abstract class DataStore
         return playerData;
     }
 
+    synchronized public PlayerData getPlayerData(OfflinePlayer player)
+    {
+        return getPlayerData(player.getUniqueId());
+    }
+
     public abstract PlayerData getPlayerDataFromStorage(UUID playerID);
 
     //deletes a claim or subdivision
@@ -660,8 +665,8 @@ public abstract class DataStore
                 worldMinY,
                 Math.max(
                         GriefPrevention.instance.getPluginConfig()
-                                .getClaimConfiguration()
-                                .getCreationConfiguration().maximumDepth,
+                                                .getClaimConfiguration()
+                                                .getCreationConfiguration().maximumDepth,
                         y1
                 )
         );
@@ -669,8 +674,8 @@ public abstract class DataStore
                 worldMinY,
                 Math.max(
                         GriefPrevention.instance.getPluginConfig()
-                                .getClaimConfiguration()
-                                .getCreationConfiguration().maximumDepth,
+                                                .getClaimConfiguration()
+                                                .getCreationConfiguration().maximumDepth,
                         y2
                 )
         );
@@ -756,8 +761,8 @@ public abstract class DataStore
 
         //if worldguard is installed, also prevent claims from overlapping any worldguard regions
         if (GriefPrevention.instance.getPluginConfig()
-                    .getClaimConfiguration()
-                    .getCreationConfiguration().requireWorldGuard &&
+                                    .getClaimConfiguration()
+                                    .getCreationConfiguration().requireWorldGuard &&
             worldGuard != null && creatingPlayer != null)
         {
             if (!worldGuard.canBuild(newClaim.lesserBoundaryCorner, newClaim.greaterBoundaryCorner, creatingPlayer)) {
@@ -876,7 +881,7 @@ public abstract class DataStore
         int oldDepth = Math.min(
                 claim.getLesserBoundaryCorner().getBlockY(),
                 claim.children.stream().mapToInt(child -> child.getLesserBoundaryCorner().getBlockY())
-                        .min().orElse(Integer.MAX_VALUE)
+                                       .min().orElse(Integer.MAX_VALUE)
         );
 
         // Use the lowest of the old and new depths.
@@ -885,8 +890,8 @@ public abstract class DataStore
         newDepth = Math.max(
                 newDepth,
                 GriefPrevention.instance.getPluginConfig()
-                        .getClaimConfiguration()
-                        .getCreationConfiguration().maximumDepth
+                                        .getClaimConfiguration()
+                                        .getCreationConfiguration().maximumDepth
         );
         // Cap the depth to the world's minimum height.
         World world = Objects.requireNonNull(claim.getLesserBoundaryCorner().getWorld());
@@ -978,8 +983,8 @@ public abstract class DataStore
         long now = Calendar.getInstance().getTimeInMillis();
         long cooldownEnd = now + 1000L * 60 *
                                  GriefPrevention.instance.getPluginConfig()
-                                         .getSiegeConfiguration()
-                                         .getCooldownEnd();  //one hour from now
+                                                         .getSiegeConfiguration()
+                                                         .getCooldownEnd();  //one hour from now
         siegeCooldownRemaining.put(siegeData.attacker.getName() + "_" + siegeData.defender.getName(), cooldownEnd);
 
         //start cooldowns for every attacker/involved claim pair
@@ -1191,20 +1196,20 @@ public abstract class DataStore
             {
                 if (newWidth <
                     GriefPrevention.instance.getPluginConfig()
-                            .getClaimConfiguration()
-                            .getCreationConfiguration().minimumWidth ||
+                                            .getClaimConfiguration()
+                                            .getCreationConfiguration().minimumWidth ||
                     newHeight <
                     GriefPrevention.instance.getPluginConfig()
-                            .getClaimConfiguration()
-                            .getCreationConfiguration().minimumWidth)
+                                            .getClaimConfiguration()
+                                            .getCreationConfiguration().minimumWidth)
                 {
                     GriefPrevention.sendMessage(
                             player,
                             TextMode.ERROR,
                             Messages.ResizeClaimTooNarrow,
                             String.valueOf(GriefPrevention.instance.getPluginConfig()
-                                    .getClaimConfiguration()
-                                    .getCreationConfiguration().minimumWidth)
+                                                                   .getClaimConfiguration()
+                                                                   .getCreationConfiguration().minimumWidth)
                     );
                     return;
                 }
@@ -1212,16 +1217,16 @@ public abstract class DataStore
                 int newArea = newWidth * newHeight;
                 if (newArea <
                     GriefPrevention.instance.getPluginConfig()
-                            .getClaimConfiguration()
-                            .getCreationConfiguration().minimumArea)
+                                            .getClaimConfiguration()
+                                            .getCreationConfiguration().minimumArea)
                 {
                     GriefPrevention.sendMessage(
                             player,
                             TextMode.ERROR,
                             Messages.ResizeClaimInsufficientArea,
                             String.valueOf(GriefPrevention.instance.getPluginConfig()
-                                    .getClaimConfiguration()
-                                    .getCreationConfiguration().minimumArea)
+                                                                   .getClaimConfiguration()
+                                                                   .getCreationConfiguration().minimumArea)
                     );
                     return;
                 }

@@ -3,6 +3,7 @@ version: "${git.commit.id.describe}"
 api-version: "1.20"
 main: me.tinyoverflow.griefprevention.GriefPrevention
 loader: me.tinyoverflow.griefprevention.GriefPreventionLoader
+bootstrapper: me.tinyoverflow.griefprevention.GriefPreventionBootstrapper
 
 dependencies:
   - name: Vault
