@@ -23,7 +23,6 @@ import com.griefprevention.visualization.BoundaryVisualization;
 import com.griefprevention.visualization.VisualizationType;
 import me.tinyoverflow.griefprevention.*;
 import me.tinyoverflow.griefprevention.events.*;
-import me.tinyoverflow.griefprevention.integrations.WorldGuardWrapper;
 import me.tinyoverflow.griefprevention.logger.ActivityType;
 import me.tinyoverflow.griefprevention.tasks.SecureClaimTask;
 import me.tinyoverflow.griefprevention.tasks.SiegeCheckupTask;
@@ -76,9 +75,6 @@ public abstract class DataStore
     Long nextClaimID = (long) 0;
     //in-memory cache for messages
     private String[] messages;
-    //current version of the schema of data in secondary storage
-    //world guard reference, if available
-    private WorldGuardWrapper worldGuard = null;
 
     //gets an almost-unique, persistent identifier for a chunk
     public static Long getChunkHash(long chunkx, long chunkz)
@@ -143,15 +139,6 @@ public abstract class DataStore
         //load up all the messages from messages.yml
         loadMessages();
         GriefPrevention.AddLogEntry("Customizable messages loaded.");
-
-        //try to hook into world guard
-        try {
-            worldGuard = new WorldGuardWrapper();
-            GriefPrevention.AddLogEntry("Successfully hooked into WorldGuard.");
-        }
-        //if failed, world guard compat features will just be disabled.
-        catch (IllegalStateException | IllegalArgumentException | ClassCastException | NoClassDefFoundError ignored) {
-        }
     }
 
     //removes cached player data from memory
@@ -681,24 +668,13 @@ public abstract class DataStore
             }
         }
 
-        //if worldguard is installed, also prevent claims from overlapping any worldguard regions
-        if (GriefPrevention.instance.getPluginConfig()
-                                    .getClaimConfiguration()
-                                    .getCreationConfiguration().requireWorldGuard &&
-            worldGuard != null && creatingPlayer != null)
-        {
-            if (!worldGuard.canBuild(newClaim.lesserBoundaryCorner, newClaim.greaterBoundaryCorner, creatingPlayer)) {
-                result.succeeded = false;
-                result.claim = null;
-                return result;
-            }
-        }
         if (dryRun) {
             // since this is a dry run, just return the unsaved claim as is.
             result.succeeded = true;
             result.claim = newClaim;
             return result;
         }
+        
         assignClaimID(newClaim); // assign a claim ID before calling event, in case a plugin wants to know the ID.
         ClaimCreatedEvent event = new ClaimCreatedEvent(newClaim, creatingPlayer);
         Bukkit.getPluginManager().callEvent(event);
