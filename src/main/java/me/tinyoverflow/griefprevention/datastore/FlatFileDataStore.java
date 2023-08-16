@@ -120,7 +120,7 @@ public class FlatFileDataStore extends DataStore
         super.initialize();
     }
 
-    void loadClaimData(File[] files) throws Exception
+    void loadClaimData(File[] files)
     {
         ConcurrentHashMap<Claim, Long> orphans = new ConcurrentHashMap<>();
         for (int i = 0; i < files.length; i++) {

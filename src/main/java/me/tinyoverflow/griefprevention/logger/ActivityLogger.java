@@ -1,21 +1,3 @@
-/*
-    GriefPrevention Server Plugin for Minecraft
-    Copyright (C) 2015 Ryan Hamshire
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package me.tinyoverflow.griefprevention.logger;
 
 import me.tinyoverflow.griefprevention.GriefPrevention;
@@ -49,8 +31,7 @@ public class ActivityLogger
         this.logDirectory = logDirectory;
         this.configuration = configuration;
 
-        if (!this.logDirectory.exists() && !this.logDirectory.mkdirs())
-        {
+        if (!this.logDirectory.exists() && !this.logDirectory.mkdirs()) {
             serverLogger.log(Level.SEVERE, "Could not create logging directory: " + this.logDirectory.getPath());
         }
     }
@@ -58,8 +39,7 @@ public class ActivityLogger
     public void log(ActivityType type, String message)
     {
         // Skip if the given log type is not enabled.
-        if (!switch (type)
-        {
+        if (!switch (type) {
             case SOCIAL -> configuration.isSocialEnabled();
             case SUSPICIOUS -> configuration.isSuspiciousEnabled();
             case ADMIN -> configuration.isAdminEnabled();
@@ -78,18 +58,22 @@ public class ActivityLogger
     public void flush()
     {
         // Skip if nothing is inside the buffer.
-        if (messageBuffer.length() == 0) return;
+        if (messageBuffer.isEmpty()) return;
 
         // Determine filename based on the current date.
         String fileName = filenameFormat.format(new Date()) + ".log";
         File logFile = Path.of(logDirectory.toString(), fileName).toFile();
 
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(logFile, StandardCharsets.UTF_8, true)))
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(
+                logFile,
+                StandardCharsets.UTF_8,
+                true
+        )))
         {
             bufferedWriter.write(messageBuffer.toString());
             messageBuffer.setLength(0);
-        } catch (IOException e)
-        {
+        }
+        catch (IOException e) {
             serverLogger.severe("Could not write to log file " + logFile + ": " + e.getMessage());
         }
     }
@@ -100,8 +84,7 @@ public class ActivityLogger
         scheduler.scheduleSyncRepeatingTask(plugin, this::flush, 0, 60 * 20);
 
         // Prune old logs once a day, if enabled.
-        if (configuration.isLogPruningEnabled())
-        {
+        if (configuration.isLogPruningEnabled()) {
             scheduler.scheduleSyncRepeatingTask(
                     plugin,
                     new PruneLogsTask(serverLogger, logDirectory, configuration),
