@@ -5,9 +5,15 @@ on:
   push:
     branches:
       - master
+    paths:
+      - ".github/workflows/**"
+      - "src/**"
+      - "pom.xml"
+      - "qodana.yaml"
 
 jobs:
   qodana:
+    name: Qodana
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
