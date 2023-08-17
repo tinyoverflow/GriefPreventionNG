@@ -84,6 +84,8 @@ public class ClaimFileRepository implements ClaimRepository
                     )
             );
 
+            // TODO: Load Permissions
+
             // Create Claim Model
             ClaimModel claim = new ClaimModel(uuid);
             claim.setOwner(owner);

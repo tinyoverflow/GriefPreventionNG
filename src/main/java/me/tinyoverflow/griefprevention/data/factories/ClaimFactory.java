@@ -13,6 +13,7 @@ import me.tinyoverflow.griefprevention.exceptions.ClaimLimitExceededException;
 import me.tinyoverflow.griefprevention.exceptions.ClaimOverlapException;
 import me.tinyoverflow.griefprevention.exceptions.InsufficientClaimBlocksException;
 import me.tinyoverflow.griefprevention.exceptions.WorldDisabledException;
+import org.apache.commons.lang.NotImplementedException;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 
@@ -71,7 +72,8 @@ public class ClaimFactory
 
     public ClaimFactory withExplicit(Location first, Location second)
     {
-        return this;
+        // TODO: Implement this
+        throw new NotImplementedException("This feature hasn't been implemented yet.");
     }
 
     public ClaimModel build() throws WorldDisabledException, ClaimLimitExceededException, InsufficientClaimBlocksException, ClaimOverlapException
