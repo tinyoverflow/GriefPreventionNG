@@ -2,7 +2,7 @@
 
 ![GitHub issues](https://img.shields.io/github/issues/tinyoverflow/minecraft-griefprevention?style=flat-square)
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/tinyoverflow/minecraft-griefprevention/master?style=flat-square)
-![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/tinyoverflow/minecraft-griefprevention/main?style=flat-square)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/tinyoverflow/minecraft-griefprevention/master?style=flat-square)
 
 > [!IMPORTANT]
 > This is a fork of GriefPrevention from TechFortress. The goal of this fork is to completely overhaul the entire
