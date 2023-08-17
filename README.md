@@ -1,26 +1,23 @@
-# 🏡 GriefPreventionNG
+# 🏡 GriefPrevention
 
-<!--
-![GitHub tag (with filter)](https://img.shields.io/github/v/tag/tinyoverflow/griefpreventionng?style=flat-square&label=Latest%20Version)
-![GitHub issues](https://img.shields.io/github/issues/tinyoverflow/griefpreventionng?style=flat-square&label=Issues)
-![GitHub last commit (branch)](https://img.shields.io/github/last-commit/tinyoverflow/griefpreventionng/main?style=flat-square&label=Last%20Commit)
-![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/tinyoverflow/griefpreventionng/maven.yml?style=flat-square&label=Build)
-![GitHub all releases](https://img.shields.io/github/downloads/tinyoverflow/griefpreventionng/total?style=flat-square&logo=github&label=Downloads)
-![Modrinth Downloads](https://img.shields.io/modrinth/dt/15lfFvuG?style=flat-square&logo=modrinth&label=Downloads)
-![bStats Servers](https://img.shields.io/bstats/servers/19291?style=flat-square&label=Servers)
--->
+![GitHub issues](https://img.shields.io/github/issues/tinyoverflow/minecraft-griefprevention?style=flat-square)
+![GitHub last commit (branch)](https://img.shields.io/github/last-commit/tinyoverflow/minecraft-griefprevention/master?style=flat-square)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/tinyoverflow/minecraft-privatestatus/main?style=flat-square)
 
-**The self-service anti-griefing Bukkit Plugin refactored from the ground up.**
+> [!IMPORTANT]
+> This is a fork of GriefPrevention by TechFortress. The goal of this fork is to completely refactor the whole codebase
+> to
+> make it cleaner, remove deprecated code and make it more maintainable in general. While it tries to achieve feature
+> parity with the original plugin, it also strips Chat Moderation, as in my opinion this should be handled by a chat
+> plugin.
 
 Stop responding to grief and prevent it instead. GriefPreventionNG stops grief before it starts automatically without
 any effort from administrators, and with very little (self-service) effort from players. Because GriefPreventionNG
 teaches players for you, you won't have to publish a training manual or tutorial for players, or add explanatory signs
 to your world.
 
-GriefPrevention is compatible with Purpur, Spigot, Paper, and any other implementation of the Bukkit API.
-
-## Documentation
+This GriefPrevention fork is compatible with Paper and it's derivatives.
 
 ## More
 
-- [View on GitHub](https://github.com/tinyoverflow/griefpreventionng)
+- [View on GitHub](https://github.com/tinyoverflow/minecraft-griefprevention)
