@@ -12,7 +12,7 @@ public class ClaimModel implements Model<UUID>
 {
     private UUID id;
     private OfflinePlayer owner;
-    private UUID parentClaimId;
+    private ClaimModel parentClaim;
     private ClaimBoundaries boundaries;
     private HashMap<OfflinePlayer, ClaimPermission> permissions;
 

@@ -3,17 +3,20 @@ package me.tinyoverflow.griefprevention.data;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import me.tinyoverflow.griefprevention.data.repositories.ClaimRepository;
 import me.tinyoverflow.griefprevention.data.repositories.UserRepository;
 
+@Getter
 public class RepositoryContainer
 {
 
-    @Getter
     private final UserRepository userRepository;
+    private final ClaimRepository claimRepository;
 
-    private RepositoryContainer(UserRepository userRepository)
+    private RepositoryContainer(UserRepository userRepository, ClaimRepository claimRepository)
     {
         this.userRepository = userRepository;
+        this.claimRepository = claimRepository;
     }
 
     public static RepositoryContainerBuilder builder()
@@ -25,6 +28,7 @@ public class RepositoryContainer
     public static class RepositoryContainerBuilder
     {
         private UserRepository userRepository;
+        private ClaimRepository claimRepository;
 
         public RepositoryContainerBuilder withUserRepository(UserRepository userRepository)
         {
@@ -32,10 +36,17 @@ public class RepositoryContainer
             return this;
         }
 
+        public RepositoryContainerBuilder withClaimRepository(ClaimRepository claimRepository)
+        {
+            this.claimRepository = claimRepository;
+            return this;
+        }
+
         public RepositoryContainer build()
         {
             return new RepositoryContainer(
-                    userRepository
+                    userRepository,
+                    claimRepository
             );
         }
     }

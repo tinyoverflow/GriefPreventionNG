@@ -196,19 +196,10 @@ public class FlatFileDataStore extends DataStore
             builder.append(line).append('\n');
         }
 
-        return loadClaim(
-                builder.toString(),
-                out_parentID,
-                file.lastModified(),
-                claimID,
-                Bukkit.getServer().getWorlds()
-        );
-    }
-
-    Claim loadClaim(String input, ArrayList<Long> out_parentID, long lastModifiedDate, long claimID, List<World> validWorlds) throws Exception
-    {
+        long lastModifiedDate = file.lastModified();
+        List<World> validWorlds = Bukkit.getServer().getWorlds();
         YamlConfiguration yaml = new YamlConfiguration();
-        yaml.loadFromString(input);
+        yaml.loadFromString(builder.toString());
 
         //boundaries
         Location lesserBoundaryCorner = locationFromString(yaml.getString("boundaries.lesser"), validWorlds);
@@ -314,6 +305,7 @@ public class FlatFileDataStore extends DataStore
     }
 
     @Override
+    @Deprecated(forRemoval = true)
     public synchronized PlayerData getPlayerDataFromStorage(UUID playerID)
     {
         File playerFile = new File(playerDataFolderPath + File.separator + playerID.toString() + ".yml");
@@ -342,6 +334,7 @@ public class FlatFileDataStore extends DataStore
 
     //saves changes to player data.  MUST be called after you're done making changes, otherwise a reload will lose them
     @Override
+    @Deprecated(forRemoval = true)
     public void overrideSavePlayerData(UUID playerID, PlayerData playerData)
     {
         //never save data for the "administrative" account.  null for claim owner ID indicates administrative account

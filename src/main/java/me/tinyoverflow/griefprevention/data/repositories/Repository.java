@@ -1,14 +1,20 @@
 package me.tinyoverflow.griefprevention.data.repositories;
 
+import java.util.Optional;
+
 public interface Repository<K, T>
 {
     /**
-     * Loads a {@link K} object from the data store.
-     *
-     * @param id The {@link T} to load the data for.
-     * @return The hydrated {@link K} instance.
+     * Loads all objects from the data store.
      */
-    K load(T id);
+    void load();
+
+    /**
+     * Return the given item from the data store.
+     *
+     * @param key Identifier of the item to load.
+     */
+    Optional<K> get(T key);
 
     /**
      * Saves a {@link K} object to the data store.
@@ -17,4 +23,9 @@ public interface Repository<K, T>
      * @return Whether the saving was successful.
      */
     boolean save(K model);
+
+    /**
+     * Saves all objects to the data store.
+     */
+    void save();
 }

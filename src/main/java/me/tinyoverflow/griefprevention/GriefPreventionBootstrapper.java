@@ -5,6 +5,8 @@ import io.papermc.paper.plugin.bootstrap.PluginBootstrap;
 import io.papermc.paper.plugin.bootstrap.PluginProviderContext;
 import me.tinyoverflow.griefprevention.configurations.GriefPreventionConfiguration;
 import me.tinyoverflow.griefprevention.data.RepositoryContainer;
+import me.tinyoverflow.griefprevention.data.repositories.ClaimFileRepository;
+import me.tinyoverflow.griefprevention.data.repositories.ClaimRepository;
 import me.tinyoverflow.griefprevention.data.repositories.UserFileRepository;
 import me.tinyoverflow.griefprevention.data.repositories.UserRepository;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
@@ -54,7 +56,8 @@ public class GriefPreventionBootstrapper implements PluginBootstrap
      */
     private GriefPreventionConfiguration getConfiguration(File dataDirectory)
     {
-        try {
+        try
+        {
             HoconConfigurationLoader configurationLoader = HoconConfigurationLoader.builder()
                     .path(Paths.get(dataDirectory.getPath(), "config.conf"))
                     .build();
@@ -71,7 +74,8 @@ public class GriefPreventionBootstrapper implements PluginBootstrap
 
             return configuration;
         }
-        catch (ConfigurateException e) {
+        catch (ConfigurateException e)
+        {
             logger.error("Could not load configuration file: " + e.getMessage());
         }
 
@@ -85,8 +89,14 @@ public class GriefPreventionBootstrapper implements PluginBootstrap
                 dataDirectory
         );
 
+        ClaimRepository claimRepository = new ClaimFileRepository(
+                logger,
+                dataDirectory
+        );
+
         return RepositoryContainer.builder()
                 .withUserRepository(userRepository)
+                .withClaimRepository(claimRepository)
                 .build();
     }
 }

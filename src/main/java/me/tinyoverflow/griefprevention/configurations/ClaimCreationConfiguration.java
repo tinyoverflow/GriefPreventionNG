@@ -10,10 +10,6 @@ import org.spongepowered.configurate.objectmapping.meta.Setting;
 public class ClaimCreationConfiguration
 {
     @Setting
-    @Comment("Whether the player needs WorldGuard build permissions to create a claim inside the region.")
-    public boolean requireWorldGuard = true;
-
-    @Setting
     @Comment("The maximum amount of claims a single player can have.")
     public int maximumClaims = 5;
 
