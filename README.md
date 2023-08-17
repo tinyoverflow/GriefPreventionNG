@@ -5,11 +5,10 @@
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/tinyoverflow/minecraft-privatestatus/main?style=flat-square)
 
 > [!IMPORTANT]
-> This is a fork of GriefPrevention by TechFortress. The goal of this fork is to completely refactor the whole codebase
-> to
-> make it cleaner, remove deprecated code and make it more maintainable in general. While it tries to achieve feature
-> parity with the original plugin, it also strips Chat Moderation, as in my opinion this should be handled by a chat
-> plugin.
+> This is a fork of GriefPrevention from TechFortress. The goal of this fork is to completely overhaul the entire
+> codebase to make it cleaner, remove obsolete code, and generally make it more maintainable. While it tries to keep the
+> features of the original plugin, it does remove the chat moderation, as I think this should be done by a chat plugin
+> specialized for that.
 
 Stop responding to grief and prevent it instead. GriefPreventionNG stops grief before it starts automatically without
 any effort from administrators, and with very little (self-service) effort from players. Because GriefPreventionNG
