@@ -19,7 +19,7 @@ import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import java.io.File;
 import java.nio.file.Paths;
 
-@SuppressWarnings("UnstableApiUsage")
+@SuppressWarnings({"UnstableApiUsage", "unused"})
 public class GriefPreventionBootstrapper implements PluginBootstrap
 {
     private ComponentLogger logger;
